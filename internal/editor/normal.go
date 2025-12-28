@@ -30,12 +30,16 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.cursorY++
 			e.adjustScroll()
 			e.clampCursor()
+		} else {
+			e.message = "End of file"
 		}
 	case 'k':
 		if e.cursorY > 0 {
 			e.cursorY--
 			e.adjustScroll()
 			e.clampCursor()
+		} else {
+			e.message = "Top of file"
 		}
 	case 'l':
 		line := e.buffer.Line(e.cursorY)
@@ -59,12 +63,16 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.cursorY--
 			e.adjustScroll()
 			e.clampCursor()
+		} else {
+			e.message = "Top of file"
 		}
 	case tcell.KeyDown:
 		if e.cursorY < e.buffer.LineCount()-1 {
 			e.cursorY++
 			e.adjustScroll()
 			e.clampCursor()
+		} else {
+			e.message = "End of file"
 		}
 	}
 }
