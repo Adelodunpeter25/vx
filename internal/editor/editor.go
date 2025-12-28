@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/preview"
 	"github.com/Adelodunpeter25/vx/internal/search"
 	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
@@ -13,6 +14,7 @@ type Editor struct {
 	buffer      *buffer.Buffer
 	syntax      *syntax.Engine
 	search      *search.Engine
+	preview     *preview.Preview
 	renderCache *RenderCache
 	width       int
 	height      int
@@ -34,6 +36,7 @@ func New(term *terminal.Terminal) *Editor {
 		buffer:      buffer.New(),
 		syntax:      syntax.New(""),
 		search:      search.New(),
+		preview:     preview.New(),
 		renderCache: newRenderCache(),
 		width:       width,
 		height:      height,
@@ -70,6 +73,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		buffer:      buf,
 		syntax:      syntax.New(filename),
 		search:      search.New(),
+		preview:     preview.New(),
 		renderCache: newRenderCache(),
 		width:       width,
 		height:      height,

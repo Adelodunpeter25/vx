@@ -1,0 +1,93 @@
+package preview
+
+import (
+	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/markdown"
+	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/gdamore/tcell/v2"
+)
+
+// Preview manages the markdown preview pane
+type Preview struct {
+	enabled  bool
+	elements []markdown.Element
+	offsetY  int
+}
+
+func New() *Preview {
+	return &Preview{
+		enabled: false,
+	}
+}
+
+// Toggle enables/disables preview
+func (p *Preview) Toggle() {
+	p.enabled = !p.enabled
+}
+
+// IsEnabled returns preview state
+func (p *Preview) IsEnabled() bool {
+	return p.enabled
+}
+
+// Update re-parses the buffer content
+func (p *Preview) Update(buf *buffer.Buffer) {
+	// Build full text from buffer
+	lines := make([]string, buf.LineCount())
+	for i := 0; i < buf.LineCount(); i++ {
+		lines[i] = buf.Line(i)
+	}
+	
+	text := ""
+	for i, line := range lines {
+		if i > 0 {
+			text += "\n"
+		}
+		text += line
+	}
+	
+	p.elements = markdown.Parse(text)
+}
+
+// Render draws the preview pane
+func (p *Preview) Render(term *terminal.Terminal, startY, height int) {
+	if !p.enabled {
+		return
+	}
+	
+	y := startY
+	for i := p.offsetY; i < len(p.elements) && y < startY+height; i++ {
+		elem := p.elements[i]
+		text, style := markdown.RenderElement(elem)
+		
+		// Draw the line
+		for x, r := range text {
+			if y < startY+height {
+				term.SetCell(x, y, r, style)
+			}
+		}
+		y++
+	}
+	
+	// Fill remaining space
+	for y < startY+height {
+		for x := 0; x < 100; x++ { // Assume max width
+			term.SetCell(x, y, ' ', tcell.StyleDefault)
+		}
+		y++
+	}
+}
+
+// Scroll adjusts preview scroll position
+func (p *Preview) Scroll(delta int) {
+	p.offsetY += delta
+	if p.offsetY < 0 {
+		p.offsetY = 0
+	}
+	if p.offsetY >= len(p.elements) {
+		p.offsetY = len(p.elements) - 1
+	}
+	if p.offsetY < 0 {
+		p.offsetY = 0
+	}
+}

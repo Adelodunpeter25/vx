@@ -10,41 +10,55 @@ import (
 func (e *Editor) render() {
 	e.term.Clear()
 	
-	contentHeight := e.height - 1
-	maxIndent := e.getMaxIndentInView()
+	// Calculate layout based on preview state
+	editorHeight := e.height - 1 // Reserve 1 line for status
+	previewHeight := 0
+	previewStartY := 0
 	
-	// Find matching bracket if cursor is on one
+	if e.preview.IsEnabled() {
+		// Split screen: 60% editor, 40% preview
+		editorHeight = (e.height * 6) / 10
+		previewHeight = e.height - editorHeight - 1 // -1 for status line
+		previewStartY = editorHeight
+	}
+	
+	// Render editor content
+	maxIndent := e.getMaxIndentInView()
 	matchLine, matchCol := e.findMatchingBracket(e.cursorY, e.cursorX)
 	
-	for i := 0; i < contentHeight; i++ {
+	for i := 0; i < editorHeight; i++ {
 		lineNum := e.offsetY + i
 		if lineNum >= e.buffer.LineCount() {
 			e.term.DrawText(0, i, "~", tcell.StyleDefault.Foreground(tcell.ColorBlue))
 		} else {
 			line := e.buffer.Line(lineNum)
 			e.renderLine(i, line)
-			
-			// Draw indent guides after content
 			e.drawIndentGuides(i, line, maxIndent)
 			
-			// Highlight matching bracket if on this line
 			if matchLine == lineNum && matchCol >= 0 {
 				e.highlightBracket(matchCol, i)
 			}
 		}
 	}
 	
+	// Render preview if enabled
+	if e.preview.IsEnabled() {
+		e.preview.Update(e.buffer)
+		e.preview.Render(e.term, previewStartY, previewHeight)
+	}
+	
 	e.renderStatusLine()
 	
-	// Position cursor and highlight bracket under cursor
+	// Position cursor
 	screenY := e.cursorY - e.offsetY
-	e.term.SetCell(e.cursorX, screenY, ' ', tcell.StyleDefault.Reverse(true))
-	
-	// Highlight current bracket if cursor is on one
-	currentLine := e.buffer.Line(e.cursorY)
-	if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
-		style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
-		e.term.SetCell(e.cursorX, screenY, rune(currentLine[e.cursorX]), style)
+	if screenY < editorHeight {
+		e.term.SetCell(e.cursorX, screenY, ' ', tcell.StyleDefault.Reverse(true))
+		
+		currentLine := e.buffer.Line(e.cursorY)
+		if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
+			style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
+			e.term.SetCell(e.cursorX, screenY, rune(currentLine[e.cursorX]), style)
+		}
 	}
 	
 	e.term.Show()

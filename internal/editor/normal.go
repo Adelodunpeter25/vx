@@ -71,6 +71,10 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		// Go to end of file
 		e.jumpToEnd()
 		e.lastKey = 0
+	case 'P':
+		// Toggle preview (Shift+P)
+		e.togglePreview()
+		e.lastKey = 0
 	case 'h':
 		if e.cursorX > 0 {
 			e.cursorX--
@@ -150,6 +154,17 @@ func (e *Editor) jumpToEnd() {
 	e.cursorX = 0
 	e.adjustScroll()
 	e.message = ""
+}
+
+func (e *Editor) togglePreview() {
+	e.preview.Toggle()
+	if e.preview.IsEnabled() {
+		e.preview.Update(e.buffer)
+		e.message = "Preview enabled"
+	} else {
+		e.message = "Preview disabled"
+	}
+	e.renderCache.invalidate()
 }
 
 func (e *Editor) copyCurrentLine() {
