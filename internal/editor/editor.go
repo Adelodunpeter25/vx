@@ -36,18 +36,40 @@ func New(term *terminal.Terminal) *Editor {
 func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 	buf, err := buffer.Load(filename)
 	if err != nil {
+		// Check if it's a partial load (recoverable error)
+		if buf != nil {
+			// File loaded with warnings
+			width, height := term.Size()
+			ed := &Editor{
+				term:    term,
+				buffer:  buf,
+				syntax:  syntax.New(filename),
+				width:   width,
+				height:  height,
+				mode:    ModeNormal,
+				message: "Warning: " + err.Error(),
+			}
+			return ed, nil
+		}
 		return nil, err
 	}
 	
 	width, height := term.Size()
-	return &Editor{
+	ed := &Editor{
 		term:    term,
 		buffer:  buf,
 		syntax:  syntax.New(filename),
 		width:   width,
 		height:  height,
 		mode:    ModeNormal,
-	}, nil
+	}
+	
+	// Show warning if syntax highlighting disabled due to size
+	if ed.syntax.IsTooLarge() {
+		ed.message = "File too large for syntax highlighting"
+	}
+	
+	return ed, nil
 }
 
 func (e *Editor) Run() error {
@@ -69,9 +91,18 @@ func (e *Editor) handleEvent() {
 	case terminal.EventKey:
 		e.handleKey(ev)
 	case terminal.EventResize:
-		e.width, e.height = e.term.Size()
-		e.render()
+		e.handleResize()
 	}
+}
+
+func (e *Editor) handleResize() {
+	e.width, e.height = e.term.Size()
+	
+	// Ensure cursor stays visible after resize
+	e.clampCursor()
+	e.adjustScroll()
+	
+	e.render()
 }
 
 func (e *Editor) handleKey(ev *terminal.Event) {

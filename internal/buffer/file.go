@@ -2,10 +2,25 @@ package buffer
 
 import (
 	"bufio"
+	"fmt"
 	"os"
+
+	"github.com/Adelodunpeter25/vx/internal/utils"
 )
 
 func Load(filename string) (*Buffer, error) {
+	// Check file size first
+	tooLarge, size, err := utils.IsFileTooLarge(filename)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, utils.NewFileError("load", filename, err)
+	}
+	
+	if tooLarge {
+		return nil, utils.NewFileError("load", filename, 
+			fmt.Errorf("file too large (%d MB), maximum is %d MB", 
+				size/(1024*1024), utils.MaxFileSize/(1024*1024)))
+	}
+	
 	file, err := os.Open(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -13,7 +28,7 @@ func Load(filename string) (*Buffer, error) {
 			b.filename = filename
 			return b, nil
 		}
-		return nil, err
+		return nil, utils.NewFileError("load", filename, err)
 	}
 	defer file.Close()
 
@@ -23,12 +38,29 @@ func Load(filename string) (*Buffer, error) {
 	}
 
 	scanner := bufio.NewScanner(file)
+	lineCount := 0
+	
 	for scanner.Scan() {
-		b.lines = append(b.lines, scanner.Text())
+		lineCount++
+		if lineCount > utils.MaxLines {
+			return nil, utils.NewFileError("load", filename, 
+				fmt.Errorf("too many lines (%d), maximum is %d", lineCount, utils.MaxLines))
+		}
+		
+		// Validate and clean UTF-8
+		line := scanner.Text()
+		line = utils.ValidateUTF8(line)
+		b.lines = append(b.lines, line)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		// Try to recover - return what we loaded so far
+		if len(b.lines) > 0 {
+			b.modified = true
+			return b, utils.NewFileError("load", filename, 
+				fmt.Errorf("partial load: %v", err))
+		}
+		return nil, utils.NewFileError("load", filename, err)
 	}
 
 	if len(b.lines) == 0 {
@@ -39,20 +71,31 @@ func Load(filename string) (*Buffer, error) {
 }
 
 func (b *Buffer) Save() error {
+	if b.filename == "" {
+		return fmt.Errorf("no filename set")
+	}
+	
 	file, err := os.Create(b.filename)
 	if err != nil {
-		return err
+		return utils.NewFileError("save", b.filename, err)
 	}
 	defer file.Close()
 
 	writer := bufio.NewWriter(file)
 	for i, line := range b.lines {
 		if i > 0 {
-			writer.WriteString("\n")
+			if _, err := writer.WriteString("\n"); err != nil {
+				return utils.NewFileError("save", b.filename, err)
+			}
 		}
-		writer.WriteString(line)
+		if _, err := writer.WriteString(line); err != nil {
+			return utils.NewFileError("save", b.filename, err)
+		}
 	}
-	writer.Flush()
+	
+	if err := writer.Flush(); err != nil {
+		return utils.NewFileError("save", b.filename, err)
+	}
 
 	b.modified = false
 	return nil

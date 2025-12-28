@@ -7,11 +7,14 @@ import (
 	"github.com/Adelodunpeter25/vx/pkg/highlight"
 )
 
+const MaxHighlightLines = 10000 // Don't highlight files larger than this
+
 type Engine struct {
 	highlighter *highlight.Highlighter
 	enabled     bool
 	cache       map[int][]highlight.StyledRune
 	lastVersion int
+	tooLarge    bool
 }
 
 func New(filename string) *Engine {
@@ -23,7 +26,14 @@ func New(filename string) *Engine {
 }
 
 func (e *Engine) HighlightLine(lineNum int, line string, buf *buffer.Buffer) []highlight.StyledRune {
-	if !e.enabled {
+	if !e.enabled || e.tooLarge {
+		return nil
+	}
+	
+	// Check if buffer is too large for highlighting
+	if buf.LineCount() > MaxHighlightLines {
+		e.tooLarge = true
+		e.cache = nil // Free memory
 		return nil
 	}
 	
@@ -68,4 +78,8 @@ func (e *Engine) Toggle() {
 
 func (e *Engine) IsEnabled() bool {
 	return e.enabled
+}
+
+func (e *Engine) IsTooLarge() bool {
+	return e.tooLarge
 }
