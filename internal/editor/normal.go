@@ -1,6 +1,9 @@
 package editor
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/gdamore/tcell/v2"
+)
 
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	// Ctrl+C force quit
