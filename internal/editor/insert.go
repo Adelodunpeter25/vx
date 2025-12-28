@@ -97,6 +97,7 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 	if ev.Rune != 0 {
 		e.buffer.InsertRune(e.cursorY, e.cursorX, ev.Rune)
 		e.cursorX++
+		e.adjustScroll()
 	}
 }
 
