@@ -30,30 +30,52 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.quit = true
 	case 'i':
 		e.mode = ModeInsert
+		e.lastKey = 0
 	case ':':
 		e.mode = ModeCommand
 		e.commandBuf = ""
 		e.message = ""
+		e.lastKey = 0
 	case '/':
 		e.mode = ModeSearch
 		e.searchBuf = ""
 		e.message = ""
+		e.lastKey = 0
 	case 'n':
 		e.searchNext()
+		e.lastKey = 0
 	case 'N':
 		e.searchPrevious()
+		e.lastKey = 0
 	case 'c':
 		e.copyCurrentLine()
+		e.lastKey = 0
 	case 'p':
 		e.pasteFromClipboard()
+		e.lastKey = 0
 	case 'u':
 		e.performUndo()
+		e.lastKey = 0
 	case 'r':
 		e.performRedo()
+		e.lastKey = 0
+	case 'g':
+		// Handle gg (go to start of file)
+		if e.lastKey == 'g' {
+			e.jumpToStart()
+			e.lastKey = 0
+		} else {
+			e.lastKey = 'g'
+		}
+	case 'G':
+		// Go to end of file
+		e.jumpToEnd()
+		e.lastKey = 0
 	case 'h':
 		if e.cursorX > 0 {
 			e.cursorX--
 		}
+		e.lastKey = 0
 	case 'j':
 		if e.cursorY < e.buffer.LineCount()-1 {
 			e.cursorY++
@@ -62,6 +84,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "End of file"
 		}
+		e.lastKey = 0
 	case 'k':
 		if e.cursorY > 0 {
 			e.cursorY--
@@ -70,11 +93,16 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "Top of file"
 		}
+		e.lastKey = 0
 	case 'l':
 		line := e.buffer.Line(e.cursorY)
 		if e.cursorX < len(line) {
 			e.cursorX++
 		}
+		e.lastKey = 0
+	default:
+		// Clear lastKey if any other key is pressed
+		e.lastKey = 0
 	}
 	
 	switch ev.Key {
@@ -82,11 +110,13 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		if e.cursorX > 0 {
 			e.cursorX--
 		}
+		e.lastKey = 0
 	case tcell.KeyRight:
 		line := e.buffer.Line(e.cursorY)
 		if e.cursorX < len(line) {
 			e.cursorX++
 		}
+		e.lastKey = 0
 	case tcell.KeyUp:
 		if e.cursorY > 0 {
 			e.cursorY--
@@ -95,6 +125,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "Top of file"
 		}
+		e.lastKey = 0
 	case tcell.KeyDown:
 		if e.cursorY < e.buffer.LineCount()-1 {
 			e.cursorY++
@@ -103,7 +134,22 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "End of file"
 		}
+		e.lastKey = 0
 	}
+}
+
+func (e *Editor) jumpToStart() {
+	e.cursorY = 0
+	e.cursorX = 0
+	e.offsetY = 0
+	e.message = ""
+}
+
+func (e *Editor) jumpToEnd() {
+	e.cursorY = e.buffer.LineCount() - 1
+	e.cursorX = 0
+	e.adjustScroll()
+	e.message = ""
 }
 
 func (e *Editor) copyCurrentLine() {

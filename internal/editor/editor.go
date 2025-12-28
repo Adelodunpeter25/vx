@@ -24,6 +24,7 @@ type Editor struct {
 	commandBuf  string
 	searchBuf   string
 	message     string
+	lastKey     rune // Track last key for multi-key commands like gg
 }
 
 func New(term *terminal.Terminal) *Editor {
