@@ -1,6 +1,10 @@
 package editor
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"fmt"
+
+	"github.com/gdamore/tcell/v2"
+)
 
 func (e *Editor) render() {
 	e.term.Clear()
@@ -57,6 +61,6 @@ func (e *Editor) renderStatusLine() {
 	info := filename + modified
 	e.term.DrawText(len(mode)+2, y, info, style)
 	
-	pos := " " + string(rune('0'+e.cursorY+1)) + "," + string(rune('0'+e.cursorX+1)) + " "
+	pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
 	e.term.DrawText(e.width-len(pos), y, pos, style)
 }
