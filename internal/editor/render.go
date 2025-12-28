@@ -86,18 +86,20 @@ func (e *Editor) renderStatusLine() {
 		return
 	}
 	
+	// Always show mode
+	mode := e.mode.String()
+	e.term.DrawText(0, y, " "+mode+" ", style)
+	modeWidth := len(mode) + 2
+	
 	if e.message != "" {
 		// Check if message is a file info message (contains KB/MB and "lines")
 		if strings.Contains(e.message, " lines") && (strings.Contains(e.message, "KB") || strings.Contains(e.message, "MB") || strings.Contains(e.message, "GB") || strings.Contains(e.message, " B,")) {
-			e.renderFileInfoMessage(y, style)
+			e.renderFileInfoMessage(y, style, modeWidth)
 		} else {
-			e.term.DrawText(0, y, e.message, style)
+			e.term.DrawText(modeWidth+1, y, e.message, style)
 		}
 		return
 	}
-	
-	mode := e.mode.String()
-	e.term.DrawText(0, y, " "+mode+" ", style)
 	
 	filename := e.buffer.Filename()
 	if filename == "" {
@@ -108,25 +110,25 @@ func (e *Editor) renderStatusLine() {
 		modified = " [+]"
 	}
 	info := filename + modified
-	e.term.DrawText(len(mode)+2, y, info, style)
+	e.term.DrawText(modeWidth+1, y, info, style)
 	
 	pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
 	e.term.DrawText(e.width-len(pos), y, pos, style)
 }
 
-func (e *Editor) renderFileInfoMessage(y int, style tcell.Style) {
+func (e *Editor) renderFileInfoMessage(y int, style tcell.Style, modeWidth int) {
 	// Parse message: "filename" size, lines
 	parts := strings.SplitN(e.message, "\"", 3)
 	if len(parts) < 3 {
-		e.term.DrawText(0, y, e.message, style)
+		e.term.DrawText(modeWidth+1, y, e.message, style)
 		return
 	}
 	
 	filename := parts[1]
 	rest := strings.TrimSpace(parts[2])
 	
-	// Draw filename on left
-	e.term.DrawText(0, y, "\""+filename+"\"", style)
+	// Draw filename after mode
+	e.term.DrawText(modeWidth+1, y, "\""+filename+"\"", style)
 	
 	// Draw size and lines on right
 	e.term.DrawText(e.width-len(rest)-1, y, rest, style)
