@@ -2,20 +2,23 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/command"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
 )
 
 type Editor struct {
-	term     *terminal.Terminal
-	buffer   *buffer.Buffer
-	width    int
-	height   int
-	cursorX  int
-	cursorY  int
-	offsetY  int
-	mode     Mode
-	quit     bool
+	term       *terminal.Terminal
+	buffer     *buffer.Buffer
+	width      int
+	height     int
+	cursorX    int
+	cursorY    int
+	offsetY    int
+	mode       Mode
+	quit       bool
+	commandBuf string
+	message    string
 }
 
 func New(term *terminal.Terminal) *Editor {
@@ -87,6 +90,10 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.quit = true
 	case 'i':
 		e.mode = ModeInsert
+	case ':':
+		e.mode = ModeCommand
+		e.commandBuf = ""
+		e.message = ""
 	case 'h':
 		if e.cursorX > 0 {
 			e.cursorX--
@@ -203,7 +210,38 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 }
 
 func (e *Editor) handleCommandMode(ev *terminal.Event) {
-	// TODO: implement command mode
+	if ev.Key == tcell.KeyEscape {
+		e.mode = ModeNormal
+		e.commandBuf = ""
+		e.message = ""
+		return
+	}
+	
+	if ev.Key == tcell.KeyEnter {
+		result := command.Execute(e.commandBuf, e.buffer)
+		if result.Error != nil {
+			e.message = result.Error.Error()
+		} else if result.Message != "" {
+			e.message = result.Message
+		}
+		if result.Quit {
+			e.quit = true
+		}
+		e.mode = ModeNormal
+		e.commandBuf = ""
+		return
+	}
+	
+	if ev.Key == tcell.KeyBackspace || ev.Key == tcell.KeyBackspace2 {
+		if len(e.commandBuf) > 0 {
+			e.commandBuf = e.commandBuf[:len(e.commandBuf)-1]
+		}
+		return
+	}
+	
+	if ev.Rune != 0 {
+		e.commandBuf += string(ev.Rune)
+	}
 }
 
 func (e *Editor) clampCursor() {
@@ -262,6 +300,19 @@ func (e *Editor) renderStatusLine() {
 	// Clear status line
 	for x := 0; x < e.width; x++ {
 		e.term.SetCell(x, y, ' ', style)
+	}
+	
+	// Command mode shows command buffer
+	if e.mode == ModeCommand {
+		cmd := ":" + e.commandBuf
+		e.term.DrawText(0, y, cmd, style)
+		return
+	}
+	
+	// Show message if present
+	if e.message != "" {
+		e.term.DrawText(0, y, e.message, style)
+		return
 	}
 	
 	// Mode indicator
