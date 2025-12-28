@@ -86,6 +86,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		if e.cursorX > 0 {
 			e.cursorX--
 		}
+		e.adjustScroll()
 		e.lastKey = 0
 	case 'j':
 		if e.cursorY < e.buffer.LineCount()-1 {
@@ -110,6 +111,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		if e.cursorX < len(line) {
 			e.cursorX++
 		}
+		e.adjustScroll()
 		e.lastKey = 0
 	default:
 		// Clear lastKey if any other key is pressed
@@ -121,12 +123,14 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		if e.cursorX > 0 {
 			e.cursorX--
 		}
+		e.adjustScroll()
 		e.lastKey = 0
 	case tcell.KeyRight:
 		line := e.buffer.Line(e.cursorY)
 		if e.cursorX < len(line) {
 			e.cursorX++
 		}
+		e.adjustScroll()
 		e.lastKey = 0
 	case tcell.KeyUp:
 		if e.cursorY > 0 {
