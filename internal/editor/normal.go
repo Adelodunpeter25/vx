@@ -19,6 +19,12 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.message = ""
 	}
 	
+	// If in preview mode, handle preview-specific keys
+	if e.preview.IsEnabled() {
+		e.handlePreviewKeys(ev)
+		return
+	}
+	
 	// Ctrl+C force quit
 	if ev.Key == tcell.KeyCtrlC {
 		e.quit = true
@@ -166,6 +172,29 @@ func (e *Editor) togglePreview() {
 		e.message = "Preview disabled"
 	}
 	e.renderCache.invalidate()
+}
+
+func (e *Editor) handlePreviewKeys(ev *terminal.Event) {
+	switch ev.Rune {
+	case 'p':
+		// Toggle preview off
+		e.togglePreview()
+	case 'j':
+		e.preview.Scroll(1)
+	case 'k':
+		e.preview.Scroll(-1)
+	case 'q':
+		e.quit = true
+	}
+	
+	switch ev.Key {
+	case tcell.KeyDown:
+		e.preview.Scroll(1)
+	case tcell.KeyUp:
+		e.preview.Scroll(-1)
+	case tcell.KeyCtrlC:
+		e.quit = true
+	}
 }
 
 func (e *Editor) copyCurrentLine() {
