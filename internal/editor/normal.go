@@ -51,7 +51,12 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.copyCurrentLine()
 		e.lastKey = 0
 	case 'p':
-		e.pasteFromClipboard()
+		// Check if this is a markdown file
+		if strings.HasSuffix(e.buffer.Filename(), ".md") {
+			e.togglePreview()
+		} else {
+			e.pasteFromClipboard()
+		}
 		e.lastKey = 0
 	case 'u':
 		e.performUndo()
@@ -70,10 +75,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case 'G':
 		// Go to end of file
 		e.jumpToEnd()
-		e.lastKey = 0
-	case 'P':
-		// Toggle preview (Shift+P)
-		e.togglePreview()
 		e.lastKey = 0
 	case 'h':
 		if e.cursorX > 0 {

@@ -10,23 +10,22 @@ import (
 func (e *Editor) render() {
 	e.term.Clear()
 	
-	// Calculate layout based on preview state
-	editorHeight := e.height - 1 // Reserve 1 line for status
-	previewHeight := 0
-	previewStartY := 0
-	
+	// If preview is enabled, show full-screen preview
 	if e.preview.IsEnabled() {
-		// Split screen: 60% editor, 40% preview
-		editorHeight = (e.height * 6) / 10
-		previewHeight = e.height - editorHeight - 1 // -1 for status line
-		previewStartY = editorHeight
+		previewHeight := e.height - 1 // Reserve 1 line for status
+		e.preview.Update(e.buffer)
+		e.preview.Render(e.term, 0, previewHeight)
+		e.renderStatusLine()
+		e.term.Show()
+		return
 	}
 	
-	// Render editor content
+	// Normal editor rendering
+	contentHeight := e.height - 1
 	maxIndent := e.getMaxIndentInView()
 	matchLine, matchCol := e.findMatchingBracket(e.cursorY, e.cursorX)
 	
-	for i := 0; i < editorHeight; i++ {
+	for i := 0; i < contentHeight; i++ {
 		lineNum := e.offsetY + i
 		if lineNum >= e.buffer.LineCount() {
 			e.term.DrawText(0, i, "~", tcell.StyleDefault.Foreground(tcell.ColorBlue))
@@ -41,24 +40,16 @@ func (e *Editor) render() {
 		}
 	}
 	
-	// Render preview if enabled
-	if e.preview.IsEnabled() {
-		e.preview.Update(e.buffer)
-		e.preview.Render(e.term, previewStartY, previewHeight)
-	}
-	
 	e.renderStatusLine()
 	
 	// Position cursor
 	screenY := e.cursorY - e.offsetY
-	if screenY < editorHeight {
-		e.term.SetCell(e.cursorX, screenY, ' ', tcell.StyleDefault.Reverse(true))
-		
-		currentLine := e.buffer.Line(e.cursorY)
-		if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
-			style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
-			e.term.SetCell(e.cursorX, screenY, rune(currentLine[e.cursorX]), style)
-		}
+	e.term.SetCell(e.cursorX, screenY, ' ', tcell.StyleDefault.Reverse(true))
+	
+	currentLine := e.buffer.Line(e.cursorY)
+	if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
+		style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
+		e.term.SetCell(e.cursorX, screenY, rune(currentLine[e.cursorX]), style)
 	}
 	
 	e.term.Show()
@@ -145,8 +136,13 @@ func (e *Editor) renderStatusLine() {
 		return
 	}
 	
-	// Always show mode
-	mode := e.mode.String()
+	// Show PREVIEW mode when preview is active
+	var mode string
+	if e.preview.IsEnabled() {
+		mode = "PREVIEW"
+	} else {
+		mode = e.mode.String()
+	}
 	e.term.DrawText(0, y, " "+mode+" ", style)
 	modeWidth := len(mode) + 2
 	
@@ -171,8 +167,11 @@ func (e *Editor) renderStatusLine() {
 	info := filename + modified
 	e.term.DrawText(modeWidth+1, y, info, style)
 	
-	pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
-	e.term.DrawText(e.width-len(pos), y, pos, style)
+	// Don't show cursor position in preview mode
+	if !e.preview.IsEnabled() {
+		pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
+		e.term.DrawText(e.width-len(pos), y, pos, style)
+	}
 }
 
 func (e *Editor) renderFileInfoMessage(y int, style tcell.Style, modeWidth int) {
