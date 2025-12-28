@@ -109,6 +109,31 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.cursorX++
 		}
 	}
+	
+	// Arrow keys
+	switch ev.Key {
+	case tcell.KeyLeft:
+		if e.cursorX > 0 {
+			e.cursorX--
+		}
+	case tcell.KeyRight:
+		line := e.buffer.Line(e.cursorY)
+		if e.cursorX < len(line) {
+			e.cursorX++
+		}
+	case tcell.KeyUp:
+		if e.cursorY > 0 {
+			e.cursorY--
+			e.adjustScroll()
+			e.clampCursor()
+		}
+	case tcell.KeyDown:
+		if e.cursorY < e.buffer.LineCount()-1 {
+			e.cursorY++
+			e.adjustScroll()
+			e.clampCursor()
+		}
+	}
 }
 
 func (e *Editor) handleInsertMode(ev *terminal.Event) {
@@ -138,6 +163,35 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 			e.cursorY--
 			e.cursorX = prevLen
 			e.adjustScroll()
+		}
+		return
+	}
+	
+	// Arrow keys in insert mode
+	switch ev.Key {
+	case tcell.KeyLeft:
+		if e.cursorX > 0 {
+			e.cursorX--
+		}
+		return
+	case tcell.KeyRight:
+		line := e.buffer.Line(e.cursorY)
+		if e.cursorX < len(line) {
+			e.cursorX++
+		}
+		return
+	case tcell.KeyUp:
+		if e.cursorY > 0 {
+			e.cursorY--
+			e.adjustScroll()
+			e.clampCursor()
+		}
+		return
+	case tcell.KeyDown:
+		if e.cursorY < e.buffer.LineCount()-1 {
+			e.cursorY++
+			e.adjustScroll()
+			e.clampCursor()
 		}
 		return
 	}
