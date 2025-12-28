@@ -9,6 +9,18 @@ import (
 )
 
 func main() {
+	// Handle flags
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "-h", "--help":
+			printHelp()
+			return
+		case "-v", "--version":
+			printVersion()
+			return
+		}
+	}
+	
 	term, err := terminal.New()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize terminal: %v\n", err)
