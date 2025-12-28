@@ -36,16 +36,6 @@ func (t *Terminal) Show() {
 	t.screen.Show()
 }
 
-func (t *Terminal) SetCell(x, y int, r rune, style tcell.Style) {
-	t.screen.SetContent(x, y, r, nil, style)
-}
-
-func (t *Terminal) DrawText(x, y int, text string, style tcell.Style) {
-	for i, r := range text {
-		t.SetCell(x+i, y, r, style)
-	}
-}
-
 func (t *Terminal) PollEvent() tcell.Event {
 	return t.screen.PollEvent()
 }

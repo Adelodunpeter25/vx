@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Adelodunpeter25/vx/internal/editor"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
-	"github.com/gdamore/tcell/v2"
 )
 
 func main() {
@@ -16,31 +16,9 @@ func main() {
 	}
 	defer term.Close()
 
-	// Test: draw welcome message
-	width, height := term.Size()
-	msg := "vx - press 'q' to quit"
-	x := (width - len(msg)) / 2
-	y := height / 2
-
-	term.Clear()
-	term.DrawText(x, y, msg, tcell.StyleDefault)
-	term.Show()
-
-	// Event loop
-	for {
-		ev := term.PollEvent()
-		switch ev := ev.(type) {
-		case *tcell.EventKey:
-			if ev.Rune() == 'q' {
-				return
-			}
-		case *tcell.EventResize:
-			term.Clear()
-			width, height = term.Size()
-			x = (width - len(msg)) / 2
-			y = height / 2
-			term.DrawText(x, y, msg, tcell.StyleDefault)
-			term.Show()
-		}
+	ed := editor.New(term)
+	if err := ed.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 }
