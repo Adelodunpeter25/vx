@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	fmt.Println("vi - modern classic text editor")
+	fmt.Println("vx - modern classic text editor")
 	os.Exit(0)
 }
