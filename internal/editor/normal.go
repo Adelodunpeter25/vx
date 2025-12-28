@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"github.com/Adelodunpeter25/vx/internal/clipboard"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
 )
@@ -34,6 +35,10 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.searchNext()
 	case 'N':
 		e.searchPrevious()
+	case 'c':
+		e.copyCurrentLine()
+	case 'p':
+		e.pasteFromClipboard()
 	case 'h':
 		if e.cursorX > 0 {
 			e.cursorX--
@@ -88,6 +93,44 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.message = "End of file"
 		}
 	}
+}
+
+func (e *Editor) copyCurrentLine() {
+	line := e.buffer.Line(e.cursorY)
+	err := clipboard.Copy(line)
+	if err != nil {
+		e.message = "Failed to copy to clipboard"
+	} else {
+		e.message = "Line copied to clipboard"
+	}
+}
+
+func (e *Editor) pasteFromClipboard() {
+	text, err := clipboard.Paste()
+	if err != nil {
+		e.message = "Failed to paste from clipboard"
+		return
+	}
+	
+	if text == "" {
+		e.message = "Clipboard is empty"
+		return
+	}
+	
+	// Insert text at cursor position
+	for _, r := range text {
+		if r == '\n' {
+			e.buffer.SplitLine(e.cursorY, e.cursorX)
+			e.cursorY++
+			e.cursorX = 0
+		} else {
+			e.buffer.InsertRune(e.cursorY, e.cursorX, r)
+			e.cursorX++
+		}
+	}
+	
+	e.adjustScroll()
+	e.message = "Pasted from clipboard"
 }
 
 func (e *Editor) searchNext() {
