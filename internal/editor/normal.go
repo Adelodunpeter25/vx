@@ -6,6 +6,11 @@ import (
 )
 
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
+	// Clear temporary messages on any key
+	if e.message == "Top of file" || e.message == "End of file" {
+		e.message = ""
+	}
+	
 	// Ctrl+C force quit
 	if ev.Key == tcell.KeyCtrlC {
 		e.quit = true
