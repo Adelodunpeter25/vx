@@ -10,6 +10,11 @@ func (e *Editor) render() {
 	e.term.Clear()
 	
 	contentHeight := e.height - 1
+	maxIndent := e.getMaxIndentInView()
+	
+	// Find matching bracket if cursor is on one
+	matchLine, matchCol := e.findMatchingBracket(e.cursorY, e.cursorX)
+	
 	for i := 0; i < contentHeight; i++ {
 		lineNum := e.offsetY + i
 		if lineNum >= e.buffer.LineCount() {
@@ -17,15 +22,39 @@ func (e *Editor) render() {
 		} else {
 			line := e.buffer.Line(lineNum)
 			e.renderLine(i, line)
+			
+			// Draw indent guides after content
+			e.drawIndentGuides(i, line, maxIndent)
+			
+			// Highlight matching bracket if on this line
+			if matchLine == lineNum && matchCol >= 0 {
+				e.highlightBracket(matchCol, i)
+			}
 		}
 	}
 	
 	e.renderStatusLine()
 	
+	// Position cursor and highlight bracket under cursor
 	screenY := e.cursorY - e.offsetY
 	e.term.SetCell(e.cursorX, screenY, ' ', tcell.StyleDefault.Reverse(true))
 	
+	// Highlight current bracket if cursor is on one
+	currentLine := e.buffer.Line(e.cursorY)
+	if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
+		style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
+		e.term.SetCell(e.cursorX, screenY, rune(currentLine[e.cursorX]), style)
+	}
+	
 	e.term.Show()
+}
+
+func (e *Editor) highlightBracket(x, y int) {
+	line := e.buffer.Line(e.offsetY + y)
+	if x < len(line) {
+		style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
+		e.term.SetCell(x, y, rune(line[x]), style)
+	}
 }
 
 func (e *Editor) renderLine(y int, line string) {
