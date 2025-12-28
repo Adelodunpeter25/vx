@@ -58,12 +58,16 @@ func (p *Preview) Render(term *terminal.Terminal, startY, height int) {
 	y := startY
 	for i := p.offsetY; i < len(p.elements) && y < startY+height; i++ {
 		elem := p.elements[i]
-		text, style := markdown.RenderElement(elem)
+		segments := markdown.RenderElement(elem)
 		
-		// Draw the line
-		for x, r := range text {
-			if y < startY+height {
-				term.SetCell(x, y, r, style)
+		// Draw all segments on the same line
+		x := 0
+		for _, seg := range segments {
+			for _, r := range seg.Text {
+				if y < startY+height && x < 200 { // Assume max width
+					term.SetCell(x, y, r, seg.Style)
+					x++
+				}
 			}
 		}
 		y++
@@ -71,7 +75,7 @@ func (p *Preview) Render(term *terminal.Terminal, startY, height int) {
 	
 	// Fill remaining space
 	for y < startY+height {
-		for x := 0; x < 100; x++ { // Assume max width
+		for x := 0; x < 200; x++ {
 			term.SetCell(x, y, ' ', tcell.StyleDefault)
 		}
 		y++

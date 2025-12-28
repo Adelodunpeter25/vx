@@ -7,9 +7,17 @@ import (
 
 // Element represents a parsed markdown element
 type Element struct {
-	Type    ElementType
-	Content string
-	Level   int // For headers
+	Type     ElementType
+	Content  string
+	Level    int // For headers
+	Segments []Segment // For inline formatting
+}
+
+type Segment struct {
+	Text  string
+	Bold  bool
+	Italic bool
+	Code  bool
 }
 
 type ElementType int
@@ -17,12 +25,8 @@ type ElementType int
 const (
 	TypeText ElementType = iota
 	TypeHeader
-	TypeBold
-	TypeItalic
-	TypeCode
 	TypeCodeBlock
 	TypeList
-	TypeLink
 	TypeBlockquote
 )
 
@@ -59,50 +63,82 @@ func Parse(text string) []Element {
 				}
 			}
 			content := strings.TrimSpace(line[level:])
-			elements = append(elements, Element{Type: TypeHeader, Content: content, Level: level})
+			segments := parseInlineFormatting(content)
+			elements = append(elements, Element{
+				Type: TypeHeader, 
+				Content: content, 
+				Level: level,
+				Segments: segments,
+			})
 			continue
 		}
 		
 		// Lists
-		if strings.HasPrefix(strings.TrimSpace(line), "- ") || strings.HasPrefix(strings.TrimSpace(line), "* ") {
-			content := strings.TrimSpace(line[2:])
-			elements = append(elements, Element{Type: TypeList, Content: content})
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "- ") || strings.HasPrefix(trimmed, "* ") {
+			content := strings.TrimSpace(trimmed[2:])
+			segments := parseInlineFormatting(content)
+			elements = append(elements, Element{
+				Type: TypeList, 
+				Content: content,
+				Segments: segments,
+			})
 			continue
 		}
 		
 		// Blockquotes
-		if strings.HasPrefix(strings.TrimSpace(line), "> ") {
-			content := strings.TrimSpace(line[2:])
-			elements = append(elements, Element{Type: TypeBlockquote, Content: content})
+		if strings.HasPrefix(trimmed, "> ") {
+			content := strings.TrimSpace(trimmed[2:])
+			segments := parseInlineFormatting(content)
+			elements = append(elements, Element{
+				Type: TypeBlockquote, 
+				Content: content,
+				Segments: segments,
+			})
 			continue
 		}
 		
 		// Regular text with inline formatting
 		if line != "" {
-			elements = append(elements, Element{Type: TypeText, Content: line})
+			segments := parseInlineFormatting(line)
+			elements = append(elements, Element{
+				Type: TypeText, 
+				Content: line,
+				Segments: segments,
+			})
 		}
 	}
 	
 	return elements
 }
 
-// ParseInline handles inline markdown formatting (bold, italic, code, links)
-func ParseInline(text string) string {
-	// Bold **text**
-	boldRe := regexp.MustCompile(`\*\*(.+?)\*\*`)
-	text = boldRe.ReplaceAllString(text, "$1")
+// parseInlineFormatting extracts bold, italic, and code segments
+func parseInlineFormatting(text string) []Segment {
+	segments := make([]Segment, 0)
 	
-	// Italic *text*
-	italicRe := regexp.MustCompile(`\*(.+?)\*`)
-	text = italicRe.ReplaceAllString(text, "$1")
+	// Pattern to match **bold**, *italic*, and `code`
+	pattern := regexp.MustCompile(`(\*\*[^*]+\*\*|\*[^*]+\*|` + "`" + `[^` + "`" + `]+` + "`" + `|[^*` + "`" + `]+)`)
+	matches := pattern.FindAllString(text, -1)
 	
-	// Inline code `code`
-	codeRe := regexp.MustCompile("`(.+?)`")
-	text = codeRe.ReplaceAllString(text, "$1")
+	for _, match := range matches {
+		seg := Segment{Text: match}
+		
+		// Check for bold **text**
+		if strings.HasPrefix(match, "**") && strings.HasSuffix(match, "**") && len(match) > 4 {
+			seg.Text = match[2:len(match)-2]
+			seg.Bold = true
+		} else if strings.HasPrefix(match, "*") && strings.HasSuffix(match, "*") && len(match) > 2 {
+			// Check for italic *text*
+			seg.Text = match[1:len(match)-1]
+			seg.Italic = true
+		} else if strings.HasPrefix(match, "`") && strings.HasSuffix(match, "`") && len(match) > 2 {
+			// Check for code `text`
+			seg.Text = match[1:len(match)-1]
+			seg.Code = true
+		}
+		
+		segments = append(segments, seg)
+	}
 	
-	// Links [text](url)
-	linkRe := regexp.MustCompile(`\[(.+?)\]\((.+?)\)`)
-	text = linkRe.ReplaceAllString(text, "$1")
-	
-	return text
+	return segments
 }

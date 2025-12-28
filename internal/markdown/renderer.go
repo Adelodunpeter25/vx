@@ -1,13 +1,12 @@
 package markdown
 
 import (
-	"strings"
-
 	"github.com/gdamore/tcell/v2"
 )
 
-// RenderElement converts a markdown element to styled text
-func RenderElement(elem Element) (string, tcell.Style) {
+// RenderElement converts a markdown element to styled text for terminal
+func RenderElement(elem Element) []RenderedSegment {
+	segments := make([]RenderedSegment, 0)
 	base := tcell.StyleDefault
 	
 	switch elem.Type {
@@ -22,32 +21,68 @@ func RenderElement(elem Element) (string, tcell.Style) {
 		default:
 			style = style.Foreground(tcell.NewRGBColor(200, 230, 255))
 		}
-		prefix := strings.Repeat("#", elem.Level) + " "
-		return prefix + elem.Content, style
 		
-	case TypeBold:
-		return elem.Content, base.Bold(true)
+		// Render inline segments with header style as base
+		for _, seg := range elem.Segments {
+			segStyle := style
+			if seg.Bold {
+				segStyle = segStyle.Bold(true)
+			}
+			if seg.Italic {
+				segStyle = segStyle.Italic(true)
+			}
+			if seg.Code {
+				segStyle = base.Foreground(tcell.NewRGBColor(255, 200, 100)).
+					Background(tcell.NewRGBColor(40, 40, 40))
+			}
+			segments = append(segments, RenderedSegment{Text: seg.Text, Style: segStyle})
+		}
 		
-	case TypeItalic:
-		return elem.Content, base.Italic(true)
-		
-	case TypeCode, TypeCodeBlock:
+	case TypeCodeBlock:
 		style := base.Foreground(tcell.NewRGBColor(255, 200, 100)).
 			Background(tcell.NewRGBColor(40, 40, 40))
-		return elem.Content, style
+		segments = append(segments, RenderedSegment{Text: elem.Content, Style: style})
 		
 	case TypeList:
-		return "• " + elem.Content, base
+		segments = append(segments, RenderedSegment{Text: "• ", Style: base})
+		for _, seg := range elem.Segments {
+			segments = append(segments, renderSegment(seg, base))
+		}
 		
 	case TypeBlockquote:
 		style := base.Foreground(tcell.ColorGray).Italic(true)
-		return "│ " + elem.Content, style
+		segments = append(segments, RenderedSegment{Text: "│ ", Style: style})
+		for _, seg := range elem.Segments {
+			segments = append(segments, renderSegment(seg, style))
+		}
 		
-	case TypeLink:
-		style := base.Foreground(tcell.NewRGBColor(100, 150, 255)).Underline(true)
-		return elem.Content, style
-		
-	default:
-		return elem.Content, base
+	default: // TypeText
+		for _, seg := range elem.Segments {
+			segments = append(segments, renderSegment(seg, base))
+		}
 	}
+	
+	return segments
+}
+
+func renderSegment(seg Segment, baseStyle tcell.Style) RenderedSegment {
+	style := baseStyle
+	
+	if seg.Bold {
+		style = style.Bold(true)
+	}
+	if seg.Italic {
+		style = style.Italic(true)
+	}
+	if seg.Code {
+		style = tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 200, 100)).
+			Background(tcell.NewRGBColor(40, 40, 40))
+	}
+	
+	return RenderedSegment{Text: seg.Text, Style: style}
+}
+
+type RenderedSegment struct {
+	Text  string
+	Style tcell.Style
 }
