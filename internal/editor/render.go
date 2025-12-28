@@ -2,6 +2,7 @@ package editor
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -86,7 +87,12 @@ func (e *Editor) renderStatusLine() {
 	}
 	
 	if e.message != "" {
-		e.term.DrawText(0, y, e.message, style)
+		// Check if message is a file info message (contains KB/MB and "lines")
+		if strings.Contains(e.message, " lines") && (strings.Contains(e.message, "KB") || strings.Contains(e.message, "MB") || strings.Contains(e.message, "GB") || strings.Contains(e.message, " B,")) {
+			e.renderFileInfoMessage(y, style)
+		} else {
+			e.term.DrawText(0, y, e.message, style)
+		}
 		return
 	}
 	
@@ -106,4 +112,22 @@ func (e *Editor) renderStatusLine() {
 	
 	pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
 	e.term.DrawText(e.width-len(pos), y, pos, style)
+}
+
+func (e *Editor) renderFileInfoMessage(y int, style tcell.Style) {
+	// Parse message: "filename" size, lines
+	parts := strings.SplitN(e.message, "\"", 3)
+	if len(parts) < 3 {
+		e.term.DrawText(0, y, e.message, style)
+		return
+	}
+	
+	filename := parts[1]
+	rest := strings.TrimSpace(parts[2])
+	
+	// Draw filename on left
+	e.term.DrawText(0, y, "\""+filename+"\"", style)
+	
+	// Draw size and lines on right
+	e.term.DrawText(e.width-len(rest)-1, y, rest, style)
 }
