@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Adelodunpeter25/vx/internal/undo"
 	"github.com/Adelodunpeter25/vx/internal/utils"
 )
 
@@ -33,8 +34,9 @@ func Load(filename string) (*Buffer, error) {
 	defer file.Close()
 
 	b := &Buffer{
-		filename: filename,
-		lines:    []string{},
+		filename:  filename,
+		lines:     []string{},
+		undoStack: undo.NewStack(),
 	}
 
 	scanner := bufio.NewScanner(file)

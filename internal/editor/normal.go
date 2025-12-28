@@ -39,6 +39,10 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.copyCurrentLine()
 	case 'p':
 		e.pasteFromClipboard()
+	case 'u':
+		e.performUndo()
+	case 'r':
+		e.performRedo()
 	case 'h':
 		if e.cursorX > 0 {
 			e.cursorX--
@@ -160,5 +164,25 @@ func (e *Editor) searchPrevious() {
 		e.cursorX = match.Col
 		e.adjustScroll()
 		e.message = ""
+	}
+}
+
+func (e *Editor) performUndo() {
+	if e.buffer.Undo() {
+		e.message = "Undo"
+		e.clampCursor()
+		e.adjustScroll()
+	} else {
+		e.message = "Nothing to undo"
+	}
+}
+
+func (e *Editor) performRedo() {
+	if e.buffer.Redo() {
+		e.message = "Redo"
+		e.clampCursor()
+		e.adjustScroll()
+	} else {
+		e.message = "Nothing to redo"
 	}
 }

@@ -1,16 +1,20 @@
 package buffer
 
+import "github.com/Adelodunpeter25/vx/internal/undo"
+
 type Buffer struct {
 	lines      []string
 	filename   string
 	modified   bool
 	modVersion int // Increments on each modification
+	undoStack  *undo.Stack
 }
 
 func New() *Buffer {
 	return &Buffer{
 		lines:      []string{""},
 		modVersion: 0,
+		undoStack:  undo.NewStack(),
 	}
 }
 
@@ -44,4 +48,8 @@ func (b *Buffer) ModVersion() int {
 func (b *Buffer) markModified() {
 	b.modified = true
 	b.modVersion++
+}
+
+func (b *Buffer) UndoStack() *undo.Stack {
+	return b.undoStack
 }
