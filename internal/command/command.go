@@ -9,9 +9,11 @@ import (
 )
 
 type Result struct {
-	Quit    bool
-	Message string
-	Error   error
+	Quit       bool
+	Message    string
+	Error      error
+	NewBuffer  *buffer.Buffer
+	SwitchFile bool
 }
 
 func Execute(cmd string, buf *buffer.Buffer) Result {
@@ -32,12 +34,10 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 			return Result{Error: fmt.Errorf("no file name")}
 		}
 		
-		// Show saving message
 		if err := buf.Save(); err != nil {
 			return Result{Error: err}
 		}
 		
-		// Get file info for success message
 		size, _ := buf.GetFileSize()
 		msg := utils.FormatFileInfo(buf.Filename(), size, buf.LineCount())
 		return Result{Message: msg}
@@ -56,6 +56,28 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 		return Result{Quit: true, Message: msg}
 	
 	default:
+		if strings.HasPrefix(cmd, "e ") {
+			filename := strings.TrimSpace(cmd[2:])
+			if filename == "" {
+				return Result{Error: fmt.Errorf("no file name")}
+			}
+			
+			// Check if current buffer is modified
+			if buf.IsModified() {
+				return Result{Error: fmt.Errorf("no write since last change (use :e! to override)")}
+			}
+			
+			// Load new file
+			newBuf, err := buffer.Load(filename)
+			if err != nil {
+				return Result{Error: err}
+			}
+			
+			size, _ := newBuf.GetFileSize()
+			msg := utils.FormatFileInfo(filename, size, newBuf.LineCount())
+			return Result{NewBuffer: newBuf, SwitchFile: true, Message: msg}
+		}
+		
 		if strings.HasPrefix(cmd, "w ") {
 			filename := strings.TrimSpace(cmd[2:])
 			if filename == "" {

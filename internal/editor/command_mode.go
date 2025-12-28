@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/Adelodunpeter25/vx/internal/command"
+	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
 )
@@ -24,6 +25,17 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 		}
 		
 		result := command.Execute(e.commandBuf, e.buffer)
+		
+		// Handle file switching
+		if result.SwitchFile && result.NewBuffer != nil {
+			e.buffer = result.NewBuffer
+			e.syntax = syntax.New(result.NewBuffer.Filename())
+			e.cursorX = 0
+			e.cursorY = 0
+			e.offsetY = 0
+			e.renderCache.invalidate()
+		}
+		
 		if result.Error != nil {
 			e.message = result.Error.Error()
 		} else if result.Message != "" {
