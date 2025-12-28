@@ -3,6 +3,12 @@ package editor
 import "github.com/gdamore/tcell/v2"
 
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
+	// Ctrl+C force quit
+	if ev.Key == tcell.KeyCtrlC {
+		e.quit = true
+		return
+	}
+	
 	switch ev.Rune {
 	case 'q':
 		e.quit = true

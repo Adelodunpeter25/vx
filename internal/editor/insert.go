@@ -3,6 +3,12 @@ package editor
 import "github.com/gdamore/tcell/v2"
 
 func (e *Editor) handleInsertMode(ev *terminal.Event) {
+	// Ctrl+C force quit
+	if ev.Key == tcell.KeyCtrlC {
+		e.quit = true
+		return
+	}
+	
 	if ev.Key == tcell.KeyEscape {
 		e.mode = ModeNormal
 		if e.cursorX > 0 {

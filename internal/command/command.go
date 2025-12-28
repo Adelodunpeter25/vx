@@ -50,12 +50,25 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 			if filename == "" {
 				return Result{Error: fmt.Errorf("no file name")}
 			}
-			// TODO: set filename in buffer
+			buf.SetFilename(filename)
 			if err := buf.Save(); err != nil {
 				return Result{Error: err}
 			}
 			return Result{Message: fmt.Sprintf("\"%s\" written", filename)}
 		}
+		
+		if strings.HasPrefix(cmd, "wq ") {
+			filename := strings.TrimSpace(cmd[3:])
+			if filename == "" {
+				return Result{Error: fmt.Errorf("no file name")}
+			}
+			buf.SetFilename(filename)
+			if err := buf.Save(); err != nil {
+				return Result{Error: err}
+			}
+			return Result{Quit: true, Message: fmt.Sprintf("\"%s\" written", filename)}
+		}
+		
 		return Result{Error: fmt.Errorf("not an editor command: :%s", cmd)}
 	}
 }

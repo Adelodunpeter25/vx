@@ -30,3 +30,7 @@ func (b *Buffer) IsModified() bool {
 func (b *Buffer) Filename() string {
 	return b.filename
 }
+
+func (b *Buffer) SetFilename(filename string) {
+	b.filename = filename
+}
