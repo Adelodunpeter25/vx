@@ -2,12 +2,14 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 )
 
 type Editor struct {
 	term       *terminal.Terminal
 	buffer     *buffer.Buffer
+	syntax     *syntax.Engine
 	width      int
 	height     int
 	cursorX    int
@@ -24,6 +26,7 @@ func New(term *terminal.Terminal) *Editor {
 	return &Editor{
 		term:    term,
 		buffer:  buffer.New(),
+		syntax:  syntax.New(""),
 		width:   width,
 		height:  height,
 		mode:    ModeNormal,
@@ -40,6 +43,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 	return &Editor{
 		term:    term,
 		buffer:  buf,
+		syntax:  syntax.New(filename),
 		width:   width,
 		height:  height,
 		mode:    ModeNormal,

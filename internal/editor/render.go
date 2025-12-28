@@ -16,7 +16,7 @@ func (e *Editor) render() {
 			e.term.DrawText(0, i, "~", tcell.StyleDefault.Foreground(tcell.ColorBlue))
 		} else {
 			line := e.buffer.Line(lineNum)
-			e.term.DrawText(0, i, line, tcell.StyleDefault)
+			e.renderLine(i, line)
 		}
 	}
 	
@@ -26,6 +26,19 @@ func (e *Editor) render() {
 	e.term.SetCell(e.cursorX, screenY, ' ', tcell.StyleDefault.Reverse(true))
 	
 	e.term.Show()
+}
+
+func (e *Editor) renderLine(y int, line string) {
+	styledRunes := e.syntax.HighlightLine(line)
+	
+	if styledRunes == nil || len(styledRunes) == 0 {
+		e.term.DrawText(0, y, line, tcell.StyleDefault)
+		return
+	}
+	
+	for x, sr := range styledRunes {
+		e.term.SetCell(x, y, sr.Rune, sr.Style)
+	}
 }
 
 func (e *Editor) renderStatusLine() {
