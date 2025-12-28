@@ -20,10 +20,27 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 		return
 	}
 	
+	if ev.Key == tcell.KeyTab {
+		e.buffer.InsertRune(e.cursorY, e.cursorX, '\t')
+		e.cursorX++
+		return
+	}
+	
 	if ev.Key == tcell.KeyEnter {
+		// Get current line indentation
+		currentLine := e.buffer.Line(e.cursorY)
+		indent := getIndentation(currentLine)
+		
 		e.buffer.SplitLine(e.cursorY, e.cursorX)
 		e.cursorY++
 		e.cursorX = 0
+		
+		// Auto-indent: insert same indentation on new line
+		for _, r := range indent {
+			e.buffer.InsertRune(e.cursorY, e.cursorX, r)
+			e.cursorX++
+		}
+		
 		e.adjustScroll()
 		return
 	}
@@ -74,4 +91,16 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 		e.buffer.InsertRune(e.cursorY, e.cursorX, ev.Rune)
 		e.cursorX++
 	}
+}
+
+func getIndentation(line string) string {
+	indent := ""
+	for _, r := range line {
+		if r == ' ' || r == '\t' {
+			indent += string(r)
+		} else {
+			break
+		}
+	}
+	return indent
 }
