@@ -20,6 +20,7 @@ type Editor struct {
 	height      int
 	cursorX     int
 	cursorY     int
+	offsetX     int // Horizontal scroll offset
 	offsetY     int
 	mode        Mode
 	quit        bool

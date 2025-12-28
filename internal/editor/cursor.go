@@ -16,10 +16,20 @@ func (e *Editor) clampCursor() {
 
 func (e *Editor) adjustScroll() {
 	contentHeight := e.height - 1
+	
+	// Vertical scroll
 	if e.cursorY < e.offsetY {
 		e.offsetY = e.cursorY
 	}
 	if e.cursorY >= e.offsetY+contentHeight {
 		e.offsetY = e.cursorY - contentHeight + 1
+	}
+	
+	// Horizontal scroll
+	if e.cursorX < e.offsetX {
+		e.offsetX = e.cursorX
+	}
+	if e.cursorX >= e.offsetX+e.width {
+		e.offsetX = e.cursorX - e.width + 1
 	}
 }

@@ -44,12 +44,15 @@ func (e *Editor) render() {
 	
 	// Position cursor
 	screenY := e.cursorY - e.offsetY
-	e.term.SetCell(e.cursorX, screenY, ' ', tcell.StyleDefault.Reverse(true))
-	
-	currentLine := e.buffer.Line(e.cursorY)
-	if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
-		style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
-		e.term.SetCell(e.cursorX, screenY, rune(currentLine[e.cursorX]), style)
+	screenX := e.cursorX - e.offsetX
+	if screenY < contentHeight && screenX >= 0 && screenX < e.width {
+		e.term.SetCell(screenX, screenY, ' ', tcell.StyleDefault.Reverse(true))
+		
+		currentLine := e.buffer.Line(e.cursorY)
+		if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
+			style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
+			e.term.SetCell(screenX, screenY, rune(currentLine[e.cursorX]), style)
+		}
 	}
 	
 	e.term.Show()
@@ -67,14 +70,26 @@ func (e *Editor) renderLine(y int, line string) {
 	lineNum := e.offsetY + y
 	styledRunes := e.syntax.HighlightLine(lineNum, line, e.buffer)
 	
+	// Apply horizontal offset
+	visibleStart := e.offsetX
+	visibleEnd := e.offsetX + e.width
+	
 	if styledRunes == nil || len(styledRunes) == 0 {
-		e.term.DrawText(0, y, line, tcell.StyleDefault)
+		// Plain text rendering with horizontal scroll
+		runes := []rune(line)
+		for x := 0; x < e.width && visibleStart+x < len(runes); x++ {
+			e.term.SetCell(x, y, runes[visibleStart+x], tcell.StyleDefault)
+		}
 		e.highlightSearchMatches(y, lineNum, line)
 		return
 	}
 	
-	for x, sr := range styledRunes {
-		e.term.SetCell(x, y, sr.Rune, sr.Style)
+	// Render styled runes with horizontal scroll
+	for i, sr := range styledRunes {
+		if i >= visibleStart && i < visibleEnd {
+			screenX := i - visibleStart
+			e.term.SetCell(screenX, y, sr.Rune, sr.Style)
+		}
 	}
 	
 	// Highlight search matches on top of syntax highlighting
