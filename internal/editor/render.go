@@ -81,8 +81,17 @@ func (e *Editor) highlightSearchMatches(y, lineNum int, line string) {
 		return
 	}
 	
-	highlightStyle := tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorBlack)
-	currentStyle := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 150, 0)).Foreground(tcell.ColorBlack)
+	// All matches: light blue/cyan background
+	highlightStyle := tcell.StyleDefault.
+		Background(tcell.NewRGBColor(100, 180, 255)).
+		Foreground(tcell.ColorBlack).
+		Bold(true)
+	
+	// Current match: bright green background
+	currentStyle := tcell.StyleDefault.
+		Background(tcell.NewRGBColor(100, 255, 100)).
+		Foreground(tcell.ColorBlack).
+		Bold(true)
 	
 	for _, match := range e.search.GetMatches() {
 		if match.Line == lineNum {
