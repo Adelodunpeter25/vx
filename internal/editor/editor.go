@@ -7,29 +7,31 @@ import (
 )
 
 type Editor struct {
-	term       *terminal.Terminal
-	buffer     *buffer.Buffer
-	syntax     *syntax.Engine
-	width      int
-	height     int
-	cursorX    int
-	cursorY    int
-	offsetY    int
-	mode       Mode
-	quit       bool
-	commandBuf string
-	message    string
+	term        *terminal.Terminal
+	buffer      *buffer.Buffer
+	syntax      *syntax.Engine
+	renderCache *RenderCache
+	width       int
+	height      int
+	cursorX     int
+	cursorY     int
+	offsetY     int
+	mode        Mode
+	quit        bool
+	commandBuf  string
+	message     string
 }
 
 func New(term *terminal.Terminal) *Editor {
 	width, height := term.Size()
 	return &Editor{
-		term:    term,
-		buffer:  buffer.New(),
-		syntax:  syntax.New(""),
-		width:   width,
-		height:  height,
-		mode:    ModeNormal,
+		term:        term,
+		buffer:      buffer.New(),
+		syntax:      syntax.New(""),
+		renderCache: newRenderCache(),
+		width:       width,
+		height:      height,
+		mode:        ModeNormal,
 	}
 }
 
@@ -41,13 +43,14 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 			// File loaded with warnings
 			width, height := term.Size()
 			ed := &Editor{
-				term:    term,
-				buffer:  buf,
-				syntax:  syntax.New(filename),
-				width:   width,
-				height:  height,
-				mode:    ModeNormal,
-				message: "Warning: " + err.Error(),
+				term:        term,
+				buffer:      buf,
+				syntax:      syntax.New(filename),
+				renderCache: newRenderCache(),
+				width:       width,
+				height:      height,
+				mode:        ModeNormal,
+				message:     "Warning: " + err.Error(),
 			}
 			return ed, nil
 		}
@@ -56,12 +59,13 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 	
 	width, height := term.Size()
 	ed := &Editor{
-		term:    term,
-		buffer:  buf,
-		syntax:  syntax.New(filename),
-		width:   width,
-		height:  height,
-		mode:    ModeNormal,
+		term:        term,
+		buffer:      buf,
+		syntax:      syntax.New(filename),
+		renderCache: newRenderCache(),
+		width:       width,
+		height:      height,
+		mode:        ModeNormal,
 	}
 	
 	// Show warning if syntax highlighting disabled due to size
@@ -102,6 +106,7 @@ func (e *Editor) handleResize() {
 	e.clampCursor()
 	e.adjustScroll()
 	
+	e.renderCache.invalidate()
 	e.render()
 }
 
@@ -114,5 +119,6 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 	case ModeCommand:
 		e.handleCommandMode(ev)
 	}
+	e.renderCache.invalidate()
 	e.render()
 }

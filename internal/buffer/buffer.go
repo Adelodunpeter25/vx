@@ -1,14 +1,16 @@
 package buffer
 
 type Buffer struct {
-	lines    []string
-	filename string
-	modified bool
+	lines      []string
+	filename   string
+	modified   bool
+	modVersion int // Increments on each modification
 }
 
 func New() *Buffer {
 	return &Buffer{
-		lines: []string{""},
+		lines:      []string{""},
+		modVersion: 0,
 	}
 }
 
@@ -33,4 +35,13 @@ func (b *Buffer) Filename() string {
 
 func (b *Buffer) SetFilename(filename string) {
 	b.filename = filename
+}
+
+func (b *Buffer) ModVersion() int {
+	return b.modVersion
+}
+
+func (b *Buffer) markModified() {
+	b.modified = true
+	b.modVersion++
 }

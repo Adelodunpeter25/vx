@@ -10,18 +10,19 @@ import (
 const MaxHighlightLines = 10000 // Don't highlight files larger than this
 
 type Engine struct {
-	highlighter *highlight.Highlighter
-	enabled     bool
-	cache       map[int][]highlight.StyledRune
-	lastVersion int
-	tooLarge    bool
+	highlighter    *highlight.Highlighter
+	enabled        bool
+	cache          map[int][]highlight.StyledRune
+	cachedVersion  int
+	tooLarge       bool
 }
 
 func New(filename string) *Engine {
 	return &Engine{
-		highlighter: highlight.New(filename),
-		enabled:     true,
-		cache:       make(map[int][]highlight.StyledRune),
+		highlighter:   highlight.New(filename),
+		enabled:       true,
+		cache:         make(map[int][]highlight.StyledRune),
+		cachedVersion: -1,
 	}
 }
 
@@ -37,9 +38,11 @@ func (e *Engine) HighlightLine(lineNum int, line string, buf *buffer.Buffer) []h
 		return nil
 	}
 	
-	// Check if we need to re-highlight entire buffer
-	if len(e.cache) == 0 || buf.IsModified() {
+	// Only re-highlight if buffer version changed
+	currentVersion := buf.ModVersion()
+	if e.cachedVersion != currentVersion {
 		e.highlightBuffer(buf)
+		e.cachedVersion = currentVersion
 	}
 	
 	if styled, ok := e.cache[lineNum]; ok {
@@ -69,6 +72,7 @@ func (e *Engine) highlightBuffer(buf *buffer.Buffer) {
 }
 
 func (e *Engine) InvalidateCache() {
+	e.cachedVersion = -1
 	e.cache = make(map[int][]highlight.StyledRune)
 }
 

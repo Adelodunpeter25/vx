@@ -11,7 +11,7 @@ func (b *Buffer) InsertRune(line, col int, r rune) {
 	}
 	
 	b.lines[line] = lineStr[:col] + string(r) + lineStr[col:]
-	b.modified = true
+	b.markModified()
 }
 
 func (b *Buffer) DeleteRune(line, col int) {
@@ -25,7 +25,7 @@ func (b *Buffer) DeleteRune(line, col int) {
 	}
 	
 	b.lines[line] = lineStr[:col-1] + lineStr[col:]
-	b.modified = true
+	b.markModified()
 }
 
 func (b *Buffer) InsertLine(line int) {
@@ -34,7 +34,7 @@ func (b *Buffer) InsertLine(line int) {
 	}
 	
 	b.lines = append(b.lines[:line], append([]string{""}, b.lines[line:]...)...)
-	b.modified = true
+	b.markModified()
 }
 
 func (b *Buffer) DeleteLine(line int) {
@@ -43,7 +43,7 @@ func (b *Buffer) DeleteLine(line int) {
 	}
 	
 	b.lines = append(b.lines[:line], b.lines[line+1:]...)
-	b.modified = true
+	b.markModified()
 }
 
 func (b *Buffer) SplitLine(line, col int) {
@@ -58,7 +58,7 @@ func (b *Buffer) SplitLine(line, col int) {
 	
 	b.lines[line] = lineStr[:col]
 	b.lines = append(b.lines[:line+1], append([]string{lineStr[col:]}, b.lines[line+1:]...)...)
-	b.modified = true
+	b.markModified()
 }
 
 func (b *Buffer) JoinLine(line int) {
@@ -68,5 +68,5 @@ func (b *Buffer) JoinLine(line int) {
 	
 	b.lines[line] = b.lines[line] + b.lines[line+1]
 	b.lines = append(b.lines[:line+1], b.lines[line+2:]...)
-	b.modified = true
+	b.markModified()
 }
