@@ -48,36 +48,5 @@ jobs:
             vx-darwin-amd64
             vx-darwin-arm64
             vx-windows-amd64.exe
-          body: |
-            ## VX Editor ${{ github.ref_name }}
-            
-            A modern vi text editor with syntax highlighting, search, undo/redo, and markdown preview.
-            
-            ### Installation
-            
-            Download the appropriate binary for your platform:
-            - **Linux (x64)**: `vx-linux-amd64`
-            - **Linux (ARM64)**: `vx-linux-arm64`
-            - **macOS (Intel)**: `vx-darwin-amd64`
-            - **macOS (Apple Silicon)**: `vx-darwin-arm64`
-            - **Windows**: `vx-windows-amd64.exe`
-            
-            Make it executable (Linux/macOS):
-            ```bash
-            chmod +x vx-*
-            sudo mv vx-* /usr/local/bin/vx
-            ```
-            
-            ### Features
-            - Modal editing (vi-style)
-            - Syntax highlighting for 200+ languages
-            - Search with `/`, navigate with `n/N`
-            - Undo/redo with `u` and `r`
-            - Clipboard support
-            - Markdown preview
-            - Indentation guides
-            - Bracket matching
-            
-            Run `vx --help` for usage information.
           draft: false
           prerelease: false
