@@ -29,7 +29,8 @@ func (e *Editor) render() {
 }
 
 func (e *Editor) renderLine(y int, line string) {
-	styledRunes := e.syntax.HighlightLine(line)
+	lineNum := e.offsetY + y
+	styledRunes := e.syntax.HighlightLine(lineNum, line, e.buffer)
 	
 	if styledRunes == nil || len(styledRunes) == 0 {
 		e.term.DrawText(0, y, line, tcell.StyleDefault)
