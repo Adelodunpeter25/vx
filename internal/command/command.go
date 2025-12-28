@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/utils"
 )
 
 type Result struct {
@@ -30,19 +31,29 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 		if buf.Filename() == "" {
 			return Result{Error: fmt.Errorf("no file name")}
 		}
+		
+		// Show saving message
 		if err := buf.Save(); err != nil {
 			return Result{Error: err}
 		}
-		return Result{Message: fmt.Sprintf("\"%s\" written", buf.Filename())}
+		
+		// Get file info for success message
+		size, _ := buf.GetFileSize()
+		msg := utils.FormatFileInfo(buf.Filename(), size, buf.LineCount())
+		return Result{Message: msg}
 	
 	case "wq":
 		if buf.Filename() == "" {
 			return Result{Error: fmt.Errorf("no file name")}
 		}
+		
 		if err := buf.Save(); err != nil {
 			return Result{Error: err}
 		}
-		return Result{Quit: true, Message: fmt.Sprintf("\"%s\" written", buf.Filename())}
+		
+		size, _ := buf.GetFileSize()
+		msg := utils.FormatFileInfo(buf.Filename(), size, buf.LineCount())
+		return Result{Quit: true, Message: msg}
 	
 	default:
 		if strings.HasPrefix(cmd, "w ") {
@@ -54,7 +65,10 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 			if err := buf.Save(); err != nil {
 				return Result{Error: err}
 			}
-			return Result{Message: fmt.Sprintf("\"%s\" written", filename)}
+			
+			size, _ := buf.GetFileSize()
+			msg := utils.FormatFileInfo(filename, size, buf.LineCount())
+			return Result{Message: msg}
 		}
 		
 		if strings.HasPrefix(cmd, "wq ") {
@@ -66,7 +80,10 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 			if err := buf.Save(); err != nil {
 				return Result{Error: err}
 			}
-			return Result{Quit: true, Message: fmt.Sprintf("\"%s\" written", filename)}
+			
+			size, _ := buf.GetFileSize()
+			msg := utils.FormatFileInfo(filename, size, buf.LineCount())
+			return Result{Quit: true, Message: msg}
 		}
 		
 		return Result{Error: fmt.Errorf("not an editor command: :%s", cmd)}

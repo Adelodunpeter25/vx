@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"strings"
+
 	"github.com/Adelodunpeter25/vx/internal/command"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
@@ -15,6 +17,12 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 	}
 	
 	if ev.Key == tcell.KeyEnter {
+		// Show "Saving..." for write commands
+		if strings.HasPrefix(e.commandBuf, "w") {
+			e.message = "Saving..."
+			e.render()
+		}
+		
 		result := command.Execute(e.commandBuf, e.buffer)
 		if result.Error != nil {
 			e.message = result.Error.Error()

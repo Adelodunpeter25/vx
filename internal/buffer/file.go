@@ -100,3 +100,20 @@ func (b *Buffer) Save() error {
 	b.modified = false
 	return nil
 }
+
+// GetFileSize returns the size of the file on disk
+func (b *Buffer) GetFileSize() (int64, error) {
+	if b.filename == "" {
+		return 0, nil
+	}
+	
+	info, err := os.Stat(b.filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	
+	return info.Size(), nil
+}

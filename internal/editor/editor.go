@@ -4,6 +4,7 @@ import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/Adelodunpeter25/vx/internal/utils"
 )
 
 type Editor struct {
@@ -68,12 +69,29 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		mode:        ModeNormal,
 	}
 	
+	// Show file info message on load
+	ed.showFileInfo()
+	
 	// Show warning if syntax highlighting disabled due to size
 	if ed.syntax.IsTooLarge() {
 		ed.message = "File too large for syntax highlighting"
 	}
 	
 	return ed, nil
+}
+
+func (e *Editor) showFileInfo() {
+	size, err := e.buffer.GetFileSize()
+	if err != nil {
+		return
+	}
+	
+	filename := e.buffer.Filename()
+	if filename == "" {
+		filename = "[No Name]"
+	}
+	
+	e.message = utils.FormatFileInfo(filename, size, e.buffer.LineCount())
 }
 
 func (e *Editor) Run() error {
