@@ -105,39 +105,3 @@ func plainTextLines(text string) [][]StyledRune {
 	}
 	return result
 }
-
-func tokenToStyle(tokenType chroma.TokenType) tcell.Style {
-	base := tcell.StyleDefault
-	typeStr := tokenType.String()
-
-	switch {
-	case tokenType == chroma.Keyword:
-		return base.Foreground(tcell.ColorBlue).Bold(true)
-	case tokenType == chroma.KeywordNamespace || tokenType == chroma.KeywordType:
-		return base.Foreground(tcell.ColorBlue)
-	case tokenType == chroma.LiteralStringDouble || tokenType == chroma.LiteralStringSingle:
-		return base.Foreground(tcell.ColorGreen)
-	case strings.Contains(typeStr, "String"):
-		return base.Foreground(tcell.ColorGreen)
-	case tokenType == chroma.Comment || tokenType == chroma.CommentSingle || tokenType == chroma.CommentMultiline:
-		return base.Foreground(tcell.ColorGray)
-	case tokenType == chroma.LiteralNumberInteger || tokenType == chroma.LiteralNumberFloat:
-		return base.Foreground(tcell.ColorYellow)
-	case strings.Contains(typeStr, "Number"):
-		return base.Foreground(tcell.ColorYellow)
-	case tokenType == chroma.NameTag:
-		return base.Foreground(tcell.NewRGBColor(100, 200, 255))
-	case tokenType == chroma.NameAttribute:
-		return base.Foreground(tcell.NewRGBColor(255, 200, 100))
-	case tokenType == chroma.Operator || tokenType == chroma.Punctuation:
-		return base.Foreground(tcell.ColorWhite)
-	case tokenType == chroma.NameFunction:
-		return base.Foreground(tcell.NewRGBColor(0, 255, 255))
-	case strings.Contains(typeStr, "Builtin"):
-		return base.Foreground(tcell.NewRGBColor(255, 0, 255))
-	case tokenType == chroma.KeywordConstant:
-		return base.Foreground(tcell.NewRGBColor(255, 100, 100))
-	default:
-		return base
-	}
-}
