@@ -64,11 +64,41 @@ func (e *Editor) renderLine(y int, line string) {
 	
 	if styledRunes == nil || len(styledRunes) == 0 {
 		e.term.DrawText(0, y, line, tcell.StyleDefault)
+		e.highlightSearchMatches(y, lineNum, line)
 		return
 	}
 	
 	for x, sr := range styledRunes {
 		e.term.SetCell(x, y, sr.Rune, sr.Style)
+	}
+	
+	// Highlight search matches on top of syntax highlighting
+	e.highlightSearchMatches(y, lineNum, line)
+}
+
+func (e *Editor) highlightSearchMatches(y, lineNum int, line string) {
+	if !e.search.HasMatches() {
+		return
+	}
+	
+	highlightStyle := tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorBlack)
+	currentStyle := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 150, 0)).Foreground(tcell.ColorBlack)
+	
+	for _, match := range e.search.GetMatches() {
+		if match.Line == lineNum {
+			isCurrent := e.search.Current() != nil && 
+				match.Line == e.search.Current().Line && 
+				match.Col == e.search.Current().Col
+			
+			style := highlightStyle
+			if isCurrent {
+				style = currentStyle
+			}
+			
+			for i := 0; i < match.Len && match.Col+i < len(line); i++ {
+				e.term.SetCell(match.Col+i, y, rune(line[match.Col+i]), style)
+			}
+		}
 	}
 }
 
@@ -83,6 +113,12 @@ func (e *Editor) renderStatusLine() {
 	if e.mode == ModeCommand {
 		cmd := ":" + e.commandBuf
 		e.term.DrawText(0, y, cmd, style)
+		return
+	}
+	
+	if e.mode == ModeSearch {
+		search := "/" + e.searchBuf
+		e.term.DrawText(0, y, search, style)
 		return
 	}
 	

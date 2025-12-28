@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/search"
 	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
@@ -11,6 +12,7 @@ type Editor struct {
 	term        *terminal.Terminal
 	buffer      *buffer.Buffer
 	syntax      *syntax.Engine
+	search      *search.Engine
 	renderCache *RenderCache
 	width       int
 	height      int
@@ -20,6 +22,7 @@ type Editor struct {
 	mode        Mode
 	quit        bool
 	commandBuf  string
+	searchBuf   string
 	message     string
 }
 
@@ -29,6 +32,7 @@ func New(term *terminal.Terminal) *Editor {
 		term:        term,
 		buffer:      buffer.New(),
 		syntax:      syntax.New(""),
+		search:      search.New(),
 		renderCache: newRenderCache(),
 		width:       width,
 		height:      height,
@@ -47,6 +51,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				term:        term,
 				buffer:      buf,
 				syntax:      syntax.New(filename),
+				search:      search.New(),
 				renderCache: newRenderCache(),
 				width:       width,
 				height:      height,
@@ -63,6 +68,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		term:        term,
 		buffer:      buf,
 		syntax:      syntax.New(filename),
+		search:      search.New(),
 		renderCache: newRenderCache(),
 		width:       width,
 		height:      height,
@@ -136,6 +142,8 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 		e.handleInsertMode(ev)
 	case ModeCommand:
 		e.handleCommandMode(ev)
+	case ModeSearch:
+		e.handleSearchMode(ev)
 	}
 	e.renderCache.invalidate()
 	e.render()

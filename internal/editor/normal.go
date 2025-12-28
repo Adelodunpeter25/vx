@@ -26,6 +26,14 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.mode = ModeCommand
 		e.commandBuf = ""
 		e.message = ""
+	case '/':
+		e.mode = ModeSearch
+		e.searchBuf = ""
+		e.message = ""
+	case 'n':
+		e.searchNext()
+	case 'N':
+		e.searchPrevious()
 	case 'h':
 		if e.cursorX > 0 {
 			e.cursorX--
@@ -79,5 +87,35 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "End of file"
 		}
+	}
+}
+
+func (e *Editor) searchNext() {
+	if !e.search.HasMatches() {
+		e.message = "No search results"
+		return
+	}
+	
+	match := e.search.Next()
+	if match != nil {
+		e.cursorY = match.Line
+		e.cursorX = match.Col
+		e.adjustScroll()
+		e.message = ""
+	}
+}
+
+func (e *Editor) searchPrevious() {
+	if !e.search.HasMatches() {
+		e.message = "No search results"
+		return
+	}
+	
+	match := e.search.Previous()
+	if match != nil {
+		e.cursorY = match.Line
+		e.cursorX = match.Col
+		e.adjustScroll()
+		e.message = ""
 	}
 }

@@ -6,6 +6,7 @@ const (
 	ModeNormal Mode = iota
 	ModeInsert
 	ModeCommand
+	ModeSearch
 )
 
 func (m Mode) String() string {
@@ -16,6 +17,8 @@ func (m Mode) String() string {
 		return "INSERT"
 	case ModeCommand:
 		return "COMMAND"
+	case ModeSearch:
+		return "SEARCH"
 	default:
 		return "UNKNOWN"
 	}
