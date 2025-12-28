@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"strings"
+
 	"github.com/Adelodunpeter25/vx/internal/clipboard"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
@@ -9,6 +11,11 @@ import (
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	// Clear temporary messages on any key
 	if e.message == "Top of file" || e.message == "End of file" {
+		e.message = ""
+	}
+	
+	// Clear file info messages on any key
+	if strings.Contains(e.message, " lines") && (strings.Contains(e.message, "KB") || strings.Contains(e.message, "MB") || strings.Contains(e.message, "GB") || strings.Contains(e.message, " B,")) {
 		e.message = ""
 	}
 	
