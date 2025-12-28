@@ -87,9 +87,9 @@ func (e *Editor) highlightSearchMatches(y, lineNum int, line string) {
 		Foreground(tcell.ColorWhite).
 		Bold(true)
 	
-	// Current match: bright yellow background with black text
+	// Current match: orange background with black text (better contrast than pure yellow)
 	currentStyle := tcell.StyleDefault.
-		Background(tcell.NewRGBColor(255, 255, 0)).
+		Background(tcell.NewRGBColor(255, 180, 0)).
 		Foreground(tcell.ColorBlack).
 		Bold(true)
 	
