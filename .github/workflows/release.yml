@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      
+      - name: Build binaries
+        run: |
+          # Linux AMD64
+          GOOS=linux GOARCH=amd64 go build -o vx-linux-amd64 cmd/vx/*.go
+          
+          # Linux ARM64
+          GOOS=linux GOARCH=arm64 go build -o vx-linux-arm64 cmd/vx/*.go
+          
+          # macOS AMD64
+          GOOS=darwin GOARCH=amd64 go build -o vx-darwin-amd64 cmd/vx/*.go
+          
+          # macOS ARM64 (Apple Silicon)
+          GOOS=darwin GOARCH=arm64 go build -o vx-darwin-arm64 cmd/vx/*.go
+          
+          # Windows AMD64
+          GOOS=windows GOARCH=amd64 go build -o vx-windows-amd64.exe cmd/vx/*.go
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            vx-linux-amd64
+            vx-linux-arm64
+            vx-darwin-amd64
+            vx-darwin-arm64
+            vx-windows-amd64.exe
+          body: |
+            ## VX Editor ${{ github.ref_name }}
+            
+            A modern vi text editor with syntax highlighting, search, undo/redo, and markdown preview.
+            
+            ### Installation
+            
+            Download the appropriate binary for your platform:
+            - **Linux (x64)**: `vx-linux-amd64`
+            - **Linux (ARM64)**: `vx-linux-arm64`
+            - **macOS (Intel)**: `vx-darwin-amd64`
+            - **macOS (Apple Silicon)**: `vx-darwin-arm64`
+            - **Windows**: `vx-windows-amd64.exe`
+            
+            Make it executable (Linux/macOS):
+            ```bash
+            chmod +x vx-*
+            sudo mv vx-* /usr/local/bin/vx
+            ```
+            
+            ### Features
+            - Modal editing (vi-style)
+            - Syntax highlighting for 200+ languages
+            - Search with `/`, navigate with `n/N`
+            - Undo/redo with `u` and `r`
+            - Clipboard support
+            - Markdown preview
+            - Indentation guides
+            - Bracket matching
+            
+            Run `vx --help` for usage information.
+          draft: false
+          prerelease: false
