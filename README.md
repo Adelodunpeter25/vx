@@ -82,7 +82,7 @@ vx --version          # Show version
 - `:e filename` - Edit new file
 
 ### Markdown Preview
-- `p` - Toggle preview (in .md files)
+- `p` - Toggle preview (in .md files(normal mode))
 - `j/k` or arrows - Scroll preview
 
 ## Requirements
@@ -94,14 +94,7 @@ vx --version          # Show version
 
 VX is "vi, but modern" - keeping the classic vi modal editing experience while adding modern conveniences like syntax highlighting and better UX. It's not trying to be Vim or Neovim, just a fast, simple text editor that respects your muscle memory.
 
-## License
-
-MIT License - see LICENSE file for details
 
 ## Contributing
 
 Contributions welcome! Please open an issue or PR on GitHub.
-
-## Author
-
-Built by [Peter Adelodun](https://github.com/Adelodunpeter25)
