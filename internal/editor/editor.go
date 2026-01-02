@@ -128,6 +128,8 @@ func (e *Editor) handleEvent() {
 		e.handleResize()
 	case terminal.EventMouse:
 		e.handleMouseEvent(ev)
+		e.renderCache.invalidate()
+		e.render()
 	}
 }
 

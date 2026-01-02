@@ -45,7 +45,15 @@ func (e *Editor) render() {
 	// Position cursor
 	screenY := e.cursorY - e.offsetY
 	screenX := e.cursorX - e.offsetX
-	if screenY < contentHeight && screenX >= 0 && screenX < e.width {
+	
+	// Debug: ensure cursor is always visible
+	if screenX < 0 || screenX >= e.width {
+		// Cursor would be off-screen, force adjust scroll
+		e.adjustScroll()
+		screenX = e.cursorX - e.offsetX
+	}
+	
+	if screenY >= 0 && screenY < contentHeight && screenX >= 0 && screenX < e.width {
 		e.term.SetCell(screenX, screenY, ' ', tcell.StyleDefault.Reverse(true))
 		
 		currentLine := e.buffer.Line(e.cursorY)

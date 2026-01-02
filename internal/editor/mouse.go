@@ -11,13 +11,27 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		return
 	}
 	
-	// Only handle left click for now
-	if ev.Button != tcell.Button1 {
+	// Handle scroll wheel
+	if ev.Button == tcell.WheelUp {
+		if e.cursorY > 0 {
+			e.cursorY--
+			e.adjustScroll()
+			e.clampCursor()
+		}
 		return
 	}
 	
-	// Only handle button press, not release or motion
-	if ev.Button == tcell.ButtonNone {
+	if ev.Button == tcell.WheelDown {
+		if e.cursorY < e.buffer.LineCount()-1 {
+			e.cursorY++
+			e.adjustScroll()
+			e.clampCursor()
+		}
+		return
+	}
+	
+	// Only handle left click for positioning
+	if ev.Button != tcell.Button1 {
 		return
 	}
 	

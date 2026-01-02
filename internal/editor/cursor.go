@@ -25,10 +25,17 @@ func (e *Editor) adjustScroll() {
 		e.offsetY = e.cursorY - contentHeight + 1
 	}
 	
-	// Horizontal scroll - keep cursor visible with margin
+	// Ensure offsetY doesn't go negative
+	if e.offsetY < 0 {
+		e.offsetY = 0
+	}
+	
+	// Horizontal scroll - keep cursor visible
+	// If cursor is left of viewport, scroll left to show it
 	if e.cursorX < e.offsetX {
 		e.offsetX = e.cursorX
 	}
+	// If cursor is at or past right edge of viewport, scroll right
 	if e.cursorX >= e.offsetX+e.width {
 		e.offsetX = e.cursorX - e.width + 1
 	}

@@ -1,0 +1,1 @@
+This is a very long line that should cause horizontal scrolling when you navigate through it with hjkl keys or arrow keys to test the scrolling behavior
