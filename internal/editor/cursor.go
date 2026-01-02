@@ -29,8 +29,8 @@ func (e *Editor) adjustScroll() {
 	if e.cursorX < e.offsetX {
 		e.offsetX = e.cursorX
 	}
-	if e.cursorX >= e.offsetX+e.width-1 {
-		e.offsetX = e.cursorX - e.width + 2
+	if e.cursorX >= e.offsetX+e.width {
+		e.offsetX = e.cursorX - e.width + 1
 	}
 	
 	// Ensure offsetX doesn't go negative

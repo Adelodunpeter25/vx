@@ -16,6 +16,7 @@ func New() (*Terminal, error) {
 	if err := screen.Init(); err != nil {
 		return nil, err
 	}
+	screen.EnableMouse()
 	screen.Clear()
 	return &Terminal{screen: screen}, nil
 }

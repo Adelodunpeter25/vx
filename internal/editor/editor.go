@@ -126,6 +126,8 @@ func (e *Editor) handleEvent() {
 		e.handleKey(ev)
 	case terminal.EventResize:
 		e.handleResize()
+	case terminal.EventMouse:
+		e.handleMouseEvent(ev)
 	}
 }
 

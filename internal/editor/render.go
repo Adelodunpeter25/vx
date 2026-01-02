@@ -60,9 +60,10 @@ func (e *Editor) render() {
 
 func (e *Editor) highlightBracket(x, y int) {
 	line := e.buffer.Line(e.offsetY + y)
-	if x < len(line) {
+	if x >= e.offsetX && x < e.offsetX+e.width && x < len(line) {
+		screenX := x - e.offsetX
 		style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
-		e.term.SetCell(x, y, rune(line[x]), style)
+		e.term.SetCell(screenX, y, rune(line[x]), style)
 	}
 }
 
@@ -125,7 +126,10 @@ func (e *Editor) highlightSearchMatches(y, lineNum int, line string) {
 			}
 			
 			for i := 0; i < match.Len && match.Col+i < len(line); i++ {
-				e.term.SetCell(match.Col+i, y, rune(line[match.Col+i]), style)
+				screenX := match.Col + i - e.offsetX
+				if screenX >= 0 && screenX < e.width {
+					e.term.SetCell(screenX, y, rune(line[match.Col+i]), style)
+				}
 			}
 		}
 	}

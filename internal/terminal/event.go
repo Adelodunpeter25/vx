@@ -7,13 +7,17 @@ type EventType int
 const (
 	EventKey EventType = iota
 	EventResize
+	EventMouse
 	EventQuit
 )
 
 type Event struct {
-	Type EventType
-	Key  tcell.Key
-	Rune rune
+	Type   EventType
+	Key    tcell.Key
+	Rune   rune
+	Button tcell.ButtonMask
+	MouseX int
+	MouseY int
 }
 
 func (t *Terminal) ReadEvent() *Event {
@@ -28,6 +32,14 @@ func (t *Terminal) ReadEvent() *Event {
 	case *tcell.EventResize:
 		t.screen.Sync()
 		return &Event{Type: EventResize}
+	case *tcell.EventMouse:
+		x, y := ev.Position()
+		return &Event{
+			Type:   EventMouse,
+			Button: ev.Buttons(),
+			MouseX: x,
+			MouseY: y,
+		}
 	}
 	return nil
 }
