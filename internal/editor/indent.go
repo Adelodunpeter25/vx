@@ -22,7 +22,7 @@ func GetIndentLevel(line string) int {
 }
 
 // DrawIndentGuides draws vertical lines at indentation boundaries
-func (e *Editor) drawIndentGuides(y int, line string, maxIndent int) {
+func (e *Editor) drawIndentGuides(y int, line string, maxIndent int, gutterWidth int) {
 	// Draw guides for each indent level
 	for i := 0; i < maxIndent; i++ {
 		x := i * 2 // 2 spaces per indent level
@@ -31,7 +31,10 @@ func (e *Editor) drawIndentGuides(y int, line string, maxIndent int) {
 			// Only draw guide if this position is whitespace
 			if char == ' ' || char == '\t' {
 				style := tcell.StyleDefault.Foreground(tcell.ColorGray).Dim(true)
-				e.term.SetCell(x, y, '│', style)
+				screenX := x - e.offsetX + gutterWidth
+				if screenX >= gutterWidth && screenX < e.width {
+					e.term.SetCell(screenX, y, '│', style)
+				}
 			}
 		}
 	}
