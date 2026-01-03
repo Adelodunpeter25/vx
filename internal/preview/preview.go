@@ -88,10 +88,11 @@ func (p *Preview) Scroll(delta int) {
 	if p.offsetY < 0 {
 		p.offsetY = 0
 	}
-	if p.offsetY >= len(p.elements) {
-		p.offsetY = len(p.elements) - 1
+	maxOffset := len(p.elements) - 1
+	if maxOffset < 0 {
+		maxOffset = 0
 	}
-	if p.offsetY < 0 {
-		p.offsetY = 0
+	if p.offsetY > maxOffset {
+		p.offsetY = maxOffset
 	}
 }
