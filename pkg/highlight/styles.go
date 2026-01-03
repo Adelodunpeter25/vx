@@ -30,6 +30,14 @@ func stringStyle(t chroma.TokenType, base tcell.Style) tcell.Style {
 		return base.Foreground(tcell.NewRGBColor(206, 145, 120)) // Orange
 	case chroma.LiteralStringDoc:
 		return base.Foreground(tcell.NewRGBColor(106, 153, 85)) // Green
+	case chroma.LiteralStringBacktick:
+		return base.Foreground(tcell.NewRGBColor(206, 145, 120)) // Orange
+	case chroma.LiteralStringChar:
+		return base.Foreground(tcell.NewRGBColor(206, 145, 120)) // Orange
+	case chroma.LiteralStringInterpol:
+		return base.Foreground(tcell.NewRGBColor(156, 220, 254)) // Sky blue (interpolation)
+	case chroma.LiteralStringHeredoc:
+		return base.Foreground(tcell.NewRGBColor(206, 145, 120)) // Orange
 	default:
 		return base.Foreground(tcell.NewRGBColor(206, 145, 120)) // Orange
 	}
@@ -42,7 +50,7 @@ func numberStyle(t chroma.TokenType, base tcell.Style) tcell.Style {
 
 // Comment styles - VS Code gray/green
 func commentStyle(base tcell.Style) tcell.Style {
-	return base.Foreground(tcell.NewRGBColor(106, 153, 85)) // Green
+	return base.Foreground(tcell.NewRGBColor(106, 153, 85)).Italic(true) // Green italic
 }
 
 // Name styles (functions, classes, variables)
@@ -64,12 +72,18 @@ func nameStyle(t chroma.TokenType, base tcell.Style) tcell.Style {
 		return base.Foreground(tcell.NewRGBColor(86, 156, 214)) // Light blue
 	case chroma.NameAttribute:
 		return base.Foreground(tcell.NewRGBColor(156, 220, 254)) // Sky blue
-	case chroma.NameVariable, chroma.NameVariableInstance:
+	case chroma.NameVariable, chroma.NameVariableInstance, chroma.NameVariableMagic:
 		return base.Foreground(tcell.NewRGBColor(156, 220, 254)) // Sky blue
 	case chroma.NameVariableClass, chroma.NameVariableGlobal:
 		return base.Foreground(tcell.NewRGBColor(79, 193, 255)) // Bright blue
 	case chroma.NameNamespace:
 		return base.Foreground(tcell.NewRGBColor(197, 134, 192)) // Purple
+	case chroma.NameLabel:
+		return base.Foreground(tcell.NewRGBColor(197, 134, 192)) // Purple
+	case chroma.NameEntity:
+		return base.Foreground(tcell.NewRGBColor(220, 220, 170)) // Yellow
+	case chroma.NameProperty:
+		return base.Foreground(tcell.NewRGBColor(156, 220, 254)) // Sky blue
 	default:
 		return base.Foreground(tcell.NewRGBColor(212, 212, 212)) // Light gray
 	}
@@ -93,4 +107,33 @@ func literalStyle(t chroma.TokenType, base tcell.Style) tcell.Style {
 	default:
 		return base.Foreground(tcell.NewRGBColor(181, 206, 168)) // Light green
 	}
+}
+
+// Generic styles (markdown, diffs, etc)
+func genericStyle(t chroma.TokenType, base tcell.Style) tcell.Style {
+	switch t {
+	case chroma.GenericHeading, chroma.GenericSubheading:
+		return base.Foreground(tcell.NewRGBColor(86, 156, 214)).Bold(true) // Blue
+	case chroma.GenericEmph:
+		return base.Italic(true)
+	case chroma.GenericStrong:
+		return base.Bold(true)
+	case chroma.GenericDeleted:
+		return base.Foreground(tcell.NewRGBColor(244, 71, 71)) // Red
+	case chroma.GenericInserted:
+		return base.Foreground(tcell.NewRGBColor(106, 153, 85)) // Green
+	case chroma.GenericError, chroma.GenericTraceback:
+		return base.Foreground(tcell.NewRGBColor(244, 71, 71)).Bold(true) // Red
+	case chroma.GenericPrompt:
+		return base.Foreground(tcell.NewRGBColor(106, 153, 85)) // Green
+	case chroma.GenericOutput:
+		return base.Foreground(tcell.NewRGBColor(212, 212, 212)) // Light gray
+	default:
+		return base
+	}
+}
+
+// Error style
+func errorStyle(base tcell.Style) tcell.Style {
+	return base.Foreground(tcell.NewRGBColor(244, 71, 71)).Underline(true) // Red underline
 }

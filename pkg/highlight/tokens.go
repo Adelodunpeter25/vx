@@ -11,9 +11,9 @@ func tokenToStyle(tokenType chroma.TokenType) tcell.Style {
 	base := tcell.StyleDefault
 	typeStr := tokenType.String()
 
-	// Keywords
-	if isKeyword(tokenType, typeStr) {
-		return keywordStyle(tokenType, base)
+	// Comments (highest priority - check first)
+	if isComment(tokenType, typeStr) {
+		return commentStyle(base)
 	}
 
 	// Strings
@@ -26,9 +26,9 @@ func tokenToStyle(tokenType chroma.TokenType) tcell.Style {
 		return numberStyle(tokenType, base)
 	}
 
-	// Comments
-	if isComment(tokenType, typeStr) {
-		return commentStyle(base)
+	// Keywords
+	if isKeyword(tokenType, typeStr) {
+		return keywordStyle(tokenType, base)
 	}
 
 	// Names (functions, classes, variables)
@@ -41,9 +41,24 @@ func tokenToStyle(tokenType chroma.TokenType) tcell.Style {
 		return operatorStyle(tokenType, base)
 	}
 
+	// Generic tokens
+	if isGeneric(tokenType, typeStr) {
+		return genericStyle(tokenType, base)
+	}
+
 	// Literals
 	if isLiteral(tokenType, typeStr) {
 		return literalStyle(tokenType, base)
+	}
+
+	// Text and whitespace
+	if isText(tokenType, typeStr) {
+		return base
+	}
+
+	// Error tokens
+	if isError(tokenType, typeStr) {
+		return errorStyle(base)
 	}
 
 	return base
@@ -137,4 +152,31 @@ func isLiteral(t chroma.TokenType, s string) bool {
 	return t == chroma.Literal ||
 		t == chroma.LiteralDate ||
 		strings.Contains(s, "Literal")
+}
+
+func isGeneric(t chroma.TokenType, s string) bool {
+	return t == chroma.Generic ||
+		t == chroma.GenericDeleted ||
+		t == chroma.GenericEmph ||
+		t == chroma.GenericError ||
+		t == chroma.GenericHeading ||
+		t == chroma.GenericInserted ||
+		t == chroma.GenericOutput ||
+		t == chroma.GenericPrompt ||
+		t == chroma.GenericStrong ||
+		t == chroma.GenericSubheading ||
+		t == chroma.GenericTraceback ||
+		strings.Contains(s, "Generic")
+}
+
+func isText(t chroma.TokenType, s string) bool {
+	return t == chroma.Text ||
+		t == chroma.TextWhitespace ||
+		strings.Contains(s, "Text") ||
+		strings.Contains(s, "Whitespace")
+}
+
+func isError(t chroma.TokenType, s string) bool {
+	return t == chroma.Error ||
+		strings.Contains(s, "Error")
 }
