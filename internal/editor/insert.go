@@ -56,6 +56,7 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 		if e.cursorX > 0 {
 			e.buffer.DeleteRune(e.cursorY, e.cursorX)
 			e.cursorX--
+			e.adjustScroll()
 		} else if e.cursorY > 0 {
 			prevLen := len(e.buffer.Line(e.cursorY - 1))
 			e.buffer.JoinLine(e.cursorY - 1)
@@ -70,12 +71,14 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 	case tcell.KeyLeft:
 		if e.cursorX > 0 {
 			e.cursorX--
+			e.adjustScroll()
 		}
 		return
 	case tcell.KeyRight:
 		line := e.buffer.Line(e.cursorY)
 		if e.cursorX < len(line) {
 			e.cursorX++
+			e.adjustScroll()
 		}
 		return
 	case tcell.KeyUp:
