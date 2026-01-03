@@ -6,14 +6,11 @@ import (
 )
 
 func (e *Editor) handleMouseEvent(ev *terminal.Event) {
-	// Don't handle mouse in preview mode
-	if e.preview.IsEnabled() {
-		return
-	}
-	
 	// Handle scroll wheel
 	if ev.Button == tcell.WheelUp {
-		if e.cursorY > 0 {
+		if e.preview.IsEnabled() {
+			e.preview.Scroll(-1)
+		} else if e.cursorY > 0 {
 			e.cursorY--
 			e.adjustScroll()
 			e.clampCursor()
@@ -22,11 +19,18 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	}
 	
 	if ev.Button == tcell.WheelDown {
-		if e.cursorY < e.buffer.LineCount()-1 {
+		if e.preview.IsEnabled() {
+			e.preview.Scroll(1)
+		} else if e.cursorY < e.buffer.LineCount()-1 {
 			e.cursorY++
 			e.adjustScroll()
 			e.clampCursor()
 		}
+		return
+	}
+	
+	// Don't handle clicks in preview mode
+	if e.preview.IsEnabled() {
 		return
 	}
 	
