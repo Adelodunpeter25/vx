@@ -113,6 +113,12 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		// Go to end of file
 		e.jumpToEnd()
 		e.lastKey = 0
+	case 'w':
+		e.moveWordForward()
+		e.lastKey = 0
+	case 'b':
+		e.moveWordBackward()
+		e.lastKey = 0
 	case 'h':
 		if e.cursorX > 0 {
 			e.cursorX--
