@@ -59,7 +59,8 @@ func (e *Editor) render() {
 		
 		currentLine := e.buffer.Line(e.cursorY)
 		if e.cursorX < len(currentLine) && isBracket(rune(currentLine[e.cursorX])) {
-			style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
+			// Bright yellow background for cursor bracket
+			style := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 200, 0)).Foreground(tcell.ColorBlack).Bold(true)
 			e.term.SetCell(screenX, screenY, rune(currentLine[e.cursorX]), style)
 		}
 	}
@@ -71,7 +72,8 @@ func (e *Editor) highlightBracket(x, y, gutterWidth int) {
 	line := e.buffer.Line(e.offsetY + y)
 	if x >= e.offsetX && x < e.offsetX+e.width-gutterWidth && x < len(line) {
 		screenX := x - e.offsetX + gutterWidth
-		style := tcell.StyleDefault.Background(tcell.NewRGBColor(100, 100, 150))
+		// Bright yellow background for matching bracket
+		style := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 200, 0)).Foreground(tcell.ColorBlack).Bold(true)
 		e.term.SetCell(screenX, y, rune(line[x]), style)
 	}
 }

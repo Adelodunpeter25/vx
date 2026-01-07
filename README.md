@@ -13,9 +13,6 @@ A modern vi text editor written in Go with syntax highlighting, search, undo/red
 - **Undo/Redo** - Full undo history with `u` and `r`
 - **Clipboard Support** - Copy with `c`, paste with `p`
 - **Markdown Preview** - Full-screen preview for `.md` files
-- **Indentation Guides** - Visual indent levels
-- **Bracket Matching** - Highlights matching brackets
-- **Large File Support** - Handles files up to 100MB
 - **Fast Startup** - Native Go binary, instant launch
 
 ## Installation
