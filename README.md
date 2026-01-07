@@ -9,6 +9,7 @@ A modern vi text editor written in Go with syntax highlighting, search, undo/red
 - **Multiple Buffers** - Open and switch between multiple files
 - **Real-time Search** - Incremental search with live highlighting as you type
 - **Find & Replace** - Interactive replace with y/n confirmation for each match
+- **Auto-close Brackets** - Automatically closes `()`, `[]`, `{}`, `""`, `''`, and `` ` ` ``
 - **Undo/Redo** - Full undo history with `u` and `r`
 - **Clipboard Support** - Copy with `c`, paste with `p`
 - **Markdown Preview** - Full-screen preview for `.md` files
