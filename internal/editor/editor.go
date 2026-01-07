@@ -3,10 +3,12 @@ package editor
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	"github.com/Adelodunpeter25/vx/internal/preview"
+	"github.com/Adelodunpeter25/vx/internal/replace"
 	"github.com/Adelodunpeter25/vx/internal/search"
 	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
+	"github.com/gdamore/tcell/v2"
 )
 
 type Editor struct {
@@ -14,6 +16,7 @@ type Editor struct {
 	buffer      *buffer.Buffer
 	syntax      *syntax.Engine
 	search      *search.Engine
+	replace     *replace.Engine
 	preview     *preview.Preview
 	renderCache *RenderCache
 	width       int
@@ -37,6 +40,7 @@ func New(term *terminal.Terminal) *Editor {
 		buffer:      buffer.New(),
 		syntax:      syntax.New(""),
 		search:      search.New(),
+		replace:     replace.New(),
 		preview:     preview.New(),
 		renderCache: newRenderCache(),
 		width:       width,
@@ -57,6 +61,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				buffer:      buf,
 				syntax:      syntax.New(filename),
 				search:      search.New(),
+				replace:     replace.New(),
 				renderCache: newRenderCache(),
 				width:       width,
 				height:      height,
@@ -74,6 +79,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		buffer:      buf,
 		syntax:      syntax.New(filename),
 		search:      search.New(),
+		replace:     replace.New(),
 		preview:     preview.New(),
 		renderCache: newRenderCache(),
 		width:       width,
@@ -154,6 +160,10 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 		e.handleCommandMode(ev)
 	case ModeSearch:
 		e.handleSearchMode(ev)
+	case ModeReplace:
+		// Convert terminal.Event to tcell.EventKey for replace mode
+		tcellEv := tcell.NewEventKey(ev.Key, ev.Rune, tcell.ModNone)
+		e.handleReplaceMode(tcellEv)
 	}
 	e.renderCache.invalidate()
 	e.render()

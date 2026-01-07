@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Adelodunpeter25/vx/internal/replace"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -167,6 +168,11 @@ func (e *Editor) renderStatusLine() {
 		return
 	}
 	
+	if e.mode == ModeReplace {
+		e.renderReplaceStatus(y, style)
+		return
+	}
+	
 	// Show PREVIEW mode when preview is active
 	var mode string
 	if e.preview.IsEnabled() {
@@ -202,6 +208,22 @@ func (e *Editor) renderStatusLine() {
 	if !e.preview.IsEnabled() {
 		pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
 		e.term.DrawText(e.width-len(pos), y, pos, style)
+	}
+}
+
+func (e *Editor) renderReplaceStatus(y int, style tcell.Style) {
+	state := e.replace.GetState()
+	
+	switch state {
+	case replace.StateSearchInput:
+		prompt := "Find: " + e.replace.GetSearchTerm()
+		e.term.DrawText(0, y, prompt, style)
+	case replace.StateReplaceInput:
+		prompt := fmt.Sprintf("Find: %s | Replace: %s", e.replace.GetSearchTerm(), e.replace.GetReplaceTerm())
+		e.term.DrawText(0, y, prompt, style)
+	case replace.StateConfirm:
+		prompt := fmt.Sprintf("Replace? [y/n/q] (%d/%d)", e.replace.GetCurrentIndex(), e.replace.GetMatchCount())
+		e.term.DrawText(0, y, prompt, style)
 	}
 }
 

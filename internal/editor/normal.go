@@ -47,6 +47,12 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.searchBuf = ""
 		e.message = ""
 		e.lastKey = 0
+	case 'H':
+		// Ctrl+H for replace
+		e.mode = ModeReplace
+		e.replace.Start()
+		e.message = ""
+		e.lastKey = 0
 	case 'n':
 		e.searchNext()
 		e.lastKey = 0
