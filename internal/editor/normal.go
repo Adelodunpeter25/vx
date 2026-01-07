@@ -199,6 +199,9 @@ func (e *Editor) handlePreviewKeys(ev *terminal.Event) {
 	case tcell.KeyCtrlC:
 		e.quit = true
 	}
+	
+	// Ensure render is triggered after preview key handling
+	e.renderCache.invalidate()
 }
 
 func (e *Editor) copyCurrentLine() {
