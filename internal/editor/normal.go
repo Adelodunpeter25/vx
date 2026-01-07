@@ -76,6 +76,17 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case 'c':
 		e.copyCurrentLine()
 		e.lastKey = 0
+	case 'x':
+		e.deleteCharacter()
+		e.lastKey = 0
+	case 'd':
+		// Handle dd (delete line)
+		if e.lastKey == 'd' {
+			e.deleteCurrentLine()
+			e.lastKey = 0
+		} else {
+			e.lastKey = 'd'
+		}
 	case 'p':
 		// Check if this is a markdown file
 		if strings.HasSuffix(e.buffer.Filename(), ".md") {
