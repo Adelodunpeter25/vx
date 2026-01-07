@@ -74,7 +74,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				width:       width,
 				height:      height,
 				mode:        ModeNormal,
-				message:     "Warning: " + err.Error(),
+				message:     "Warning: " + utils.FormatLoadError(filename, err),
 			}
 			return ed, nil
 		}
