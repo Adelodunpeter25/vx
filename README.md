@@ -62,6 +62,7 @@ vx --version          # Show version
 
 ### Normal Mode
 - `h/j/k/l` - Move cursor left/down/up/right
+- `w/b` - Move forward/backward by word
 - `i` - Enter insert mode
 - `:` - Enter command mode
 - `/` - Search (real-time incremental search)
