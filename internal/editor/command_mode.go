@@ -31,6 +31,11 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 			e.addBuffer(result.NewBuffer, result.NewBuffer.Filename())
 		} else if result.DeleteBuffer {
 			e.deleteCurrentBuffer()
+			// If we're in prompt mode, don't reset to normal
+			if e.mode == ModeBufferPrompt {
+				e.commandBuf = ""
+				return
+			}
 		} else if result.SwitchFile && result.NewBuffer != nil {
 			// Handle file switching (replace current buffer)
 			e.buffer = result.NewBuffer
