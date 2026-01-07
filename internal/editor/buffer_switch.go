@@ -62,6 +62,7 @@ func (e *Editor) deleteCurrentBuffer() {
 		// Enter a special prompt mode
 		e.mode = ModeBufferPrompt
 		e.message = "Save changes? [y/n]"
+		e.renderCache.invalidate()
 		return
 	}
 
