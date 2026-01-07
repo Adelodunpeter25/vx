@@ -204,10 +204,25 @@ func (e *Editor) renderStatusLine() {
 	info := filename + modified
 	e.term.DrawText(modeWidth+1, y, info, style)
 	
-	// Don't show cursor position in preview mode
-	if !e.preview.IsEnabled() {
-		pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
-		e.term.DrawText(e.width-len(pos), y, pos, style)
+	// Show buffer count if multiple buffers
+	if e.bufferMgr.Count() > 1 {
+		bufInfo := fmt.Sprintf(" Buffer %d/%d ", e.bufferMgr.CurrentIndex(), e.bufferMgr.Count())
+		bufInfoX := e.width - len(bufInfo)
+		
+		// Don't show cursor position in preview mode
+		if !e.preview.IsEnabled() {
+			pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
+			bufInfoX -= len(pos)
+			e.term.DrawText(e.width-len(pos), y, pos, style)
+		}
+		
+		e.term.DrawText(bufInfoX, y, bufInfo, style)
+	} else {
+		// Don't show cursor position in preview mode
+		if !e.preview.IsEnabled() {
+			pos := fmt.Sprintf(" %d,%d ", e.cursorY+1, e.cursorX+1)
+			e.term.DrawText(e.width-len(pos), y, pos, style)
+		}
 	}
 }
 

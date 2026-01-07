@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/buffers"
 	"github.com/Adelodunpeter25/vx/internal/preview"
 	"github.com/Adelodunpeter25/vx/internal/replace"
 	"github.com/Adelodunpeter25/vx/internal/search"
@@ -13,6 +14,7 @@ import (
 
 type Editor struct {
 	term        *terminal.Terminal
+	bufferMgr   *buffers.Manager
 	buffer      *buffer.Buffer
 	syntax      *syntax.Engine
 	search      *search.Engine
@@ -35,10 +37,14 @@ type Editor struct {
 
 func New(term *terminal.Terminal) *Editor {
 	width, height := term.Size()
+	buf := buffer.New()
+	bufMgr := buffers.New(buf, "")
+	
 	return &Editor{
 		term:        term,
-		buffer:      buffer.New(),
-		syntax:      syntax.New(""),
+		bufferMgr:   bufMgr,
+		buffer:      buf,
+		syntax:      bufMgr.Current().Syntax,
 		search:      search.New(),
 		replace:     replace.New(),
 		preview:     preview.New(),
@@ -56,10 +62,12 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		if buf != nil {
 			// File loaded with warnings
 			width, height := term.Size()
+			bufMgr := buffers.New(buf, filename)
 			ed := &Editor{
 				term:        term,
+				bufferMgr:   bufMgr,
 				buffer:      buf,
-				syntax:      syntax.New(filename),
+				syntax:      bufMgr.Current().Syntax,
 				search:      search.New(),
 				replace:     replace.New(),
 				renderCache: newRenderCache(),
@@ -74,10 +82,12 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 	}
 	
 	width, height := term.Size()
+	bufMgr := buffers.New(buf, filename)
 	ed := &Editor{
 		term:        term,
+		bufferMgr:   bufMgr,
 		buffer:      buf,
-		syntax:      syntax.New(filename),
+		syntax:      bufMgr.Current().Syntax,
 		search:      search.New(),
 		replace:     replace.New(),
 		preview:     preview.New(),
@@ -164,6 +174,9 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 		// Convert terminal.Event to tcell.EventKey for replace mode
 		tcellEv := tcell.NewEventKey(ev.Key, ev.Rune, tcell.ModNone)
 		e.handleReplaceMode(tcellEv)
+	case ModeBufferPrompt:
+		tcellEv := tcell.NewEventKey(ev.Key, ev.Rune, tcell.ModNone)
+		e.handleBufferPromptMode(tcellEv)
 	}
 	e.renderCache.invalidate()
 	e.render()

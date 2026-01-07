@@ -31,6 +31,18 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		return
 	}
 	
+	// Ctrl+N next buffer
+	if ev.Key == tcell.KeyCtrlN {
+		e.nextBuffer()
+		return
+	}
+	
+	// Ctrl+P previous buffer
+	if ev.Key == tcell.KeyCtrlP {
+		e.previousBuffer()
+		return
+	}
+	
 	switch ev.Rune {
 	case 'q':
 		e.quit = true

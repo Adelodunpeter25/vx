@@ -26,8 +26,13 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 		
 		result := command.Execute(e.commandBuf, e.buffer)
 		
-		// Handle file switching
-		if result.SwitchFile && result.NewBuffer != nil {
+		// Handle buffer operations
+		if result.AddBuffer && result.NewBuffer != nil {
+			e.addBuffer(result.NewBuffer, result.NewBuffer.Filename())
+		} else if result.DeleteBuffer {
+			e.deleteCurrentBuffer()
+		} else if result.SwitchFile && result.NewBuffer != nil {
+			// Handle file switching (replace current buffer)
 			e.buffer = result.NewBuffer
 			e.syntax = syntax.New(result.NewBuffer.Filename())
 			e.cursorX = 0

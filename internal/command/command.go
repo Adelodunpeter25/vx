@@ -9,11 +9,13 @@ import (
 )
 
 type Result struct {
-	Quit       bool
-	Message    string
-	Error      error
-	NewBuffer  *buffer.Buffer
-	SwitchFile bool
+	Quit         bool
+	Message      string
+	Error        error
+	NewBuffer    *buffer.Buffer
+	SwitchFile   bool
+	AddBuffer    bool
+	DeleteBuffer bool
 }
 
 func Execute(cmd string, buf *buffer.Buffer) Result {
@@ -56,6 +58,27 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 		return Result{Quit: true, Message: msg}
 	
 	default:
+		if cmd == "db" {
+			return Result{DeleteBuffer: true}
+		}
+		
+		if strings.HasPrefix(cmd, "b ") {
+			filename := strings.TrimSpace(cmd[2:])
+			if filename == "" {
+				return Result{Error: fmt.Errorf("no file name")}
+			}
+			
+			// Load new file in new buffer
+			newBuf, err := buffer.Load(filename)
+			if err != nil {
+				return Result{Error: err}
+			}
+			
+			size, _ := newBuf.GetFileSize()
+			msg := utils.FormatFileInfo(filename, size, newBuf.LineCount())
+			return Result{NewBuffer: newBuf, AddBuffer: true, Message: msg}
+		}
+		
 		if strings.HasPrefix(cmd, "e ") {
 			filename := strings.TrimSpace(cmd[2:])
 			if filename == "" {
