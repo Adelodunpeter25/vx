@@ -69,6 +69,8 @@ vx --version          # Show version
 - `n/N` - Next/previous search result
 - `c` - Copy current line
 - `p` - Paste (or toggle preview for .md files)
+- `x` - Delete character under cursor
+- `dd` - Delete current line
 - `u` - Undo
 - `r` - Redo
 - `gg` - Jump to start of file
