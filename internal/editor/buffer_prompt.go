@@ -1,6 +1,9 @@
 package editor
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/Adelodunpeter25/vx/internal/utils"
+	"github.com/gdamore/tcell/v2"
+)
 
 func (e *Editor) handleBufferPromptMode(ev *tcell.EventKey) {
 	switch ev.Key() {
@@ -16,7 +19,7 @@ func (e *Editor) handleBufferPromptMode(ev *tcell.EventKey) {
 		case 'y', 'Y':
 			// Save and close buffer
 			if err := e.buffer.Save(); err != nil {
-				e.message = "Error saving: " + err.Error()
+				e.message = utils.FormatSaveError(e.buffer.Filename(), err)
 				e.mode = ModeNormal
 			} else {
 				e.bufferMgr.Delete()

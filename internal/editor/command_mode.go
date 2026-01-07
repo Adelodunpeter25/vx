@@ -6,6 +6,7 @@ import (
 	"github.com/Adelodunpeter25/vx/internal/command"
 	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -47,7 +48,7 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 		}
 		
 		if result.Error != nil {
-			e.message = result.Error.Error()
+			e.message = utils.FormatUserError(result.Error)
 		} else if result.Message != "" {
 			e.message = result.Message
 		}
