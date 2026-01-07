@@ -10,7 +10,9 @@ import (
 
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	// Clear temporary messages on any key
-	if e.message == "Top of file" || e.message == "End of file" {
+	if e.message == "Top of file" || e.message == "End of file" || 
+	   e.message == "Buffer closed" || e.message == "Buffer saved and closed" || 
+	   e.message == "Buffer closed without saving" || e.message == "Cannot close last buffer" {
 		e.message = ""
 	}
 	
