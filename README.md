@@ -6,7 +6,8 @@ A modern vi text editor written in Go with syntax highlighting, search, undo/red
 
 - **Modal Editing** - Classic vi-style normal, insert, and command modes
 - **Syntax Highlighting** - Support for 200+ languages via Chroma
-- **Search** - Fast text search with `/`, navigate with `n/N`
+- **Real-time Search** - Incremental search with live highlighting as you type
+- **Find & Replace** - Interactive replace with y/n confirmation for each match
 - **Undo/Redo** - Full undo history with `u` and `r`
 - **Clipboard Support** - Copy with `c`, paste with `p`
 - **Markdown Preview** - Full-screen preview for `.md` files
@@ -62,7 +63,8 @@ vx --version          # Show version
 - `h/j/k/l` - Move cursor left/down/up/right
 - `i` - Enter insert mode
 - `:` - Enter command mode
-- `/` - Search
+- `/` - Search (real-time incremental search)
+- `Shift+H` - Find and replace
 - `n/N` - Next/previous search result
 - `c` - Copy current line
 - `p` - Paste (or toggle preview for .md files)
@@ -72,6 +74,20 @@ vx --version          # Show version
 - `G` - Jump to end of file
 - `q` - Quit
 - `Ctrl+C` - Force quit
+
+### Search Mode
+- Type to search - Results highlight in real-time as you type
+- `Enter` - Exit search mode (keep highlights)
+- `Esc` - Cancel search
+
+### Replace Mode
+- `Shift+H` - Start find and replace
+- Type search term, press `Enter`
+- Type replacement term, press `Enter`
+- For each match:
+  - `y` - Replace this match
+  - `n` - Skip this match
+  - `q` - Quit replace mode
 
 ### Command Mode
 - `:w` - Save file
