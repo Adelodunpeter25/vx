@@ -9,6 +9,7 @@ import (
 	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
+	"github.com/Adelodunpeter25/vx/internal/visual"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -19,6 +20,7 @@ type Editor struct {
 	syntax      *syntax.Engine
 	search      *search.Engine
 	replace     *replace.Engine
+	visual      *visual.Manager
 	preview     *preview.Preview
 	renderCache *RenderCache
 	width       int
@@ -47,6 +49,7 @@ func New(term *terminal.Terminal) *Editor {
 		syntax:      bufMgr.Current().Syntax,
 		search:      search.New(),
 		replace:     replace.New(),
+		visual:      visual.New(),
 		preview:     preview.New(),
 		renderCache: newRenderCache(),
 		width:       width,
@@ -70,6 +73,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				syntax:      bufMgr.Current().Syntax,
 				search:      search.New(),
 				replace:     replace.New(),
+				visual:      visual.New(),
 				renderCache: newRenderCache(),
 				width:       width,
 				height:      height,
@@ -90,6 +94,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		syntax:      bufMgr.Current().Syntax,
 		search:      search.New(),
 		replace:     replace.New(),
+		visual:      visual.New(),
 		preview:     preview.New(),
 		renderCache: newRenderCache(),
 		width:       width,
