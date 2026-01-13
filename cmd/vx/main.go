@@ -12,7 +12,7 @@ func main() {
 	// Handle flags
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
-		case "-h", "--help":
+		case "h","-h", "--help":
 			printHelp()
 			return
 		case "-v", "--version":
