@@ -41,15 +41,22 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	
 	mouseX, mouseY := ev.MouseX, ev.MouseY
 	
-	// Convert screen coordinates to buffer coordinates
-	bufferY := mouseY + e.offsetY
-	bufferX := mouseX + e.offsetX
-	
 	// Ensure we're not clicking below the content area (status line)
 	contentHeight := e.height - 1
 	if mouseY >= contentHeight {
 		return
 	}
+	
+	// Account for line number gutter
+	gutterWidth := e.getGutterWidth()
+	if mouseX < gutterWidth {
+		// Clicked in gutter, ignore
+		return
+	}
+	
+	// Convert screen coordinates to buffer coordinates
+	bufferY := mouseY + e.offsetY
+	bufferX := mouseX - gutterWidth + e.offsetX
 	
 	// Ensure click is within buffer bounds
 	if bufferY >= e.buffer.LineCount() {
