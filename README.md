@@ -109,7 +109,7 @@ vx --version          # Show version
 
 ## Requirements
 
-- Go 1.21+ (for building from source)
+- Go 1.25 (for building from source)
 - Terminal with 256 color support
 
 ## Philosophy

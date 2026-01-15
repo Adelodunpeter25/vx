@@ -27,3 +27,12 @@ func (e *Editor) renderLineNumbers(contentHeight int) {
 		}
 	}
 }
+
+// renderLineNumber renders a single line number at the given screen row
+func (e *Editor) renderLineNumber(screenRow, lineNum, gutterWidth int) {
+	style := tcell.StyleDefault.Foreground(tcell.NewRGBColor(100, 100, 100))
+	numStr := fmt.Sprintf("%*d ", gutterWidth-1, lineNum+1)
+	for x, r := range numStr {
+		e.term.SetCell(x, screenRow, r, style)
+	}
+}
