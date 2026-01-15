@@ -10,10 +10,11 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	if ev.Button == tcell.WheelUp {
 		if e.preview.IsEnabled() {
 			e.preview.Scroll(-1)
-		} else if e.cursorY > 0 {
-			e.cursorY--
-			e.adjustScroll()
-			e.clampCursor()
+		} else {
+			// Scroll view up (decrease offsetY)
+			if e.offsetY > 0 {
+				e.offsetY--
+			}
 		}
 		return
 	}
@@ -21,10 +22,15 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	if ev.Button == tcell.WheelDown {
 		if e.preview.IsEnabled() {
 			e.preview.Scroll(1)
-		} else if e.cursorY < e.buffer.LineCount()-1 {
-			e.cursorY++
-			e.adjustScroll()
-			e.clampCursor()
+		} else {
+			// Scroll view down (increase offsetY)
+			maxOffset := e.buffer.LineCount() - (e.height - 1)
+			if maxOffset < 0 {
+				maxOffset = 0
+			}
+			if e.offsetY < maxOffset {
+				e.offsetY++
+			}
 		}
 		return
 	}
