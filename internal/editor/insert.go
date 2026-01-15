@@ -98,21 +98,9 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 	}
 	
 	if ev.Rune != 0 {
-		// Check for auto-close brackets/quotes
-		if closingChar, shouldClose := getClosingChar(ev.Rune); shouldClose && e.shouldAutoClose(ev.Rune) {
-			// Insert opening character
-			e.buffer.InsertRune(e.cursorY, e.cursorX, ev.Rune)
-			e.cursorX++
-			// Insert closing character
-			e.buffer.InsertRune(e.cursorY, e.cursorX, closingChar)
-			// Cursor is already positioned between them
-			e.adjustScroll()
-		} else {
-			// Normal character insertion
-			e.buffer.InsertRune(e.cursorY, e.cursorX, ev.Rune)
-			e.cursorX++
-			e.adjustScroll()
-		}
+		e.buffer.InsertRune(e.cursorY, e.cursorX, ev.Rune)
+		e.cursorX++
+		e.adjustScroll()
 	}
 }
 
