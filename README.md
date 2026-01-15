@@ -62,7 +62,7 @@ vx --version          # Show version
 - `w/b` - Move forward/backward by word
 - `i` - Enter insert mode
 - `:` - Enter command mode
-- `/` or `Cmd+F` - Search (real-time incremental search)
+- `/` or `Ctrl+F` - Search (real-time incremental search)
 - `Shift+H` - Find and replace
 - `n/N` - Next/previous search result
 - `c` - Copy current line
@@ -73,7 +73,7 @@ vx --version          # Show version
 - `r` - Redo
 - `gg` - Jump to start of file
 - `G` - Jump to end of file
-- `Cmd+S` - Save file
+- `Ctrl+S` - Save file
 - `Ctrl+N` - Next buffer
 - `Ctrl+P` - Previous buffer
 - `q` - Quit

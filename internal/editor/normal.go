@@ -34,7 +34,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		return
 	}
 	
-	// Ctrl+S save (Cmd+S on Mac)
+	// Ctrl+S save
 	if ev.Key == tcell.KeyCtrlS {
 		if e.buffer.Filename() == "" {
 			e.message = "No filename specified"
@@ -49,7 +49,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		return
 	}
 	
-	// Ctrl+F search (Cmd+F on Mac)
+	// Ctrl+F search
 	if ev.Key == tcell.KeyCtrlF {
 		e.mode = ModeSearch
 		e.searchBuf = ""
