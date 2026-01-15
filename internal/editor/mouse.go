@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/Adelodunpeter25/vx/internal/wrap"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -53,16 +54,34 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		return
 	}
 	
-	// Account for line number gutter
+	// Convert screen coordinates to buffer coordinates (accounting for wrapped lines)
 	gutterWidth := e.getGutterWidth()
+	maxWidth := e.width - gutterWidth
+	
 	if mouseX < gutterWidth {
-		// Clicked in gutter, ignore
 		return
 	}
 	
-	// Convert screen coordinates to buffer coordinates
-	bufferY := mouseY + e.offsetY
-	bufferX := mouseX - gutterWidth + e.offsetX
+	// Find which buffer line and column the click corresponds to
+	screenRow := 0
+	bufferY := e.offsetY
+	bufferX := mouseX - gutterWidth
+	
+	for bufferY < e.buffer.LineCount() {
+		line := e.buffer.Line(bufferY)
+		lineVisualRows := wrap.VisualLineCount(line, maxWidth)
+		
+		if screenRow+lineVisualRows > mouseY {
+			// Click is on this buffer line
+			// Calculate which wrapped segment
+			segmentIndex := mouseY - screenRow
+			bufferX = segmentIndex*maxWidth + (mouseX - gutterWidth)
+			break
+		}
+		
+		screenRow += lineVisualRows
+		bufferY++
+	}
 	
 	// Ensure click is within buffer bounds
 	if bufferY >= e.buffer.LineCount() {
