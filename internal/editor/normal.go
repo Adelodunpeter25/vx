@@ -5,6 +5,7 @@ import (
 
 	"github.com/Adelodunpeter25/vx/internal/clipboard"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -30,6 +31,30 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	// Ctrl+C force quit
 	if ev.Key == tcell.KeyCtrlC {
 		e.quit = true
+		return
+	}
+	
+	// Ctrl+S save (Cmd+S on Mac)
+	if ev.Key == tcell.KeyCtrlS {
+		if e.buffer.Filename() == "" {
+			e.message = "No filename specified"
+		} else {
+			if err := e.buffer.Save(); err != nil {
+				e.message = utils.FormatSaveError(e.buffer.Filename(), err)
+			} else {
+				size, _ := e.buffer.GetFileSize()
+				e.message = utils.FormatFileInfo(e.buffer.Filename(), size, e.buffer.LineCount())
+			}
+		}
+		return
+	}
+	
+	// Ctrl+F search (Cmd+F on Mac)
+	if ev.Key == tcell.KeyCtrlF {
+		e.mode = ModeSearch
+		e.searchBuf = ""
+		e.message = ""
+		e.lastKey = 0
 		return
 	}
 	
