@@ -27,9 +27,16 @@ func (e *Editor) adjustScroll() {
 		line := e.buffer.Line(lineNum)
 		visualLine += wrap.VisualLineCount(line, maxWidth)
 	}
-	// Add wrapped rows within current line
-	if maxWidth > 0 {
-		visualLine += e.cursorX / maxWidth
+	
+	// Find which wrapped segment contains the cursor
+	currentLine := e.buffer.Line(e.cursorY)
+	segments := wrap.WrapLine(currentLine, e.cursorY, maxWidth)
+	for i, seg := range segments {
+		segEndCol := seg.StartCol + len([]rune(seg.Text))
+		if e.cursorX >= seg.StartCol && e.cursorX <= segEndCol {
+			visualLine += i
+			break
+		}
 	}
 	
 	// Calculate visual line of offsetY

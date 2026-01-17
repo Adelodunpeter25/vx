@@ -88,12 +88,17 @@ func (e *Editor) getCursorScreenPos(gutterWidth, maxWidth int) (screenY, screenX
 		screenY += wrap.VisualLineCount(line, maxWidth)
 	}
 	
-	// Add wrapped rows within current line
-	if maxWidth > 0 {
-		screenY += e.cursorX / maxWidth
-		screenX = (e.cursorX % maxWidth) + gutterWidth
-	} else {
-		screenX = e.cursorX + gutterWidth
+	// Find which wrapped segment contains the cursor
+	currentLine := e.buffer.Line(e.cursorY)
+	segments := wrap.WrapLine(currentLine, e.cursorY, maxWidth)
+	
+	for i, seg := range segments {
+		segEndCol := seg.StartCol + len([]rune(seg.Text))
+		if e.cursorX >= seg.StartCol && e.cursorX <= segEndCol {
+			screenY += i
+			screenX = (e.cursorX - seg.StartCol) + gutterWidth
+			break
+		}
 	}
 	
 	return screenY, screenX
