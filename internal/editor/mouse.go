@@ -25,11 +25,26 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 			e.preview.Scroll(1)
 		} else {
 			// Scroll view down (increase offsetY)
-			maxOffset := e.buffer.LineCount() - (e.height - 1)
-			if maxOffset < 0 {
-				maxOffset = 0
+			// Calculate total visual rows and max scroll position
+			gutterWidth := e.getGutterWidth()
+			maxWidth := e.width - gutterWidth
+			contentHeight := e.height - 1
+			
+			totalVisualRows := 0
+			for i := 0; i < e.buffer.LineCount(); i++ {
+				line := e.buffer.Line(i)
+				totalVisualRows += wrap.VisualLineCount(line, maxWidth)
 			}
-			if e.offsetY < maxOffset {
+			
+			// Calculate current visual position of offsetY
+			currentVisualOffset := 0
+			for i := 0; i < e.offsetY && i < e.buffer.LineCount(); i++ {
+				line := e.buffer.Line(i)
+				currentVisualOffset += wrap.VisualLineCount(line, maxWidth)
+			}
+			
+			// Only scroll if there's more content below
+			if currentVisualOffset + contentHeight < totalVisualRows {
 				e.offsetY++
 			}
 		}
