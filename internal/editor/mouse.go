@@ -57,9 +57,13 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	}
 	
 	// Only handle left click for positioning and selection
-	if ev.Button != tcell.Button1 {
+	if ev.Button != tcell.Button1 && ev.Button != tcell.ButtonNone {
 		return
 	}
+	
+	// Detect button state change
+	buttonPressed := ev.Button == tcell.Button1
+	buttonReleased := ev.Button == tcell.ButtonNone && e.mouseDragging
 	
 	mouseX, mouseY := ev.MouseX, ev.MouseY
 	
@@ -104,8 +108,8 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	}
 	
 	// Check if button is pressed or released
-	if ev.Button&tcell.Button1 != 0 {
-		// Button is pressed
+	if buttonPressed {
+		// Button is pressed/held
 		if !e.mouseDragging && !e.selection.IsActive() {
 			// First press - record position but don't start selection yet
 			e.mouseDownX = mouseX
@@ -174,7 +178,7 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		e.cursorY = bufferY
 		e.cursorX = bufferX
 		e.clampCursor()
-	} else {
+	} else if buttonReleased {
 		// Button released
 		if !e.selection.IsActive() {
 			// Was just a click, not a drag - move cursor
