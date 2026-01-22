@@ -71,8 +71,8 @@ func (e *Editor) render() {
 	
 	e.renderStatusLine()
 	
-	// Position cursor
-	if cursorScreenY >= 0 && cursorScreenY < contentHeight && cursorScreenX >= gutterWidth && cursorScreenX < e.width {
+	// Position cursor (but not in search mode - cursor position is shown in status bar)
+	if e.mode != ModeSearch && cursorScreenY >= 0 && cursorScreenY < contentHeight && cursorScreenX >= gutterWidth && cursorScreenX < e.width {
 		e.term.SetCell(cursorScreenX, cursorScreenY, ' ', tcell.StyleDefault.Reverse(true))
 		
 		currentLine := e.buffer.Line(e.cursorY)
