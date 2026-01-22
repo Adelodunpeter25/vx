@@ -99,10 +99,20 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.searchPrevious()
 		e.lastKey = 0
 	case 'c':
-		e.copyCurrentLine()
+		// Copy selection if active, otherwise copy current line
+		if e.selection.IsActive() {
+			e.copySelection()
+		} else {
+			e.copyCurrentLine()
+		}
 		e.lastKey = 0
 	case 'x':
-		e.deleteCharacter()
+		// Cut selection if active, otherwise delete character
+		if e.selection.IsActive() {
+			e.cutSelection()
+		} else {
+			e.deleteCharacter()
+		}
 		e.lastKey = 0
 	case 'd':
 		// Handle dd (delete line)
@@ -149,6 +159,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.cursorX--
 		}
 		e.adjustScroll()
+		e.selection.Clear()
 		e.lastKey = 0
 	case 'j':
 		if e.cursorY < e.buffer.LineCount()-1 {
@@ -158,6 +169,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "End of file"
 		}
+		e.selection.Clear()
 		e.lastKey = 0
 	case 'k':
 		if e.cursorY > 0 {
@@ -167,6 +179,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "Top of file"
 		}
+		e.selection.Clear()
 		e.lastKey = 0
 	case 'l':
 		line := e.buffer.Line(e.cursorY)
@@ -174,6 +187,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.cursorX++
 		}
 		e.adjustScroll()
+		e.selection.Clear()
 		e.lastKey = 0
 	default:
 		// Clear lastKey if any other key is pressed
@@ -181,11 +195,15 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	}
 	
 	switch ev.Key {
+	case tcell.KeyEscape:
+		e.selection.Clear()
+		e.lastKey = 0
 	case tcell.KeyLeft:
 		if e.cursorX > 0 {
 			e.cursorX--
 		}
 		e.adjustScroll()
+		e.selection.Clear()
 		e.lastKey = 0
 	case tcell.KeyRight:
 		line := e.buffer.Line(e.cursorY)
@@ -193,6 +211,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.cursorX++
 		}
 		e.adjustScroll()
+		e.selection.Clear()
 		e.lastKey = 0
 	case tcell.KeyUp:
 		if e.cursorY > 0 {
@@ -202,6 +221,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "Top of file"
 		}
+		e.selection.Clear()
 		e.lastKey = 0
 	case tcell.KeyDown:
 		if e.cursorY < e.buffer.LineCount()-1 {
@@ -211,6 +231,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			e.message = "End of file"
 		}
+		e.selection.Clear()
 		e.lastKey = 0
 	}
 }

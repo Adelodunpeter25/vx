@@ -56,7 +56,7 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		return
 	}
 	
-	// Only handle left click for positioning
+	// Only handle left click for positioning and selection
 	if ev.Button != tcell.Button1 {
 		return
 	}
@@ -103,11 +103,26 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		bufferY = e.buffer.LineCount() - 1
 	}
 	
-	// Move cursor to clicked position
-	e.cursorY = bufferY
-	e.cursorX = bufferX
+	// Check if this is a button press (start of selection) or drag
+	if ev.Button&tcell.Button1 != 0 {
+		// Button is pressed - either starting or continuing selection
+		if !e.selection.IsActive() {
+			// Start new selection
+			e.selection.Start(bufferY, bufferX)
+		} else {
+			// Update existing selection
+			e.selection.Update(bufferY, bufferX)
+		}
+		e.cursorY = bufferY
+		e.cursorX = bufferX
+		e.clampCursor()
+	} else {
+		// Button released - keep selection active
+		// Don't clear it here, let movement keys or Esc clear it
+		e.cursorY = bufferY
+		e.cursorX = bufferX
+		e.clampCursor()
+	}
 	
-	// Clamp cursor to valid position
-	e.clampCursor()
 	e.adjustScroll()
 }

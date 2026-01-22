@@ -48,6 +48,11 @@ func (e *Editor) render() {
 			// Render the segment
 			e.renderWrappedSegment(screenRow, lineNum, seg, gutterWidth)
 			
+			// Highlight selection if active
+			if e.selection.IsActive() {
+				e.highlightSelection(screenRow, lineNum, seg, gutterWidth)
+			}
+			
 			// Highlight matching bracket if on this line
 			if matchLine == lineNum && matchCol >= seg.StartCol && matchCol < seg.StartCol+len([]rune(seg.Text)) {
 				e.highlightBracketWrapped(matchCol-seg.StartCol, screenRow, gutterWidth, line, matchCol)
