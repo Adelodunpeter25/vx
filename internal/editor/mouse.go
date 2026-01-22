@@ -190,7 +190,8 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		e.mouseDragging = false
 	}
 	
-	e.adjustScroll()
+	// Don't call adjustScroll here - let cursor stay where it is
+	// Only adjust scroll when cursor moves via keyboard
 }
 
 func abs(x int) int {
