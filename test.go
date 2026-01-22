@@ -16,7 +16,7 @@ func main() {
 	fmt.Println(longLine)
 	
 	// Test search functionality
-	fruits := []string{"apple", "banana", "cherry", "date", "elderberry"}
+	fruits := []string{"find&replace", "banana", "cherry", "date", "elderberry"}
 	for i, fruit := range fruits {
 		fmt.Printf("%d: %s\n", i, fruit)
 	}

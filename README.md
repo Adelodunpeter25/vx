@@ -17,12 +17,11 @@ A modern vi text editor written in Go with syntax highlighting, search, undo/red
 
 ## Installation
 
-### Quick Install (Linux/macOS)
+### Quick Install (Recommended - MacOS/Linux)
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Adelodunpeter25/vx/main/install.sh | bash
 ```
-
 ### Manual Installation
 
 Download the appropriate binary from [releases](https://github.com/Adelodunpeter25/vx/releases):
@@ -39,7 +38,6 @@ Make it executable and move to PATH:
 chmod +x vx-*
 sudo mv vx-* /usr/local/bin/vx
 ```
-
 ### Build from Source
 
 ```bash
@@ -47,7 +45,6 @@ git clone https://github.com/Adelodunpeter25/vx.git
 cd vx
 go build -o vx cmd/vx/*.go
 ```
-
 ## Usage
 
 ```bash
@@ -55,7 +52,6 @@ vx [filename]         # Open file for editing
 vx --help             # Show help
 vx --version          # Show version
 ```
-
 ## Keybindings
 
 ### Normal Mode
@@ -115,14 +111,9 @@ vx --version          # Show version
 - `p` - Toggle preview (in .md files(normal mode))
 - `j/k` or arrows - Scroll preview
 
-## Requirements
-
-- Go 1.25 (for building from source)
-- Terminal with 256 color support
-
 ## Philosophy
 
-VX is "vi, but modern" - keeping the classic vi modal editing experience while adding modern conveniences like syntax highlighting and better UX. It's not trying to be Vim or Neovim, just a fast, simple text editor that respects your muscle memory.
+VX is "vi, but modern" - keeping the classic vi modal editing experience while adding modern conveniences like syntax highlighting and better UX. It's not trying to be Vim or Neovim, just a fast, simple text editor that respectsyour muscle memory.
 
 ## Contributing
 
