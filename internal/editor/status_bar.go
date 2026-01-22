@@ -75,8 +75,9 @@ func (e *Editor) renderNormalStatus(y int, style tcell.Style) {
 	modeWidth := len(mode) + 2
 	
 	// Show message if present
-	if e.message != "" {
-		e.renderStatusMessage(y, style, modeWidth)
+	message := e.msgManager.Get()
+	if message != "" {
+		e.renderStatusMessage(y, style, modeWidth, message)
 		return
 	}
 	
@@ -84,12 +85,12 @@ func (e *Editor) renderNormalStatus(y int, style tcell.Style) {
 	e.renderFileInfo(y, style, modeWidth)
 }
 
-func (e *Editor) renderStatusMessage(y int, style tcell.Style, modeWidth int) {
+func (e *Editor) renderStatusMessage(y int, style tcell.Style, modeWidth int, message string) {
 	// Check if message is a file info message (contains KB/MB and "lines")
-	if strings.Contains(e.message, " lines") && (strings.Contains(e.message, "KB") || strings.Contains(e.message, "MB") || strings.Contains(e.message, "GB") || strings.Contains(e.message, " B,")) {
-		e.renderFileInfoMessage(y, style, modeWidth)
+	if strings.Contains(message, " lines") && (strings.Contains(message, "KB") || strings.Contains(message, "MB") || strings.Contains(message, "GB") || strings.Contains(message, " B,")) {
+		e.renderFileInfoMessage(y, style, modeWidth, message)
 	} else {
-		e.term.DrawText(modeWidth+1, y, e.message, style)
+		e.term.DrawText(modeWidth+1, y, message, style)
 	}
 }
 
@@ -132,11 +133,11 @@ func (e *Editor) renderRightInfo(y int, style tcell.Style) {
 	}
 }
 
-func (e *Editor) renderFileInfoMessage(y int, style tcell.Style, modeWidth int) {
+func (e *Editor) renderFileInfoMessage(y int, style tcell.Style, modeWidth int, message string) {
 	// Parse message: "filename" size, lines
-	parts := strings.SplitN(e.message, "\"", 3)
+	parts := strings.SplitN(message, "\"", 3)
 	if len(parts) < 3 {
-		e.term.DrawText(modeWidth+1, y, e.message, style)
+		e.term.DrawText(modeWidth+1, y, message, style)
 		return
 	}
 	

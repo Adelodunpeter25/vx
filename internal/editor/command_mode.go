@@ -14,14 +14,14 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 	if ev.Key == tcell.KeyEscape {
 		e.mode = ModeNormal
 		e.commandBuf = ""
-		e.message = ""
+		e.msgManager.Clear()
 		return
 	}
 	
 	if ev.Key == tcell.KeyEnter {
 		// Show "Saving..." for write commands
 		if strings.HasPrefix(e.commandBuf, "w") {
-			e.message = "Saving..."
+			e.msgManager.SetPersistent("Saving...")
 			e.render()
 		}
 		
@@ -48,9 +48,9 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 		}
 		
 		if result.Error != nil {
-			e.message = utils.FormatUserError(result.Error)
+			e.msgManager.SetError(utils.FormatUserError(result.Error))
 		} else if result.Message != "" {
-			e.message = result.Message
+			e.msgManager.SetPersistent(result.Message)
 		}
 		if result.Quit {
 			e.quit = true

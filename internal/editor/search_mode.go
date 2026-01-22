@@ -12,14 +12,14 @@ func (e *Editor) handleSearchMode(ev *terminal.Event) {
 		e.mode = ModeNormal
 		e.searchBuf = ""
 		e.search.Clear()
-		e.message = ""
+		e.msgManager.Clear()
 		return
 	}
 	
 	if ev.Key == tcell.KeyEnter {
 		// Just exit search mode, results already visible
 		if e.search.HasMatches() {
-			e.message = fmt.Sprintf("/%s [%d/%d]", e.searchBuf, e.search.CurrentIndex(), e.search.MatchCount())
+			e.msgManager.SetPersistent(fmt.Sprintf("/%s [%d/%d]", e.searchBuf, e.search.CurrentIndex(), e.search.MatchCount()))
 		}
 		e.mode = ModeNormal
 		return
@@ -44,7 +44,7 @@ func (e *Editor) handleSearchMode(ev *terminal.Event) {
 func (e *Editor) performIncrementalSearch() {
 	if e.searchBuf == "" {
 		e.search.Clear()
-		e.message = ""
+		e.msgManager.Clear()
 		return
 	}
 	
@@ -58,7 +58,7 @@ func (e *Editor) performIncrementalSearch() {
 	matches := e.search.Search(lines, e.searchBuf)
 	
 	if len(matches) == 0 {
-		e.message = fmt.Sprintf("Pattern not found: %s", e.searchBuf)
+		e.msgManager.SetPersistent(fmt.Sprintf("Pattern not found: %s", e.searchBuf))
 		return
 	}
 	
@@ -70,14 +70,14 @@ func (e *Editor) performIncrementalSearch() {
 		e.adjustScroll()
 	}
 	
-	e.message = fmt.Sprintf("/%s [%d/%d]", e.searchBuf, e.search.CurrentIndex(), e.search.MatchCount())
+	e.msgManager.SetPersistent(fmt.Sprintf("/%s [%d/%d]", e.searchBuf, e.search.CurrentIndex(), e.search.MatchCount()))
 }
 
 func (e *Editor) performSearch() {
 	if e.searchBuf == "" {
 		e.mode = ModeNormal
 		e.search.Clear()
-		e.message = ""
+		e.msgManager.Clear()
 		return
 	}
 	
@@ -91,7 +91,7 @@ func (e *Editor) performSearch() {
 	matches := e.search.Search(lines, e.searchBuf)
 	
 	if len(matches) == 0 {
-		e.message = fmt.Sprintf("Pattern not found: %s", e.searchBuf)
+		e.msgManager.SetPersistent(fmt.Sprintf("Pattern not found: %s", e.searchBuf))
 		e.mode = ModeNormal
 		return
 	}
@@ -104,6 +104,6 @@ func (e *Editor) performSearch() {
 		e.adjustScroll()
 	}
 	
-	e.message = fmt.Sprintf("/%s [%d/%d]", e.searchBuf, e.search.CurrentIndex(), e.search.MatchCount())
+	e.msgManager.SetPersistent(fmt.Sprintf("/%s [%d/%d]", e.searchBuf, e.search.CurrentIndex(), e.search.MatchCount()))
 	e.mode = ModeNormal
 }

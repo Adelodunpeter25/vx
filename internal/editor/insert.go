@@ -1,17 +1,13 @@
 package editor
 
 import (
-	"strings"
-
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
 )
 
 func (e *Editor) handleInsertMode(ev *terminal.Event) {
-	// Clear file info messages on any key
-	if strings.Contains(e.message, " lines") && (strings.Contains(e.message, "KB") || strings.Contains(e.message, "MB") || strings.Contains(e.message, "GB") || strings.Contains(e.message, " B,")) {
-		e.message = ""
-	}
+	// Clear transient messages on any key
+	e.msgManager.ClearIfTransient()
 	
 	// Ctrl+C force quit
 	if ev.Key == tcell.KeyCtrlC {

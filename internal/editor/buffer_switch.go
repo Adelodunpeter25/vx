@@ -54,14 +54,14 @@ func (e *Editor) previousBuffer() {
 // deleteCurrentBuffer closes the current buffer with save prompt if modified
 func (e *Editor) deleteCurrentBuffer() {
 	if e.bufferMgr.Count() == 1 {
-		e.message = "Cannot close last buffer"
+		e.msgManager.SetTransient("Cannot close last buffer")
 		return
 	}
 
 	if e.buffer.IsModified() {
 		// Enter a special prompt mode
 		e.mode = ModeBufferPrompt
-		e.message = "Save changes? [y/n]"
+		e.msgManager.SetPersistent("Save changes? [y/n]")
 		e.renderCache.invalidate()
 		return
 	}
@@ -69,5 +69,5 @@ func (e *Editor) deleteCurrentBuffer() {
 	// Not modified, just delete
 	e.bufferMgr.Delete()
 	e.switchToBuffer()
-	e.message = "Buffer closed"
+	e.msgManager.SetTransient("Buffer closed")
 }

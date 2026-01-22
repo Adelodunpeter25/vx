@@ -11,9 +11,9 @@ func (e *Editor) copySelection() {
 	
 	err := clipboard.Copy(text)
 	if err != nil {
-		e.message = "Failed to copy selection"
+		e.msgManager.SetError("Failed to copy selection")
 	} else {
-		e.message = "Selection copied"
+		e.msgManager.SetTransient("Selection copied")
 	}
 	e.selection.Clear()
 }
@@ -28,7 +28,7 @@ func (e *Editor) cutSelection() {
 	// Copy to clipboard
 	err := clipboard.Copy(text)
 	if err != nil {
-		e.message = "Failed to cut selection"
+		e.msgManager.SetError("Failed to cut selection")
 		return
 	}
 	
@@ -46,6 +46,6 @@ func (e *Editor) cutSelection() {
 	e.cursorX = startCol
 	e.clampCursor()
 	
-	e.message = "Selection cut"
+	e.msgManager.SetTransient("Selection cut")
 	e.selection.Clear()
 }

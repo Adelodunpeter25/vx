@@ -12,7 +12,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 	case tcell.KeyEscape:
 		e.replace.Cancel()
 		e.mode = ModeNormal
-		e.message = ""
+		e.msgManager.Clear()
 		e.renderCache.invalidate()
 		return
 
@@ -26,7 +26,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 			matches := e.search.Search(lines, e.replace.GetSearchTerm())
 			e.replace.ConfirmSearch(matches)
 			if len(matches) == 0 {
-				e.message = "No matches found"
+				e.msgManager.SetTransient("No matches found")
 				e.mode = ModeNormal
 				e.replace.Cancel()
 			}
@@ -79,7 +79,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 				}
 				// Move to next match
 				if !e.replace.NextMatch() {
-					e.message = "Replace complete"
+					e.msgManager.SetTransient("Replace complete")
 					e.mode = ModeNormal
 				} else {
 					match = e.replace.GetCurrentMatch()
@@ -94,7 +94,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 			case 'n':
 				// Skip to next match
 				if !e.replace.NextMatch() {
-					e.message = "Replace complete"
+					e.msgManager.SetTransient("Replace complete")
 					e.mode = ModeNormal
 				} else {
 					match := e.replace.GetCurrentMatch()
@@ -110,7 +110,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 				// Quit replace
 				e.replace.Cancel()
 				e.mode = ModeNormal
-				e.message = "Replace cancelled"
+				e.msgManager.SetTransient("Replace cancelled")
 				e.renderCache.invalidate()
 			}
 		} else if state == replace.StateSearchInput {

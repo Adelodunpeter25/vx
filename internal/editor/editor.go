@@ -23,6 +23,7 @@ type Editor struct {
 	preview     *preview.Preview
 	selection   *visual.Selection
 	renderCache *RenderCache
+	msgManager  *MessageManager
 	width       int
 	height      int
 	cursorX     int
@@ -33,7 +34,6 @@ type Editor struct {
 	quit        bool
 	commandBuf  string
 	searchBuf   string
-	message     string
 	lastKey     rune // Track last key for multi-key commands like gg
 	mouseDownX  int  // Track mouse button down position
 	mouseDownY  int
@@ -55,6 +55,7 @@ func New(term *terminal.Terminal) *Editor {
 		preview:     preview.New(),
 		selection:   visual.New(),
 		renderCache: newRenderCache(),
+		msgManager:  NewMessageManager(),
 		width:       width,
 		height:      height,
 		mode:        ModeNormal,
@@ -69,6 +70,8 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 			// File loaded with warnings
 			width, height := term.Size()
 			bufMgr := buffers.New(buf, filename)
+			msgMgr := NewMessageManager()
+			msgMgr.SetError("Warning: " + utils.FormatLoadError(filename, err))
 			ed := &Editor{
 				term:        term,
 				bufferMgr:   bufMgr,
@@ -78,10 +81,10 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				replace:     replace.New(),
 				selection:   visual.New(),
 				renderCache: newRenderCache(),
+				msgManager:  msgMgr,
 				width:       width,
 				height:      height,
 				mode:        ModeNormal,
-				message:     "Warning: " + utils.FormatLoadError(filename, err),
 			}
 			return ed, nil
 		}
@@ -100,6 +103,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		preview:     preview.New(),
 		selection:   visual.New(),
 		renderCache: newRenderCache(),
+		msgManager:  NewMessageManager(),
 		width:       width,
 		height:      height,
 		mode:        ModeNormal,
@@ -110,7 +114,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 	
 	// Show warning if syntax highlighting disabled due to size
 	if ed.syntax.IsTooLarge() {
-		ed.message = "File too large for syntax highlighting"
+		ed.msgManager.SetPersistent("File too large for syntax highlighting")
 	}
 	
 	return ed, nil
@@ -127,7 +131,7 @@ func (e *Editor) showFileInfo() {
 		filename = "[No Name]"
 	}
 	
-	e.message = utils.FormatFileInfo(filename, size, e.buffer.LineCount())
+	e.msgManager.SetPersistent(utils.FormatFileInfo(filename, size, e.buffer.LineCount()))
 }
 
 func (e *Editor) Run() error {

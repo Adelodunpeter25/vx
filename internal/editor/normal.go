@@ -10,17 +10,8 @@ import (
 )
 
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
-	// Clear temporary messages on any key
-	if e.message == "Top of file" || e.message == "End of file" || 
-	   e.message == "Buffer closed" || e.message == "Buffer saved and closed" || 
-	   e.message == "Buffer closed without saving" || e.message == "Cannot close last buffer" {
-		e.message = ""
-	}
-	
-	// Clear file info messages on any key
-	if strings.Contains(e.message, " lines") && (strings.Contains(e.message, "KB") || strings.Contains(e.message, "MB") || strings.Contains(e.message, "GB") || strings.Contains(e.message, " B,")) {
-		e.message = ""
-	}
+	// Clear transient messages on any key
+	e.msgManager.ClearIfTransient()
 	
 	// If in preview mode, handle preview-specific keys
 	if e.preview.IsEnabled() {
@@ -37,13 +28,13 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	// Ctrl+S save
 	if ev.Key == tcell.KeyCtrlS {
 		if e.buffer.Filename() == "" {
-			e.message = "No filename specified"
+			e.msgManager.SetError("No filename specified")
 		} else {
 			if err := e.buffer.Save(); err != nil {
-				e.message = utils.FormatSaveError(e.buffer.Filename(), err)
+				e.msgManager.SetError(utils.FormatSaveError(e.buffer.Filename(), err))
 			} else {
 				size, _ := e.buffer.GetFileSize()
-				e.message = utils.FormatFileInfo(e.buffer.Filename(), size, e.buffer.LineCount())
+				e.msgManager.SetPersistent(utils.FormatFileInfo(e.buffer.Filename(), size, e.buffer.LineCount()))
 			}
 		}
 		return
@@ -53,7 +44,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	if ev.Key == tcell.KeyCtrlF {
 		e.mode = ModeSearch
 		e.searchBuf = ""
-		e.message = ""
+		e.msgManager.Clear()
 		e.lastKey = 0
 		return
 	}
@@ -79,18 +70,18 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case ':':
 		e.mode = ModeCommand
 		e.commandBuf = ""
-		e.message = ""
+		e.msgManager.Clear()
 		e.lastKey = 0
 	case '/':
 		e.mode = ModeSearch
 		e.searchBuf = ""
-		e.message = ""
+		e.msgManager.Clear()
 		e.lastKey = 0
 	case 'H':
 		// Ctrl+H for replace
 		e.mode = ModeReplace
 		e.replace.Start()
-		e.message = ""
+		e.msgManager.Clear()
 		e.lastKey = 0
 	case 'n':
 		e.searchNext()
@@ -167,7 +158,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.adjustScroll()
 			e.clampCursor()
 		} else {
-			e.message = "End of file"
+			e.msgManager.SetTransient("End of file")
 		}
 		e.selection.Clear()
 		e.lastKey = 0
@@ -177,7 +168,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.adjustScroll()
 			e.clampCursor()
 		} else {
-			e.message = "Top of file"
+			e.msgManager.SetTransient("Top of file")
 		}
 		e.selection.Clear()
 		e.lastKey = 0
@@ -219,7 +210,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.adjustScroll()
 			e.clampCursor()
 		} else {
-			e.message = "Top of file"
+			e.msgManager.SetTransient("Top of file")
 		}
 		e.selection.Clear()
 		e.lastKey = 0
@@ -229,7 +220,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			e.adjustScroll()
 			e.clampCursor()
 		} else {
-			e.message = "End of file"
+			e.msgManager.SetTransient("End of file")
 		}
 		e.selection.Clear()
 		e.lastKey = 0
@@ -240,23 +231,23 @@ func (e *Editor) jumpToStart() {
 	e.cursorY = 0
 	e.cursorX = 0
 	e.offsetY = 0
-	e.message = ""
+	e.msgManager.Clear()
 }
 
 func (e *Editor) jumpToEnd() {
 	e.cursorY = e.buffer.LineCount() - 1
 	e.cursorX = 0
 	e.adjustScroll()
-	e.message = ""
+	e.msgManager.Clear()
 }
 
 func (e *Editor) togglePreview() {
 	e.preview.Toggle()
 	if e.preview.IsEnabled() {
 		e.preview.Update(e.buffer)
-		e.message = "Preview enabled"
+		e.msgManager.SetTransient("Preview enabled")
 	} else {
-		e.message = "Preview disabled"
+		e.msgManager.SetTransient("Preview disabled")
 	}
 	e.renderCache.invalidate()
 }
@@ -291,21 +282,21 @@ func (e *Editor) copyCurrentLine() {
 	line := e.buffer.Line(e.cursorY)
 	err := clipboard.Copy(line)
 	if err != nil {
-		e.message = "Failed to copy to clipboard"
+		e.msgManager.SetError("Failed to copy to clipboard")
 	} else {
-		e.message = "Line copied to clipboard"
+		e.msgManager.SetTransient("Line copied to clipboard")
 	}
 }
 
 func (e *Editor) pasteFromClipboard() {
 	text, err := clipboard.Paste()
 	if err != nil {
-		e.message = "Failed to paste from clipboard"
+		e.msgManager.SetError("Failed to paste from clipboard")
 		return
 	}
 	
 	if text == "" {
-		e.message = "Clipboard is empty"
+		e.msgManager.SetTransient("Clipboard is empty")
 		return
 	}
 	
@@ -322,12 +313,12 @@ func (e *Editor) pasteFromClipboard() {
 	}
 	
 	e.adjustScroll()
-	e.message = "Pasted from clipboard"
+	e.msgManager.SetTransient("Pasted from clipboard")
 }
 
 func (e *Editor) searchNext() {
 	if !e.search.HasMatches() {
-		e.message = "No search results"
+		e.msgManager.SetTransient("No search results")
 		return
 	}
 	
@@ -336,13 +327,13 @@ func (e *Editor) searchNext() {
 		e.cursorY = match.Line
 		e.cursorX = match.Col
 		e.adjustScroll()
-		e.message = ""
+		e.msgManager.Clear()
 	}
 }
 
 func (e *Editor) searchPrevious() {
 	if !e.search.HasMatches() {
-		e.message = "No search results"
+		e.msgManager.SetTransient("No search results")
 		return
 	}
 	
@@ -351,26 +342,26 @@ func (e *Editor) searchPrevious() {
 		e.cursorY = match.Line
 		e.cursorX = match.Col
 		e.adjustScroll()
-		e.message = ""
+		e.msgManager.Clear()
 	}
 }
 
 func (e *Editor) performUndo() {
 	if e.buffer.Undo() {
-		e.message = "Undo"
+		e.msgManager.SetTransient("Undo")
 		e.clampCursor()
 		e.adjustScroll()
 	} else {
-		e.message = "Nothing to undo"
+		e.msgManager.SetTransient("Nothing to undo")
 	}
 }
 
 func (e *Editor) performRedo() {
 	if e.buffer.Redo() {
-		e.message = "Redo"
+		e.msgManager.SetTransient("Redo")
 		e.clampCursor()
 		e.adjustScroll()
 	} else {
-		e.message = "Nothing to redo"
+		e.msgManager.SetTransient("Nothing to redo")
 	}
 }
