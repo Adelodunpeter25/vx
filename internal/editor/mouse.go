@@ -105,6 +105,33 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	
 	// Check if this is a button press (start of selection) or drag
 	if ev.Button&tcell.Button1 != 0 {
+		// Auto-scroll if dragging near edges
+		contentHeight := e.height - 1
+		if mouseY < 2 && e.offsetY > 0 {
+			// Near top - scroll up
+			e.offsetY--
+		} else if mouseY > contentHeight - 3 {
+			// Near bottom - scroll down
+			gutterWidth := e.getGutterWidth()
+			maxWidth := e.width - gutterWidth
+			
+			totalVisualRows := 0
+			for i := 0; i < e.buffer.LineCount(); i++ {
+				line := e.buffer.Line(i)
+				totalVisualRows += wrap.VisualLineCount(line, maxWidth)
+			}
+			
+			currentVisualOffset := 0
+			for i := 0; i < e.offsetY && i < e.buffer.LineCount(); i++ {
+				line := e.buffer.Line(i)
+				currentVisualOffset += wrap.VisualLineCount(line, maxWidth)
+			}
+			
+			if currentVisualOffset + contentHeight < totalVisualRows {
+				e.offsetY++
+			}
+		}
+		
 		// Button is pressed - either starting or continuing selection
 		if !e.selection.IsActive() {
 			// Start new selection

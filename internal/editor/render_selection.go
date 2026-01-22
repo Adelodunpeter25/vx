@@ -47,7 +47,7 @@ func (e *Editor) highlightSelection(screenRow, lineNum int, seg wrap.Line, gutte
 	}
 	
 	// Apply highlight style to selected characters
-	selectionStyle := tcell.StyleDefault.Background(tcell.ColorBlue).Foreground(tcell.ColorWhite)
+	selectionStyle := tcell.StyleDefault.Background(tcell.ColorGray).Foreground(tcell.ColorBlack)
 	line := []rune(e.buffer.Line(lineNum))
 	
 	for col := highlightStart; col < highlightEnd && col < len(line); col++ {
