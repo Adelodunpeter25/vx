@@ -149,7 +149,7 @@ func (e *Editor) highlightSearchMatchesWrapped(screenRow, lineNum int, seg wrap.
 		Bold(true)
 	
 	currentStyle := tcell.StyleDefault.
-		Background(tcell.NewRGBColor(255, 180, 0)).
+		Background(tcell.NewRGBColor(0, 200, 200)).
 		Foreground(tcell.ColorBlack).
 		Bold(true)
 	
