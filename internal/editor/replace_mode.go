@@ -81,6 +81,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 				if !e.replace.NextMatch() {
 					e.msgManager.SetTransient("Replace complete")
 					e.mode = ModeNormal
+					e.search.Clear() // Clear search highlights
 				} else {
 					match = e.replace.GetCurrentMatch()
 					if match != nil {
@@ -96,6 +97,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 				if !e.replace.NextMatch() {
 					e.msgManager.SetTransient("Replace complete")
 					e.mode = ModeNormal
+					e.search.Clear() // Clear search highlights
 				} else {
 					match := e.replace.GetCurrentMatch()
 					if match != nil {
@@ -110,6 +112,7 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 				// Quit replace
 				e.replace.Cancel()
 				e.mode = ModeNormal
+				e.search.Clear() // Clear search highlights
 				e.msgManager.SetTransient("Replace cancelled")
 				e.renderCache.invalidate()
 			}
