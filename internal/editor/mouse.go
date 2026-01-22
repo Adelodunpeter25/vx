@@ -103,53 +103,95 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		bufferY = e.buffer.LineCount() - 1
 	}
 	
-	// Check if this is a button press (start of selection) or drag
+	// Check if button is pressed or released
 	if ev.Button&tcell.Button1 != 0 {
+		// Button is pressed
+		if !e.mouseDragging && !e.selection.IsActive() {
+			// First press - record position but don't start selection yet
+			e.mouseDownX = mouseX
+			e.mouseDownY = mouseY
+			e.mouseDragging = true
+		}
+		
+		// Check if mouse moved enough to start selection
+		if e.mouseDragging && !e.selection.IsActive() && (abs(mouseX-e.mouseDownX) > 1 || abs(mouseY-e.mouseDownY) > 0) {
+			// Mouse moved - start selection from original down position
+			// Convert mouseDown position to buffer coordinates
+			screenRow := 0
+			startBufferY := e.offsetY
+			startBufferX := e.mouseDownX - gutterWidth
+			
+			for startBufferY < e.buffer.LineCount() {
+				line := e.buffer.Line(startBufferY)
+				lineVisualRows := wrap.VisualLineCount(line, maxWidth)
+				
+				if screenRow+lineVisualRows > e.mouseDownY {
+					segmentIndex := e.mouseDownY - screenRow
+					startBufferX = segmentIndex*maxWidth + (e.mouseDownX - gutterWidth)
+					break
+				}
+				
+				screenRow += lineVisualRows
+				startBufferY++
+			}
+			
+			if startBufferY >= e.buffer.LineCount() {
+				startBufferY = e.buffer.LineCount() - 1
+			}
+			
+			e.selection.Start(startBufferY, startBufferX)
+		}
+		
+		// Update selection if active
+		if e.selection.IsActive() {
+			e.selection.Update(bufferY, bufferX)
+		}
+		
 		// Auto-scroll if dragging near edges
-		contentHeight := e.height - 1
-		if mouseY < 2 && e.offsetY > 0 {
-			// Near top - scroll up
-			e.offsetY--
-		} else if mouseY > contentHeight - 3 {
-			// Near bottom - scroll down
-			gutterWidth := e.getGutterWidth()
-			maxWidth := e.width - gutterWidth
-			
-			totalVisualRows := 0
-			for i := 0; i < e.buffer.LineCount(); i++ {
-				line := e.buffer.Line(i)
-				totalVisualRows += wrap.VisualLineCount(line, maxWidth)
-			}
-			
-			currentVisualOffset := 0
-			for i := 0; i < e.offsetY && i < e.buffer.LineCount(); i++ {
-				line := e.buffer.Line(i)
-				currentVisualOffset += wrap.VisualLineCount(line, maxWidth)
-			}
-			
-			if currentVisualOffset + contentHeight < totalVisualRows {
-				e.offsetY++
+		if e.selection.IsActive() {
+			contentHeight := e.height - 1
+			if mouseY < 2 && e.offsetY > 0 {
+				e.offsetY--
+			} else if mouseY > contentHeight - 3 {
+				totalVisualRows := 0
+				for i := 0; i < e.buffer.LineCount(); i++ {
+					line := e.buffer.Line(i)
+					totalVisualRows += wrap.VisualLineCount(line, maxWidth)
+				}
+				
+				currentVisualOffset := 0
+				for i := 0; i < e.offsetY && i < e.buffer.LineCount(); i++ {
+					line := e.buffer.Line(i)
+					currentVisualOffset += wrap.VisualLineCount(line, maxWidth)
+				}
+				
+				if currentVisualOffset + contentHeight < totalVisualRows {
+					e.offsetY++
+				}
 			}
 		}
 		
-		// Button is pressed - either starting or continuing selection
-		if !e.selection.IsActive() {
-			// Start new selection
-			e.selection.Start(bufferY, bufferX)
-		} else {
-			// Update existing selection
-			e.selection.Update(bufferY, bufferX)
-		}
 		e.cursorY = bufferY
 		e.cursorX = bufferX
 		e.clampCursor()
 	} else {
-		// Button released - keep selection active
-		// Don't clear it here, let movement keys or Esc clear it
-		e.cursorY = bufferY
-		e.cursorX = bufferX
-		e.clampCursor()
+		// Button released
+		if !e.selection.IsActive() {
+			// Was just a click, not a drag - move cursor
+			e.cursorY = bufferY
+			e.cursorX = bufferX
+			e.clampCursor()
+		}
+		// Reset drag state
+		e.mouseDragging = false
 	}
 	
 	e.adjustScroll()
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

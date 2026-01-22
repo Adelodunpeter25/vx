@@ -35,6 +35,9 @@ type Editor struct {
 	searchBuf   string
 	message     string
 	lastKey     rune // Track last key for multi-key commands like gg
+	mouseDownX  int  // Track mouse button down position
+	mouseDownY  int
+	mouseDragging bool
 }
 
 func New(term *terminal.Terminal) *Editor {
