@@ -70,5 +70,42 @@ fi
 echo ""
 echo "✓ VX Editor installed successfully!"
 echo ""
+
+# Check for clipboard support on Linux
+if [ "$OS" = "linux" ]; then
+    if ! command -v xclip &> /dev/null && ! command -v xsel &> /dev/null; then
+        echo "⚠ Clipboard support requires xclip or xsel"
+        echo ""
+        read -p "Install xclip for clipboard support? [Y/n] " -n 1 -r
+        echo ""
+        
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            # Detect package manager and install
+            if command -v apt-get &> /dev/null; then
+                echo "Installing xclip via apt..."
+                sudo apt-get update && sudo apt-get install -y xclip
+            elif command -v yum &> /dev/null; then
+                echo "Installing xclip via yum..."
+                sudo yum install -y xclip
+            elif command -v dnf &> /dev/null; then
+                echo "Installing xclip via dnf..."
+                sudo dnf install -y xclip
+            elif command -v pacman &> /dev/null; then
+                echo "Installing xclip via pacman..."
+                sudo pacman -S --noconfirm xclip
+            elif command -v zypper &> /dev/null; then
+                echo "Installing xclip via zypper..."
+                sudo zypper install -y xclip
+            else
+                echo "Could not detect package manager. Please install xclip manually:"
+                echo "  Ubuntu/Debian: sudo apt-get install xclip"
+                echo "  Fedora/RHEL:   sudo dnf install xclip"
+                echo "  Arch:          sudo pacman -S xclip"
+            fi
+            echo ""
+        fi
+    fi
+fi
+
 echo "Run 'vx --help' to get started"
 echo "Run 'vx filename' to edit a file"
