@@ -22,11 +22,6 @@ jobs:
         with:
           go-version: '1.21'
       
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev xorg-dev libxtst-dev libpng++-dev xcb libxcb-xkb-dev x11-xkb-utils libx11-xcb-dev libxkbcommon-x11-dev libxkbcommon-dev
-      
       - name: Build binaries
         run: |
           # Linux AMD64
