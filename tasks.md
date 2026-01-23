@@ -8,7 +8,7 @@
 - ~~Mouse selection issues~~ - Fixed drag-only detection
 - ~~Cursor positioning with wrapping~~ - Fixed insert mode and scroll calculations
 
-## TODO - v0.1.1
+## TODO
 - [ ] Test clipboard on Linux (needs xclip/xsel installed)
 - [ ] Verify Windows build works (untested)
 
@@ -22,6 +22,5 @@
 
 ## Nice to Have
 - [ ] LSP integration (basic go-to-definition, diagnostics)
-- [ ] Macros (if users request it)
 - [ ] Terminal integration
 - [ ] Tab pages
