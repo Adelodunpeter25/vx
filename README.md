@@ -113,8 +113,4 @@ vx --version          # Show version
 
 ## Philosophy
 
-VX is "vi, but modern" - keeping the classic vi modal editing experience while adding modern conveniences like syntax highlighting and better UX. It's not trying to be Vim or Neovim, just a fast, simple text editor that respectsyour muscle memory.
-
-## Contributing
-
-Contributions welcome! Please open an issue or PR on GitHub.
+VX is "vi, but modern" - keeping the classic vi modal editing experience while adding modern conveniences like syntax highlighting and better UX. It's not trying to be Vim or Neovim, just a fast, simple text editor that respectsyour muscle memory..

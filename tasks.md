@@ -21,6 +21,4 @@
 - [ ] Delete to register (dd should allow pasting deleted lines)
 
 ## Nice to Have
-- [ ] LSP integration (basic go-to-definition, diagnostics)
-- [ ] Terminal integration
-- [ ] Tab pages
+- [ ] LSP integration (basic go-to-definition, diagnostics)s
