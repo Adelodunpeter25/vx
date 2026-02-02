@@ -73,7 +73,7 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		return
 	}
 	
-	// Convert screen coordinates to buffer coordinates (accounting for wrapped lines)
+	// Convert screen coordinates to buffer coordinates (accounting for wrapped lines and visual offset)
 	gutterWidth := e.getGutterWidth()
 	maxWidth := e.width - gutterWidth
 	
@@ -81,27 +81,35 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		return
 	}
 	
-	// Find which buffer line and column the click corresponds to
-	screenRow := 0
-	bufferY := e.offsetY
+	// Calculate the visual row that was clicked (accounting for visual offset)
+	clickedVisualRow := e.visualOffsetY + mouseY
+	
+	// Find which buffer line and column corresponds to this visual row
+	currentVisualRow := 0
+	bufferY := 0
 	bufferX := mouseX - gutterWidth
 	
 	for bufferY < e.buffer.LineCount() {
 		line := e.buffer.Line(bufferY)
-		lineVisualRows := wrap.VisualLineCount(line, maxWidth)
+		segments := wrap.WrapLine(line, bufferY, maxWidth)
 		
-		if screenRow+lineVisualRows > mouseY {
-			// Click is on this buffer line
-			// Calculate which wrapped segment
-			segmentIndex := mouseY - screenRow
-			bufferX = segmentIndex*maxWidth + (mouseX - gutterWidth)
-			break
+		for _, seg := range segments {
+			if currentVisualRow == clickedVisualRow {
+				// Found the line - calculate column within this segment
+				bufferX = seg.StartCol + (mouseX - gutterWidth)
+				// Clamp to segment bounds
+				segLen := len([]rune(seg.Text))
+				if bufferX > seg.StartCol + segLen {
+					bufferX = seg.StartCol + segLen
+				}
+				goto found
+			}
+			currentVisualRow++
 		}
-		
-		screenRow += lineVisualRows
 		bufferY++
 	}
 	
+found:
 	// Ensure click is within buffer bounds
 	if bufferY >= e.buffer.LineCount() {
 		bufferY = e.buffer.LineCount() - 1
