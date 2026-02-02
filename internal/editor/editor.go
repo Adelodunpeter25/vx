@@ -29,7 +29,8 @@ type Editor struct {
 	cursorX     int
 	cursorY     int
 	offsetX     int // Horizontal scroll offset
-	offsetY     int
+	offsetY     int // Buffer line offset (top visible line)
+	visualOffsetY int // Visual row offset for smooth scrolling
 	mode        Mode
 	quit        bool
 	commandBuf  string

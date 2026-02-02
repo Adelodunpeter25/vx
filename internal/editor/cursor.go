@@ -22,10 +22,10 @@ func (e *Editor) adjustScroll() {
 	maxWidth := e.width - gutterWidth
 	
 	// Calculate visual line position of cursor
-	visualLine := 0
+	cursorVisualLine := 0
 	for lineNum := 0; lineNum < e.cursorY && lineNum < e.buffer.LineCount(); lineNum++ {
 		line := e.buffer.Line(lineNum)
-		visualLine += wrap.VisualLineCount(line, maxWidth)
+		cursorVisualLine += wrap.VisualLineCount(line, maxWidth)
 	}
 	
 	// Find which wrapped segment contains the cursor
@@ -34,33 +34,28 @@ func (e *Editor) adjustScroll() {
 	for i, seg := range segments {
 		segEndCol := seg.StartCol + len([]rune(seg.Text))
 		if e.cursorX >= seg.StartCol && e.cursorX <= segEndCol {
-			visualLine += i
+			cursorVisualLine += i
 			break
 		}
 	}
 	
-	// Calculate visual line of offsetY
-	offsetVisual := 0
-	for lineNum := 0; lineNum < e.offsetY && lineNum < e.buffer.LineCount(); lineNum++ {
-		line := e.buffer.Line(lineNum)
-		offsetVisual += wrap.VisualLineCount(line, maxWidth)
-	}
-	
-	// Vertical scroll - adjust offsetY to keep cursor visible
-	if visualLine < offsetVisual {
+	// Adjust visual offset to keep cursor visible
+	if cursorVisualLine < e.visualOffsetY {
 		// Cursor above viewport - scroll up
-		e.offsetY = e.findLineAtVisualRow(visualLine, maxWidth)
+		e.visualOffsetY = cursorVisualLine
 	}
-	if visualLine >= offsetVisual+contentHeight {
+	if cursorVisualLine >= e.visualOffsetY + contentHeight {
 		// Cursor below viewport - scroll down
-		targetVisual := visualLine - contentHeight + 1
-		e.offsetY = e.findLineAtVisualRow(targetVisual, maxWidth)
+		e.visualOffsetY = cursorVisualLine - contentHeight + 1
 	}
 	
-	// Ensure offsetY doesn't go negative
-	if e.offsetY < 0 {
-		e.offsetY = 0
+	// Ensure visual offset doesn't go negative
+	if e.visualOffsetY < 0 {
+		e.visualOffsetY = 0
 	}
+	
+	// Convert visual offset to buffer line offset for rendering
+	e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
 	
 	// No horizontal scroll needed with wrapping
 	e.offsetX = 0

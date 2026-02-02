@@ -21,4 +21,4 @@
 - [ ] Delete to register (dd should allow pasting deleted lines)
 
 ## Nice to Have
-- [ ] LSP integration (basic go-to-definition, diagnostics)s
+- [ ] LSP integration (basic go-to-definition, diagnostics)

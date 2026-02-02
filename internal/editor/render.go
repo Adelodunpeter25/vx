@@ -27,21 +27,36 @@ func (e *Editor) render() {
 	// Calculate cursor screen position
 	cursorScreenY, cursorScreenX := e.getCursorScreenPos(gutterWidth, maxWidth)
 	
-	// Render wrapped lines
+	// Render wrapped lines starting from visualOffsetY
 	screenRow := 0
 	lineNum := e.offsetY
+	
+	// Calculate how many visual rows to skip in the first line
+	visualRowsBeforeOffset := 0
+	for i := 0; i < e.offsetY; i++ {
+		line := e.buffer.Line(i)
+		visualRowsBeforeOffset += wrap.VisualLineCount(line, maxWidth)
+	}
+	skipRows := e.visualOffsetY - visualRowsBeforeOffset
 	
 	for screenRow < contentHeight && lineNum < e.buffer.LineCount() {
 		line := e.buffer.Line(lineNum)
 		segments := wrap.WrapLine(line, lineNum, maxWidth)
 		
-		for _, seg := range segments {
+		for segIdx, seg := range segments {
+			// Skip rows if we're in the first line and need to offset
+			if lineNum == e.offsetY && segIdx < skipRows {
+				continue
+			}
+			
 			if screenRow >= contentHeight {
 				break
 			}
 			
-			// Render line number only on first segment
-			if !seg.IsWrapped {
+			// Render line number only on first visible segment of each line
+			if segIdx == skipRows && lineNum == e.offsetY {
+				e.renderLineNumber(screenRow, lineNum, gutterWidth)
+			} else if !seg.IsWrapped && lineNum > e.offsetY {
 				e.renderLineNumber(screenRow, lineNum, gutterWidth)
 			}
 			
@@ -61,6 +76,7 @@ func (e *Editor) render() {
 			screenRow++
 		}
 		lineNum++
+		skipRows = 0 // Only skip rows in the first line
 	}
 	
 	// Fill remaining rows with ~
@@ -86,11 +102,11 @@ func (e *Editor) render() {
 }
 
 func (e *Editor) getCursorScreenPos(gutterWidth, maxWidth int) (screenY, screenX int) {
-	// Calculate which screen row the cursor is on
-	screenY = 0
-	for lineNum := e.offsetY; lineNum < e.cursorY && lineNum < e.buffer.LineCount(); lineNum++ {
+	// Calculate cursor's visual row position
+	cursorVisualLine := 0
+	for lineNum := 0; lineNum < e.cursorY && lineNum < e.buffer.LineCount(); lineNum++ {
 		line := e.buffer.Line(lineNum)
-		screenY += wrap.VisualLineCount(line, maxWidth)
+		cursorVisualLine += wrap.VisualLineCount(line, maxWidth)
 	}
 	
 	// Find which wrapped segment contains the cursor
@@ -100,11 +116,14 @@ func (e *Editor) getCursorScreenPos(gutterWidth, maxWidth int) (screenY, screenX
 	for i, seg := range segments {
 		segEndCol := seg.StartCol + len([]rune(seg.Text))
 		if e.cursorX >= seg.StartCol && e.cursorX <= segEndCol {
-			screenY += i
+			cursorVisualLine += i
 			screenX = (e.cursorX - seg.StartCol) + gutterWidth
 			break
 		}
 	}
+	
+	// Convert to screen position relative to visual offset
+	screenY = cursorVisualLine - e.visualOffsetY
 	
 	return screenY, screenX
 }
