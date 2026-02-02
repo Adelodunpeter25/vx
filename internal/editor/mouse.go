@@ -12,9 +12,13 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		if e.preview.IsEnabled() {
 			e.preview.Scroll(-1)
 		} else {
-			// Scroll view up (decrease offsetY)
-			if e.offsetY > 0 {
-				e.offsetY--
+			// Scroll view up by one visual row
+			if e.visualOffsetY > 0 {
+				e.visualOffsetY--
+				// Update offsetY to match
+				gutterWidth := e.getGutterWidth()
+				maxWidth := e.width - gutterWidth
+				e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
 			}
 		}
 		return
@@ -24,28 +28,23 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		if e.preview.IsEnabled() {
 			e.preview.Scroll(1)
 		} else {
-			// Scroll view down (increase offsetY)
-			// Calculate total visual rows and max scroll position
+			// Scroll view down by one visual row
 			gutterWidth := e.getGutterWidth()
 			maxWidth := e.width - gutterWidth
 			contentHeight := e.height - 1
 			
+			// Calculate total visual rows
 			totalVisualRows := 0
 			for i := 0; i < e.buffer.LineCount(); i++ {
 				line := e.buffer.Line(i)
 				totalVisualRows += wrap.VisualLineCount(line, maxWidth)
 			}
 			
-			// Calculate current visual position of offsetY
-			currentVisualOffset := 0
-			for i := 0; i < e.offsetY && i < e.buffer.LineCount(); i++ {
-				line := e.buffer.Line(i)
-				currentVisualOffset += wrap.VisualLineCount(line, maxWidth)
-			}
-			
 			// Only scroll if there's more content below
-			if currentVisualOffset + contentHeight < totalVisualRows {
-				e.offsetY++
+			if e.visualOffsetY + contentHeight < totalVisualRows {
+				e.visualOffsetY++
+				// Update offsetY to match
+				e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
 			}
 		}
 		return
