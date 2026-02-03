@@ -50,7 +50,7 @@ func (p *Preview) Update(buf *buffer.Buffer) {
 }
 
 // Render draws the preview pane
-func (p *Preview) Render(term *terminal.Terminal, startY, height, width int) {
+func (p *Preview) Render(term *terminal.Terminal, startX, startY, height, width int) {
 	if !p.enabled {
 		return
 	}
@@ -61,10 +61,10 @@ func (p *Preview) Render(term *terminal.Terminal, startY, height, width int) {
 		segments := markdown.RenderElement(elem)
 
 		// Draw all segments on the same line
-		x := 0
+		x := startX
 		for _, seg := range segments {
 			for _, r := range seg.Text {
-				if y < startY+height && x < width {
+				if y < startY+height && x < startX+width {
 					term.SetCell(x, y, r, seg.Style)
 					x++
 				}
@@ -75,7 +75,7 @@ func (p *Preview) Render(term *terminal.Terminal, startY, height, width int) {
 
 	// Fill remaining space
 	for y < startY+height {
-		for x := 0; x < width; x++ {
+		for x := startX; x < startX+width; x++ {
 			term.SetCell(x, y, ' ', tcell.StyleDefault)
 		}
 		y++

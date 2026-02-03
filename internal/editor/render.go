@@ -124,7 +124,7 @@ func (e *Editor) renderPane(p *Pane, rect splitpane.Rect, isActive bool) {
 }
 
 func (e *Editor) renderPreviewPane(p *Pane, rect splitpane.Rect) {
-	p.preview.Render(e.term, rect.Y, rect.Height, rect.Width)
+	p.preview.Render(e.term, rect.X, rect.Y, rect.Height, rect.Width)
 }
 
 func (e *Editor) setCellAt(rect splitpane.Rect, x, y int, r rune, style tcell.Style) {
