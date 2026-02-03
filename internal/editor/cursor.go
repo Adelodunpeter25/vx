@@ -1,10 +1,18 @@
 package editor
 
-import "github.com/Adelodunpeter25/vx/internal/wrap"
+import (
+	"unicode/utf8"
+
+	"github.com/Adelodunpeter25/vx/internal/wrap"
+)
+
+func lineRuneCount(line string) int {
+	return utf8.RuneCountInString(line)
+}
 
 func (e *Editor) clampCursor() {
 	line := e.buffer.Line(e.cursorY)
-	maxX := len(line)
+	maxX := lineRuneCount(line)
 	if e.mode == ModeNormal && maxX > 0 {
 		maxX--
 	}
@@ -20,14 +28,14 @@ func (e *Editor) adjustScroll() {
 	contentHeight := e.height - 1
 	gutterWidth := e.getGutterWidth()
 	maxWidth := e.width - gutterWidth
-	
+
 	// Calculate visual line position of cursor
 	cursorVisualLine := 0
 	for lineNum := 0; lineNum < e.cursorY && lineNum < e.buffer.LineCount(); lineNum++ {
 		line := e.buffer.Line(lineNum)
 		cursorVisualLine += wrap.VisualLineCount(line, maxWidth)
 	}
-	
+
 	// Find which wrapped segment contains the cursor
 	currentLine := e.buffer.Line(e.cursorY)
 	segments := wrap.WrapLine(currentLine, e.cursorY, maxWidth)
@@ -38,25 +46,25 @@ func (e *Editor) adjustScroll() {
 			break
 		}
 	}
-	
+
 	// Adjust visual offset to keep cursor visible
 	if cursorVisualLine < e.visualOffsetY {
 		// Cursor above viewport - scroll up
 		e.visualOffsetY = cursorVisualLine
 	}
-	if cursorVisualLine >= e.visualOffsetY + contentHeight {
+	if cursorVisualLine >= e.visualOffsetY+contentHeight {
 		// Cursor below viewport - scroll down
 		e.visualOffsetY = cursorVisualLine - contentHeight + 1
 	}
-	
+
 	// Ensure visual offset doesn't go negative
 	if e.visualOffsetY < 0 {
 		e.visualOffsetY = 0
 	}
-	
+
 	// Convert visual offset to buffer line offset for rendering
 	e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
-	
+
 	// No horizontal scroll needed with wrapping
 	e.offsetX = 0
 }

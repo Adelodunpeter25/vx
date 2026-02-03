@@ -12,19 +12,19 @@ import (
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	// Clear transient messages on any key
 	e.msgManager.ClearIfTransient()
-	
+
 	// If in preview mode, handle preview-specific keys
 	if e.preview.IsEnabled() {
 		e.handlePreviewKeys(ev)
 		return
 	}
-	
+
 	// Ctrl+C force quit
 	if ev.Key == tcell.KeyCtrlC {
 		e.quit = true
 		return
 	}
-	
+
 	// Ctrl+S save
 	if ev.Key == tcell.KeyCtrlS {
 		if e.buffer.Filename() == "" {
@@ -39,7 +39,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		}
 		return
 	}
-	
+
 	// Ctrl+F search
 	if ev.Key == tcell.KeyCtrlF {
 		e.mode = ModeSearch
@@ -48,19 +48,19 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.lastKey = 0
 		return
 	}
-	
+
 	// Ctrl+N next buffer
 	if ev.Key == tcell.KeyCtrlN {
 		e.nextBuffer()
 		return
 	}
-	
+
 	// Ctrl+P previous buffer
 	if ev.Key == tcell.KeyCtrlP {
 		e.previousBuffer()
 		return
 	}
-	
+
 	switch ev.Rune {
 	case 'q':
 		e.quit = true
@@ -174,7 +174,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.lastKey = 0
 	case 'l':
 		line := e.buffer.Line(e.cursorY)
-		if e.cursorX < len(line) {
+		if e.cursorX < lineRuneCount(line) {
 			e.cursorX++
 		}
 		e.adjustScroll()
@@ -184,7 +184,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		// Clear lastKey if any other key is pressed
 		e.lastKey = 0
 	}
-	
+
 	switch ev.Key {
 	case tcell.KeyEscape:
 		e.selection.Clear()
@@ -198,7 +198,7 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.lastKey = 0
 	case tcell.KeyRight:
 		line := e.buffer.Line(e.cursorY)
-		if e.cursorX < len(line) {
+		if e.cursorX < lineRuneCount(line) {
 			e.cursorX++
 		}
 		e.adjustScroll()
@@ -264,7 +264,7 @@ func (e *Editor) handlePreviewKeys(ev *terminal.Event) {
 	case 'q':
 		e.quit = true
 	}
-	
+
 	switch ev.Key {
 	case tcell.KeyDown:
 		e.preview.Scroll(1)
@@ -273,7 +273,7 @@ func (e *Editor) handlePreviewKeys(ev *terminal.Event) {
 	case tcell.KeyCtrlC:
 		e.quit = true
 	}
-	
+
 	// Ensure render is triggered after preview key handling
 	e.renderCache.invalidate()
 }
@@ -294,12 +294,12 @@ func (e *Editor) pasteFromClipboard() {
 		e.msgManager.SetError("Failed to paste from clipboard")
 		return
 	}
-	
+
 	if text == "" {
 		e.msgManager.SetTransient("Clipboard is empty")
 		return
 	}
-	
+
 	// Insert text at cursor position
 	for _, r := range text {
 		if r == '\n' {
@@ -311,7 +311,7 @@ func (e *Editor) pasteFromClipboard() {
 			e.cursorX++
 		}
 	}
-	
+
 	e.adjustScroll()
 	e.msgManager.SetTransient("Pasted from clipboard")
 }
@@ -321,7 +321,7 @@ func (e *Editor) searchNext() {
 		e.msgManager.SetTransient("No search results")
 		return
 	}
-	
+
 	match := e.search.Next()
 	if match != nil {
 		e.cursorY = match.Line
@@ -336,7 +336,7 @@ func (e *Editor) searchPrevious() {
 		e.msgManager.SetTransient("No search results")
 		return
 	}
-	
+
 	match := e.search.Previous()
 	if match != nil {
 		e.cursorY = match.Line

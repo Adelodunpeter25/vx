@@ -1,6 +1,10 @@
 package buffer
 
-import "github.com/Adelodunpeter25/vx/internal/undo"
+import (
+	"unicode/utf8"
+
+	"github.com/Adelodunpeter25/vx/internal/undo"
+)
 
 type Buffer struct {
 	lines      []string
@@ -27,6 +31,13 @@ func (b *Buffer) Line(n int) string {
 		return ""
 	}
 	return b.lines[n]
+}
+
+func (b *Buffer) LineRuneCount(n int) int {
+	if n < 0 || n >= len(b.lines) {
+		return 0
+	}
+	return utf8.RuneCountInString(b.lines[n])
 }
 
 func (b *Buffer) IsModified() bool {

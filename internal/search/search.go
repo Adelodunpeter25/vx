@@ -1,6 +1,9 @@
 package search
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 // Match represents a search match location
 type Match struct {
@@ -37,6 +40,7 @@ func (e *Engine) Search(lines []string, query string) []Match {
 
 	// Case-insensitive search
 	lowerQuery := strings.ToLower(query)
+	queryLen := utf8.RuneCountInString(query)
 
 	for lineNum, line := range lines {
 		lowerLine := strings.ToLower(line)
@@ -46,10 +50,12 @@ func (e *Engine) Search(lines []string, query string) []Match {
 			if idx == -1 {
 				break
 			}
+			byteIdx := col + idx
+			runeIdx := utf8.RuneCountInString(line[:byteIdx])
 			e.matches = append(e.matches, Match{
 				Line: lineNum,
-				Col:  col + idx,
-				Len:  len(query),
+				Col:  runeIdx,
+				Len:  queryLen,
 			})
 			col += idx + 1
 		}

@@ -24,10 +24,11 @@ func GetIndentLevel(line string) int {
 // DrawIndentGuides draws vertical lines at indentation boundaries
 func (e *Editor) drawIndentGuides(y int, line string, maxIndent int, gutterWidth int) {
 	// Draw guides for each indent level
+	runes := []rune(line)
 	for i := 0; i < maxIndent; i++ {
 		x := i * 2 // 2 spaces per indent level
-		if x < len(line) {
-			char := line[x]
+		if x < len(runes) {
+			char := runes[x]
 			// Only draw guide if this position is whitespace
 			if char == ' ' || char == '\t' {
 				style := tcell.StyleDefault.Foreground(tcell.ColorGray).Dim(true)
@@ -44,7 +45,7 @@ func (e *Editor) drawIndentGuides(y int, line string, maxIndent int, gutterWidth
 func (e *Editor) getMaxIndentInView() int {
 	maxIndent := 0
 	contentHeight := e.height - 1
-	
+
 	for i := 0; i < contentHeight; i++ {
 		lineNum := e.offsetY + i
 		if lineNum >= e.buffer.LineCount() {
@@ -56,6 +57,6 @@ func (e *Editor) getMaxIndentInView() int {
 			maxIndent = indent
 		}
 	}
-	
+
 	return maxIndent
 }

@@ -6,18 +6,19 @@ func (e *Editor) findMatchingBracket(line, col int) (int, int) {
 	if line < 0 || line >= e.buffer.LineCount() {
 		return -1, -1
 	}
-	
+
 	currentLine := e.buffer.Line(line)
-	if col < 0 || col >= len(currentLine) {
+	runes := []rune(currentLine)
+	if col < 0 || col >= len(runes) {
 		return -1, -1
 	}
-	
-	char := rune(currentLine[col])
-	
+
+	char := runes[col]
+
 	// Check if current char is a bracket
 	var opening, closing rune
 	var forward bool
-	
+
 	switch char {
 	case '(':
 		opening, closing, forward = '(', ')', true
@@ -34,7 +35,7 @@ func (e *Editor) findMatchingBracket(line, col int) (int, int) {
 	default:
 		return -1, -1
 	}
-	
+
 	if forward {
 		return e.findForwardBracket(line, col, opening, closing)
 	}
@@ -43,17 +44,17 @@ func (e *Editor) findMatchingBracket(line, col int) (int, int) {
 
 func (e *Editor) findForwardBracket(startLine, startCol int, opening, closing rune) (int, int) {
 	depth := 1
-	
+
 	// Start from next character
 	for l := startLine; l < e.buffer.LineCount(); l++ {
-		line := e.buffer.Line(l)
+		line := []rune(e.buffer.Line(l))
 		start := 0
 		if l == startLine {
 			start = startCol + 1
 		}
-		
+
 		for c := start; c < len(line); c++ {
-			char := rune(line[c])
+			char := line[c]
 			if char == opening {
 				depth++
 			} else if char == closing {
@@ -64,23 +65,23 @@ func (e *Editor) findForwardBracket(startLine, startCol int, opening, closing ru
 			}
 		}
 	}
-	
+
 	return -1, -1
 }
 
 func (e *Editor) findBackwardBracket(startLine, startCol int, opening, closing rune) (int, int) {
 	depth := 1
-	
+
 	// Start from previous character
 	for l := startLine; l >= 0; l-- {
-		line := e.buffer.Line(l)
+		line := []rune(e.buffer.Line(l))
 		end := len(line) - 1
 		if l == startLine {
 			end = startCol - 1
 		}
-		
+
 		for c := end; c >= 0; c-- {
-			char := rune(line[c])
+			char := line[c]
 			if char == closing {
 				depth++
 			} else if char == opening {
@@ -91,7 +92,7 @@ func (e *Editor) findBackwardBracket(startLine, startCol int, opening, closing r
 			}
 		}
 	}
-	
+
 	return -1, -1
 }
 
