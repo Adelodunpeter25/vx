@@ -32,6 +32,10 @@ type Pane struct {
 	mouseDownX    int
 	mouseDownY    int
 	mouseDragging bool
+	viewX         int
+	viewY         int
+	viewWidth     int
+	viewHeight    int
 }
 
 func NewPane(buf *buffer.Buffer, filename string) *Pane {

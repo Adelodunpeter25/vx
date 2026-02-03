@@ -8,6 +8,14 @@ import (
 
 func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	p := e.active()
+	paneWidth := p.viewWidth
+	paneHeight := p.viewHeight
+	if paneWidth == 0 {
+		paneWidth = e.width
+	}
+	if paneHeight == 0 {
+		paneHeight = e.height - 1
+	}
 	// Handle scroll wheel
 	if ev.Button == tcell.WheelUp {
 		if p.preview.IsEnabled() {
@@ -17,8 +25,8 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 			if p.visualOffsetY > 0 {
 				p.visualOffsetY--
 				// Update offsetY to match
-				gutterWidth := e.getGutterWidth()
-				maxWidth := e.width - gutterWidth
+				gutterWidth := e.getGutterWidthFor(p)
+				maxWidth := paneWidth - gutterWidth
 				p.offsetY = e.findLineAtVisualRow(p.visualOffsetY, maxWidth)
 			}
 		}
@@ -30,9 +38,9 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 			p.preview.Scroll(1)
 		} else {
 			// Scroll view down by one visual row
-			gutterWidth := e.getGutterWidth()
-			maxWidth := e.width - gutterWidth
-			contentHeight := e.height - 1
+			gutterWidth := e.getGutterWidthFor(p)
+			maxWidth := paneWidth - gutterWidth
+			contentHeight := paneHeight
 
 			// Calculate total visual rows
 			totalVisualRows := 0
@@ -68,14 +76,14 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	mouseX, mouseY := ev.MouseX, ev.MouseY
 
 	// Ensure we're not clicking below the content area (status line)
-	contentHeight := e.height - 1
+	contentHeight := paneHeight
 	if mouseY >= contentHeight {
 		return
 	}
 
 	// Convert screen coordinates to buffer coordinates (accounting for wrapped lines and visual offset)
-	gutterWidth := e.getGutterWidth()
-	maxWidth := e.width - gutterWidth
+	gutterWidth := e.getGutterWidthFor(p)
+	maxWidth := paneWidth - gutterWidth
 
 	if mouseX < gutterWidth {
 		return
@@ -107,7 +115,7 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 
 		// Auto-scroll if dragging near edges
 		if p.selection.IsActive() {
-			contentHeight := e.height - 1
+			contentHeight := paneHeight
 			if mouseY < 2 && p.visualOffsetY > 0 {
 				p.visualOffsetY--
 				p.offsetY = e.findLineAtVisualRow(p.visualOffsetY, maxWidth)

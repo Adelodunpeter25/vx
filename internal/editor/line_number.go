@@ -7,7 +7,13 @@ import (
 )
 
 func (e *Editor) getGutterWidth() int {
-	p := e.active()
+	return e.getGutterWidthFor(e.active())
+}
+
+func (e *Editor) getGutterWidthFor(p *Pane) int {
+	if p == nil {
+		return 2
+	}
 	lineCount := p.buffer.LineCount()
 	return len(fmt.Sprintf("%d", lineCount)) + 1 // +1 for spacing
 }

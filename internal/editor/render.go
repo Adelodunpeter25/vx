@@ -1,38 +1,65 @@
 package editor
 
 import (
+	"fmt"
+
+	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/wrap"
 	"github.com/gdamore/tcell/v2"
 )
 
 func (e *Editor) render() {
-	p := e.active()
 	e.term.Clear()
 
-	// If preview is enabled, show full-screen preview
-	if p.preview.IsEnabled() {
-		previewHeight := e.height - 1 // Reserve 1 line for status
-		p.preview.Update(p.buffer)
-		p.preview.Render(e.term, 0, previewHeight, e.width)
-		e.renderStatusLine()
-		e.term.Show()
+	contentHeight := e.height - 1
+	rects, dividerX := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes))
+	for i, rect := range rects {
+		if i < len(e.panes) {
+			isActive := i == e.activePane
+			e.renderPane(e.panes[i], rect, isActive)
+		}
+	}
+
+	// Draw divider for 2-pane layout
+	if dividerX >= 0 {
+		for y := 0; y < contentHeight; y++ {
+			e.term.SetCell(dividerX, y, '│', tcell.StyleDefault.Foreground(tcell.ColorGray))
+		}
+	}
+
+	e.renderStatusLine()
+	e.term.Show()
+}
+
+func (e *Editor) renderPane(p *Pane, rect splitpane.Rect, isActive bool) {
+	if p == nil {
 		return
 	}
 
-	// Normal editor rendering with line wrapping
-	contentHeight := e.height - 1
-	gutterWidth := e.getGutterWidth()
-	maxWidth := e.width - gutterWidth
+	p.viewX = rect.X
+	p.viewY = rect.Y
+	p.viewWidth = rect.Width
+	p.viewHeight = rect.Height
+
+	// If preview is enabled, show preview within pane rect
+	if p.preview.IsEnabled() {
+		p.preview.Update(p.buffer)
+		e.renderPreviewPane(p, rect)
+		return
+	}
+
+	contentHeight := rect.Height
+	gutterWidth := e.getGutterWidthFor(p)
+	maxWidth := rect.Width - gutterWidth
+	if maxWidth < 1 {
+		return
+	}
+
 	matchLine, matchCol := e.findMatchingBracket(p.cursorY, p.cursorX)
+	cursorScreenY, cursorScreenX := e.getCursorScreenPosFor(p, gutterWidth, maxWidth)
 
-	// Calculate cursor screen position
-	cursorScreenY, cursorScreenX := e.getCursorScreenPos(gutterWidth, maxWidth)
-
-	// Render wrapped lines starting from visualOffsetY
 	screenRow := 0
 	lineNum := p.offsetY
-
-	// Calculate how many visual rows to skip in the first line
 	visualRowsBeforeOffset := 0
 	for i := 0; i < p.offsetY; i++ {
 		line := p.buffer.Line(i)
@@ -45,65 +72,83 @@ func (e *Editor) render() {
 		segments := wrap.WrapLine(line, lineNum, maxWidth)
 
 		for segIdx, seg := range segments {
-			// Skip rows if we're in the first line and need to offset
 			if lineNum == p.offsetY && segIdx < skipRows {
 				continue
 			}
-
 			if screenRow >= contentHeight {
 				break
 			}
 
-			// Render line number only on first visible segment of each line
+			// Line numbers
 			if segIdx == skipRows && lineNum == p.offsetY {
-				e.renderLineNumber(screenRow, lineNum, gutterWidth)
+				e.renderLineNumberAt(rect, screenRow, lineNum, gutterWidth)
 			} else if !seg.IsWrapped && lineNum > p.offsetY {
-				e.renderLineNumber(screenRow, lineNum, gutterWidth)
+				e.renderLineNumberAt(rect, screenRow, lineNum, gutterWidth)
 			}
 
-			// Render the segment
-			e.renderWrappedSegment(screenRow, lineNum, seg, gutterWidth)
+			e.renderWrappedSegmentAt(rect, p, screenRow, lineNum, seg, gutterWidth)
 
-			// Highlight selection if active
 			if p.selection.IsActive() {
-				e.highlightSelection(screenRow, lineNum, seg, gutterWidth)
+				e.highlightSelectionAt(rect, p, screenRow, lineNum, seg, gutterWidth)
 			}
 
-			// Highlight matching bracket if on this line
 			if matchLine == lineNum && matchCol >= seg.StartCol && matchCol < seg.StartCol+len([]rune(seg.Text)) {
-				e.highlightBracketWrapped(matchCol-seg.StartCol, screenRow, gutterWidth, line, matchCol)
+				e.highlightBracketWrappedAt(rect, matchCol-seg.StartCol, screenRow, gutterWidth, line, matchCol)
 			}
 
 			screenRow++
 		}
 		lineNum++
-		skipRows = 0 // Only skip rows in the first line
+		skipRows = 0
 	}
 
 	// Fill remaining rows with ~
 	for screenRow < contentHeight {
-		e.term.DrawText(gutterWidth, screenRow, "~", tcell.StyleDefault.Foreground(tcell.ColorBlue))
+		e.drawTextAt(rect, gutterWidth, screenRow, "~", tcell.StyleDefault.Foreground(tcell.ColorBlue))
 		screenRow++
 	}
 
-	e.renderStatusLine()
-
-	// Position cursor (but not in search mode - cursor position is shown in status bar)
-	if p.mode != ModeSearch && cursorScreenY >= 0 && cursorScreenY < contentHeight && cursorScreenX >= gutterWidth && cursorScreenX < e.width {
-		e.term.SetCell(cursorScreenX, cursorScreenY, ' ', tcell.StyleDefault.Reverse(true))
-
+	// Cursor (only active pane)
+	if isActive && p.mode != ModeSearch && cursorScreenY >= 0 && cursorScreenY < contentHeight && cursorScreenX >= gutterWidth && cursorScreenX < rect.Width {
+		e.setCellAt(rect, cursorScreenX, cursorScreenY, ' ', tcell.StyleDefault.Reverse(true))
 		currentLine := []rune(p.buffer.Line(p.cursorY))
 		if p.cursorX < len(currentLine) && isBracket(currentLine[p.cursorX]) {
 			style := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 200, 0)).Foreground(tcell.ColorBlack).Bold(true)
-			e.term.SetCell(cursorScreenX, cursorScreenY, currentLine[p.cursorX], style)
+			e.setCellAt(rect, cursorScreenX, cursorScreenY, currentLine[p.cursorX], style)
 		}
 	}
+}
 
-	e.term.Show()
+func (e *Editor) renderPreviewPane(p *Pane, rect splitpane.Rect) {
+	p.preview.Render(e.term, rect.Y, rect.Height, rect.Width)
+}
+
+func (e *Editor) setCellAt(rect splitpane.Rect, x, y int, r rune, style tcell.Style) {
+	e.term.SetCell(rect.X+x, rect.Y+y, r, style)
+}
+
+func (e *Editor) drawTextAt(rect splitpane.Rect, x, y int, text string, style tcell.Style) {
+	for i, r := range text {
+		e.setCellAt(rect, x+i, y, r, style)
+	}
+}
+
+func (e *Editor) renderLineNumberAt(rect splitpane.Rect, screenRow, lineNum, gutterWidth int) {
+	style := tcell.StyleDefault.Foreground(tcell.NewRGBColor(100, 100, 100))
+	numStr := fmt.Sprintf("%*d ", gutterWidth-1, lineNum+1)
+	for x, r := range numStr {
+		e.setCellAt(rect, x, screenRow, r, style)
+	}
 }
 
 func (e *Editor) getCursorScreenPos(gutterWidth, maxWidth int) (screenY, screenX int) {
-	p := e.active()
+	return e.getCursorScreenPosFor(e.active(), gutterWidth, maxWidth)
+}
+
+func (e *Editor) getCursorScreenPosFor(p *Pane, gutterWidth, maxWidth int) (screenY, screenX int) {
+	if p == nil {
+		return 0, 0
+	}
 	// Calculate cursor's visual row position
 	cursorVisualLine := 0
 	for lineNum := 0; lineNum < p.cursorY && lineNum < p.buffer.LineCount(); lineNum++ {
@@ -132,6 +177,10 @@ func (e *Editor) getCursorScreenPos(gutterWidth, maxWidth int) (screenY, screenX
 
 func (e *Editor) renderWrappedSegment(screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	p := e.active()
+	e.renderWrappedSegmentAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, p, screenRow, lineNum, seg, gutterWidth)
+}
+
+func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	styledRunes := p.syntax.HighlightLine(lineNum, p.buffer.Line(lineNum), p.buffer)
 
 	runes := []rune(seg.Text)
@@ -144,23 +193,31 @@ func (e *Editor) renderWrappedSegment(screenRow, lineNum int, seg wrap.Line, gut
 			style = styledRunes[bufferCol].Style
 		}
 
-		e.term.SetCell(gutterWidth+i, screenRow, r, style)
+		e.setCellAt(rect, gutterWidth+i, screenRow, r, style)
 	}
 
 	// Highlight search matches
-	e.highlightSearchMatchesWrapped(screenRow, lineNum, seg, gutterWidth)
+	e.highlightSearchMatchesWrappedAt(rect, p, screenRow, lineNum, seg, gutterWidth)
 }
 
 func (e *Editor) highlightBracketWrapped(screenCol, screenRow, gutterWidth int, line string, bufferCol int) {
+	e.highlightBracketWrappedAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, screenCol, screenRow, gutterWidth, line, bufferCol)
+}
+
+func (e *Editor) highlightBracketWrappedAt(rect splitpane.Rect, screenCol, screenRow, gutterWidth int, line string, bufferCol int) {
 	runes := []rune(line)
 	if bufferCol < len(runes) {
 		style := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 200, 0)).Foreground(tcell.ColorBlack).Bold(true)
-		e.term.SetCell(gutterWidth+screenCol, screenRow, runes[bufferCol], style)
+		e.setCellAt(rect, gutterWidth+screenCol, screenRow, runes[bufferCol], style)
 	}
 }
 
 func (e *Editor) highlightSearchMatchesWrapped(screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	p := e.active()
+	e.highlightSearchMatchesWrappedAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, p, screenRow, lineNum, seg, gutterWidth)
+}
+
+func (e *Editor) highlightSearchMatchesWrappedAt(rect splitpane.Rect, p *Pane, screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	if !p.search.HasMatches() {
 		return
 	}
@@ -196,7 +253,7 @@ func (e *Editor) highlightSearchMatchesWrapped(screenRow, lineNum int, seg wrap.
 			bufferCol := match.Col + i
 			if bufferCol >= seg.StartCol && bufferCol < seg.StartCol+len([]rune(seg.Text)) {
 				screenCol := bufferCol - seg.StartCol
-				e.term.SetCell(gutterWidth+screenCol, screenRow, line[bufferCol], style)
+				e.setCellAt(rect, gutterWidth+screenCol, screenRow, line[bufferCol], style)
 			}
 		}
 	}

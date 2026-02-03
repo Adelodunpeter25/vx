@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/gdamore/tcell/v2"
@@ -93,6 +94,27 @@ func (e *Editor) active() *Pane {
 	return e.panes[e.activePane]
 }
 
+func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
+	if len(e.panes) == 0 {
+		return
+	}
+	if ev.MouseY >= e.height-1 {
+		return
+	}
+	contentHeight := e.height - 1
+	rects, _ := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes))
+	for i, rect := range rects {
+		if ev.MouseX >= rect.X && ev.MouseX < rect.X+rect.Width && ev.MouseY >= rect.Y && ev.MouseY < rect.Y+rect.Height {
+			e.activePane = i
+			local := *ev
+			local.MouseX = ev.MouseX - rect.X
+			local.MouseY = ev.MouseY - rect.Y
+			e.handleMouseEvent(&local)
+			return
+		}
+	}
+}
+
 func (e *Editor) Run() error {
 	e.render()
 
@@ -114,7 +136,7 @@ func (e *Editor) handleEvent() {
 	case terminal.EventResize:
 		e.handleResize()
 	case terminal.EventMouse:
-		e.handleMouseEvent(ev)
+		e.handleMouseEventForPane(ev)
 		e.active().renderCache.invalidate()
 		e.render()
 	}

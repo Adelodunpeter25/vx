@@ -1,6 +1,7 @@
 package editor
 
 import (
+	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/wrap"
 	"github.com/gdamore/tcell/v2"
 )
@@ -8,6 +9,10 @@ import (
 // highlightSelection highlights the selected text on the given screen row
 func (e *Editor) highlightSelection(screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	p := e.active()
+	e.highlightSelectionAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, p, screenRow, lineNum, seg, gutterWidth)
+}
+
+func (e *Editor) highlightSelectionAt(rect splitpane.Rect, p *Pane, screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	startLine, startCol, endLine, endCol, ok := p.selection.GetRange()
 	if !ok {
 		return
@@ -53,8 +58,8 @@ func (e *Editor) highlightSelection(screenRow, lineNum int, seg wrap.Line, gutte
 
 	for col := highlightStart; col < highlightEnd && col < len(line); col++ {
 		screenX := gutterWidth + (col - segStart)
-		if screenX >= gutterWidth && screenX < e.width {
-			e.term.SetCell(screenX, screenRow, line[col], selectionStyle)
+		if screenX >= gutterWidth && screenX < rect.Width {
+			e.setCellAt(rect, screenX, screenRow, line[col], selectionStyle)
 		}
 	}
 }
