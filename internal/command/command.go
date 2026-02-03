@@ -16,6 +16,7 @@ type Result struct {
 	SwitchFile   bool
 	AddBuffer    bool
 	DeleteBuffer bool
+	ToggleFiles  bool
 }
 
 func Execute(cmd string, buf *buffer.Buffer) Result {
@@ -58,6 +59,10 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 		return Result{Quit: true, Message: msg}
 	
 	default:
+		if cmd == "f" {
+			return Result{ToggleFiles: true}
+		}
+
 		if cmd == "db" {
 			return Result{DeleteBuffer: true}
 		}

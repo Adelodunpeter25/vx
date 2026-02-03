@@ -352,6 +352,18 @@ func (e *Editor) previewFileInActivePane(path string) {
 	p.renderCache.invalidate()
 }
 
+func (e *Editor) toggleFileBrowser() {
+	if e.fileBrowser == nil {
+		e.fileBrowser = filebrowser.New("")
+	}
+	e.fileBrowser.Open = !e.fileBrowser.Open
+	if e.fileBrowser.Open {
+		e.fileBrowser.Focused = true
+	} else {
+		e.fileBrowser.Focused = false
+	}
+}
+
 func (e *Editor) ensurePaneCount() {
 	if len(e.panes) == 0 {
 		buf := buffer.New()

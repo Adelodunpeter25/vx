@@ -38,6 +38,8 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 				p.commandBuf = ""
 				return
 			}
+		} else if result.ToggleFiles {
+			e.toggleFileBrowser()
 		} else if result.SwitchFile && result.NewBuffer != nil {
 			// Handle file switching (replace current buffer)
 			p.buffer = result.NewBuffer
