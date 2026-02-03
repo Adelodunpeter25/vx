@@ -7,6 +7,7 @@ import (
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
 	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -34,6 +35,10 @@ func (e *Editor) previewFileInActivePane(path string) {
 	p := e.active()
 	if p.buffer.IsModified() {
 		p.msgManager.SetError("No write since last change (use :e! to override)")
+		return
+	}
+	if isBinary, err := utils.IsBinaryFile(path); err == nil && isBinary {
+		p.msgManager.SetTransient("Binary file: preview disabled")
 		return
 	}
 	newBuf, err := buffer.Load(path)

@@ -187,7 +187,7 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 		if e.handleBrowserResizeDrag(ev, fbWidth) {
 			return
 		}
-		contentX = fbWidth
+		contentX = fbWidth + 1
 		contentWidth = e.width - contentX
 	}
 	rects, dividerX := splitpane.LayoutSideBySide(contentWidth, contentHeight, len(e.panes), e.splitRatio)
