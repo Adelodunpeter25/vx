@@ -108,25 +108,25 @@ func (e *Editor) renderFileInfo(y int, style tcell.Style, modeWidth int) {
 	info := filename + modified
 	e.term.DrawText(modeWidth+1, y, info, style)
 
-	// Show buffer count and cursor position
+	// Show pane count and cursor position
 	e.renderRightInfo(y, style)
 }
 
 func (e *Editor) renderRightInfo(y int, style tcell.Style) {
-	// Show buffer count if multiple buffers
-	if e.active().bufferMgr.Count() > 1 {
+	// Show pane count if multiple panes
+	if len(e.panes) > 1 {
 		p := e.active()
-		bufInfo := fmt.Sprintf(" Buffer %d/%d ", p.bufferMgr.CurrentIndex(), p.bufferMgr.Count())
-		bufInfoX := e.width - len(bufInfo)
+		paneInfo := fmt.Sprintf(" Pane %d/%d ", e.activePane+1, len(e.panes))
+		paneInfoX := e.width - len(paneInfo)
 
 		// Don't show cursor position in preview mode
 		if !p.preview.IsEnabled() {
 			pos := fmt.Sprintf(" %d,%d ", p.cursorY+1, p.cursorX+1)
-			bufInfoX -= len(pos)
+			paneInfoX -= len(pos)
 			e.term.DrawText(e.width-len(pos), y, pos, style)
 		}
 
-		e.term.DrawText(bufInfoX, y, bufInfo, style)
+		e.term.DrawText(paneInfoX, y, paneInfo, style)
 	} else {
 		// Don't show cursor position in preview mode
 		p := e.active()

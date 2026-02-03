@@ -105,6 +105,42 @@ func (e *Editor) addPaneWithBuffer(buf *buffer.Buffer, filename string) {
 	e.activePane = len(e.panes) - 1
 }
 
+func (e *Editor) nextPane() {
+	if len(e.panes) <= 1 {
+		return
+	}
+	e.activePane = (e.activePane + 1) % len(e.panes)
+}
+
+func (e *Editor) previousPane() {
+	if len(e.panes) <= 1 {
+		return
+	}
+	e.activePane = (e.activePane - 1 + len(e.panes)) % len(e.panes)
+}
+
+func (e *Editor) deleteCurrentPane() {
+	p := e.active()
+	if p == nil {
+		return
+	}
+	if len(e.panes) == 1 {
+		p.msgManager.SetTransient("Cannot close last pane")
+		return
+	}
+	if p.buffer.IsModified() {
+		p.mode = ModeBufferPrompt
+		p.msgManager.SetPersistent("Save changes? [y/n]")
+		p.renderCache.invalidate()
+		return
+	}
+	e.panes = append(e.panes[:e.activePane], e.panes[e.activePane+1:]...)
+	if e.activePane >= len(e.panes) {
+		e.activePane = len(e.panes) - 1
+	}
+	e.active().msgManager.SetTransient("Pane closed")
+}
+
 func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 	if len(e.panes) == 0 {
 		return

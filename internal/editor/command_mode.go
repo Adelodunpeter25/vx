@@ -32,7 +32,7 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 		if result.AddBuffer && result.NewBuffer != nil {
 			e.addPaneWithBuffer(result.NewBuffer, result.NewBuffer.Filename())
 		} else if result.DeleteBuffer {
-			e.deleteCurrentBuffer()
+			e.deleteCurrentPane()
 			// If we're in prompt mode, don't reset to normal
 			if p.mode == ModeBufferPrompt {
 				p.commandBuf = ""

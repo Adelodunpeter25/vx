@@ -2,7 +2,6 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
-	"github.com/Adelodunpeter25/vx/internal/buffers"
 	"github.com/Adelodunpeter25/vx/internal/preview"
 	"github.com/Adelodunpeter25/vx/internal/replace"
 	"github.com/Adelodunpeter25/vx/internal/search"
@@ -11,7 +10,6 @@ import (
 )
 
 type Pane struct {
-	bufferMgr     *buffers.Manager
 	buffer        *buffer.Buffer
 	syntax        *syntax.Engine
 	search        *search.Engine
@@ -39,11 +37,9 @@ type Pane struct {
 }
 
 func NewPane(buf *buffer.Buffer, filename string) *Pane {
-	bufMgr := buffers.New(buf, filename)
 	return &Pane{
-		bufferMgr:   bufMgr,
 		buffer:      buf,
-		syntax:      bufMgr.Current().Syntax,
+		syntax:      syntax.New(filename),
 		search:      search.New(),
 		replace:     replace.New(),
 		preview:     preview.New(),

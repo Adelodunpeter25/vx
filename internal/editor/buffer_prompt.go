@@ -23,18 +23,26 @@ func (e *Editor) handleBufferPromptMode(ev *tcell.EventKey) {
 				p.msgManager.SetError(utils.FormatSaveError(p.buffer.Filename(), err))
 				p.mode = ModeNormal
 			} else {
-				p.bufferMgr.Delete()
-				e.switchToBuffer()
-				p.msgManager.SetTransient("Buffer saved and closed")
+				e.panes = append(e.panes[:e.activePane], e.panes[e.activePane+1:]...)
+				if e.activePane >= len(e.panes) {
+					e.activePane = len(e.panes) - 1
+				}
+				if e.active() != nil {
+					e.active().msgManager.SetTransient("Pane saved and closed")
+				}
 				p.mode = ModeNormal
 			}
 			p.renderCache.invalidate()
 
 		case 'n', 'N':
 			// Close without saving
-			p.bufferMgr.Delete()
-			e.switchToBuffer()
-			p.msgManager.SetTransient("Buffer closed without saving")
+			e.panes = append(e.panes[:e.activePane], e.panes[e.activePane+1:]...)
+			if e.activePane >= len(e.panes) {
+				e.activePane = len(e.panes) - 1
+			}
+			if e.active() != nil {
+				e.active().msgManager.SetTransient("Pane closed without saving")
+			}
 			p.mode = ModeNormal
 			p.renderCache.invalidate()
 		}

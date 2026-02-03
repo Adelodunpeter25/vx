@@ -52,13 +52,13 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 
 	// Ctrl+N next buffer
 	if ev.Key == tcell.KeyCtrlN {
-		e.nextBuffer()
+		e.nextPane()
 		return
 	}
 
 	// Ctrl+P previous buffer
 	if ev.Key == tcell.KeyCtrlP {
-		e.previousBuffer()
+		e.previousPane()
 		return
 	}
 
