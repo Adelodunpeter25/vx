@@ -32,7 +32,8 @@ type State struct {
 }
 
 type Action struct {
-	OpenPath string
+	OpenPath    string
+	PreviewPath string
 }
 
 func New(root string) *State {
@@ -276,7 +277,7 @@ func (s *State) HandleMouse(ev *terminal.Event, x, y, width, height int) Action 
 		return Action{}
 	}
 	s.selected = idx
-	return s.activateSelection(nodes)
+	return s.previewSelection(nodes)
 }
 
 func (s *State) activateSelection(nodes []*Node) Action {
@@ -289,6 +290,18 @@ func (s *State) activateSelection(nodes []*Node) Action {
 		return Action{}
 	}
 	return Action{OpenPath: node.Path}
+}
+
+func (s *State) previewSelection(nodes []*Node) Action {
+	if s.selected < 0 || s.selected >= len(nodes) {
+		return Action{}
+	}
+	node := nodes[s.selected]
+	if node.IsDir {
+		node.Expanded = !node.Expanded
+		return Action{}
+	}
+	return Action{PreviewPath: node.Path}
 }
 
 func padRight(s string, width int) string {

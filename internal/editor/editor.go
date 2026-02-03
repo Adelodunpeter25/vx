@@ -168,6 +168,9 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 		if ev.MouseX < fbWidth && ev.MouseY < contentHeight {
 			e.fileBrowser.Focused = true
 			action := e.fileBrowser.HandleMouse(ev, 0, 0, fbWidth, contentHeight)
+			if action.PreviewPath != "" {
+				e.previewFileInActivePane(action.PreviewPath)
+			}
 			if action.OpenPath != "" {
 				e.openFileInActivePane(action.OpenPath)
 			}
@@ -280,6 +283,9 @@ func (e *Editor) handleResize() {
 func (e *Editor) handleKey(ev *terminal.Event) {
 	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
 		action := e.fileBrowser.HandleKey(ev)
+		if action.PreviewPath != "" {
+			e.previewFileInActivePane(action.PreviewPath)
+		}
 		if action.OpenPath != "" {
 			e.openFileInActivePane(action.OpenPath)
 		}
@@ -309,6 +315,25 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 }
 
 func (e *Editor) openFileInActivePane(path string) {
+	p := e.active()
+	if p.buffer.IsModified() {
+		p.msgManager.SetError("No write since last change (use :e! to override)")
+		return
+	}
+	newBuf, err := buffer.Load(path)
+	if err != nil {
+		p.msgManager.SetError("Error: " + err.Error())
+		return
+	}
+	p.buffer = newBuf
+	p.syntax = syntax.New(newBuf.Filename())
+	p.cursorX = 0
+	p.cursorY = 0
+	p.offsetY = 0
+	p.renderCache.invalidate()
+}
+
+func (e *Editor) previewFileInActivePane(path string) {
 	p := e.active()
 	if p.buffer.IsModified() {
 		p.msgManager.SetError("No write since last change (use :e! to override)")
