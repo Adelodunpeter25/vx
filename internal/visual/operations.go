@@ -58,7 +58,8 @@ func (s *Selection) DeleteSelectedText(buf *buffer.Buffer) {
 	if startLine == endLine {
 		// Delete characters from startCol to endCol
 		for i := startCol; i < endCol; i++ {
-			buf.DeleteRune(startLine, startCol)
+			// DeleteRune expects a 1-based column (backspace semantics).
+			buf.DeleteRune(startLine, startCol+1)
 		}
 		return
 	}
@@ -67,20 +68,22 @@ func (s *Selection) DeleteSelectedText(buf *buffer.Buffer) {
 	// Delete from startCol to end of first line
 	firstLine := []rune(buf.Line(startLine))
 	for i := startCol; i < len(firstLine); i++ {
-		buf.DeleteRune(startLine, startCol)
+		// DeleteRune expects a 1-based column (backspace semantics).
+		buf.DeleteRune(startLine, startCol+1)
 	}
-	
+
 	// Delete middle lines (from end to start to avoid index shifting)
 	for i := endLine - 1; i > startLine; i-- {
 		buf.DeleteLine(i)
 	}
-	
+
 	// Delete from start of last line to endCol (now it's startLine+1)
 	lastLine := []rune(buf.Line(startLine + 1))
 	for i := 0; i < endCol && i < len(lastLine); i++ {
-		buf.DeleteRune(startLine + 1, 0)
+		// DeleteRune expects a 1-based column (backspace semantics).
+		buf.DeleteRune(startLine+1, 1)
 	}
-	
+
 	// Join the lines
 	buf.JoinLine(startLine)
 }
