@@ -16,7 +16,7 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	if paneHeight == 0 {
 		paneHeight = e.height - 1
 	}
-	if ev.MouseX < 0 || ev.MouseX >= paneWidth {
+	if ev.MouseX < 0 || ev.MouseX >= paneWidth || ev.MouseY < 0 || ev.MouseY >= paneHeight {
 		return
 	}
 	// Handle scroll wheel

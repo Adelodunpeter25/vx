@@ -156,6 +156,7 @@ func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int) bool {
 			return true
 		}
 		e.splitRatio = float64(left) / float64(available)
+		e.active().renderCache.invalidate()
 		return true
 	}
 	return false
@@ -171,6 +172,7 @@ func (e *Editor) Run() error {
 }
 
 func (e *Editor) handleEvent() {
+	e.ensurePaneCount()
 	ev := e.term.ReadEvent()
 	if ev == nil {
 		return
@@ -219,4 +221,13 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 	}
 	e.active().renderCache.invalidate()
 	e.render()
+}
+
+func (e *Editor) ensurePaneCount() {
+	if len(e.panes) == 0 {
+		buf := buffer.New()
+		pane := NewPane(buf, "")
+		e.panes = []*Pane{pane}
+		e.activePane = 0
+	}
 }

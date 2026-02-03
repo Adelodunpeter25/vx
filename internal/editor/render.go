@@ -22,8 +22,12 @@ func (e *Editor) render() {
 
 	// Draw divider for 2-pane layout
 	if dividerX >= 0 {
+		style := tcell.StyleDefault.Foreground(tcell.ColorGray)
+		if e.dragSplit {
+			style = style.Bold(true)
+		}
 		for y := 0; y < contentHeight; y++ {
-			e.term.SetCell(dividerX, y, '│', tcell.StyleDefault.Foreground(tcell.ColorGray))
+			e.term.SetCell(dividerX, y, '│', style)
 		}
 	}
 
