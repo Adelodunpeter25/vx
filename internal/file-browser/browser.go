@@ -83,7 +83,6 @@ func (s *State) appendVisible(out *[]*Node, node *Node, depth int) {
 	if node == nil {
 		return
 	}
-	node.Name = node.Name
 	*out = append(*out, node)
 	if node.IsDir && node.Expanded {
 		if !node.Loaded {
@@ -148,6 +147,7 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 	if len(nodes) == 0 {
 		return
 	}
+	s.clampScroll(len(nodes), height)
 	if s.selected < s.scroll {
 		s.scroll = s.selected
 	}
@@ -263,10 +263,14 @@ func (s *State) HandleMouse(ev *terminal.Event, x, y, width, height int) Action 
 		if s.scroll > 0 {
 			s.scroll--
 		}
+		nodes := s.Visible()
+		s.clampScroll(len(nodes), height)
 		return Action{}
 	}
 	if ev.Button == tcell.WheelDown {
 		s.scroll++
+		nodes := s.Visible()
+		s.clampScroll(len(nodes), height)
 		return Action{}
 	}
 
@@ -302,6 +306,22 @@ func (s *State) previewSelection(nodes []*Node) Action {
 		return Action{}
 	}
 	return Action{PreviewPath: node.Path}
+}
+
+func (s *State) clampScroll(nodesLen int, height int) {
+	if height < 1 {
+		height = 1
+	}
+	maxScroll := nodesLen - height
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	if s.scroll < 0 {
+		s.scroll = 0
+	}
+	if s.scroll > maxScroll {
+		s.scroll = maxScroll
+	}
 }
 
 func padRight(s string, width int) string {
