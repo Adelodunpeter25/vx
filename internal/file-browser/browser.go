@@ -29,6 +29,7 @@ type State struct {
 
 	selected int
 	scroll   int
+	showHidden bool
 }
 
 type Action struct {
@@ -125,7 +126,7 @@ func (s *State) loadChildren(node *Node) {
 	children := make([]*Node, 0, len(entries))
 	for _, ent := range entries {
 		name := ent.Name()
-		if strings.HasPrefix(name, ".") {
+		if strings.HasPrefix(name, ".") && !s.showHidden {
 			continue
 		}
 		path := filepath.Join(node.Path, name)
@@ -145,6 +146,15 @@ func (s *State) loadChildren(node *Node) {
 	})
 	node.Children = children
 	node.Loaded = true
+}
+
+func (s *State) SetShowHidden(show bool) {
+	s.showHidden = show
+	if s.Root != nil {
+		s.Root.Loaded = false
+		s.loadChildren(s.Root)
+		s.Root.Expanded = true
+	}
 }
 
 func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {

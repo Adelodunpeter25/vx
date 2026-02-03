@@ -17,6 +17,8 @@ type Result struct {
 	AddBuffer    bool
 	DeleteBuffer bool
 	ToggleFiles  bool
+	ShowHidden   bool
+	HideHidden   bool
 }
 
 func Execute(cmd string, buf *buffer.Buffer) Result {
@@ -61,6 +63,12 @@ func Execute(cmd string, buf *buffer.Buffer) Result {
 	default:
 		if cmd == "f" {
 			return Result{ToggleFiles: true}
+		}
+		if cmd == "set:show-hidden" {
+			return Result{ShowHidden: true}
+		}
+		if cmd == "set:hide-hidden" {
+			return Result{HideHidden: true}
 		}
 
 		if cmd == "db" {

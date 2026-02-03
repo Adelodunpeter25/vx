@@ -48,6 +48,10 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 			}
 		} else if result.ToggleFiles {
 			e.toggleFileBrowser()
+		} else if result.ShowHidden {
+			e.setFileBrowserHidden(true)
+		} else if result.HideHidden {
+			e.setFileBrowserHidden(false)
 		} else if result.SwitchFile && result.NewBuffer != nil {
 			// Handle file switching (replace current buffer)
 			p.buffer = result.NewBuffer

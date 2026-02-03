@@ -73,9 +73,9 @@ func (e *Editor) renderNormalStatus(y int, style tcell.Style) {
 	} else {
 		mode = e.active().mode.String()
 	}
-	focus := "EDITOR"
+	focus := "Editor"
 	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
-		focus = "FILES"
+		focus = "Files"
 	}
 	prefix := " " + mode + " | " + focus + " "
 	e.term.DrawText(0, y, prefix, style)

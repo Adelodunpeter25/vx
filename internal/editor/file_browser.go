@@ -135,3 +135,15 @@ func (e *Editor) handleCdPrompt(ev *terminal.Event) {
 		e.active().mode = ModeNormal
 	}
 }
+
+func (e *Editor) setFileBrowserHidden(show bool) {
+	if e.fileBrowser == nil {
+		e.fileBrowser = filebrowser.New("")
+	}
+	e.fileBrowser.SetShowHidden(show)
+	if show {
+		e.active().msgManager.SetTransient("Hidden files: show")
+	} else {
+		e.active().msgManager.SetTransient("Hidden files: hide")
+	}
+}
