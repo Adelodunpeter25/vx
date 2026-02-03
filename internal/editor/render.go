@@ -12,7 +12,7 @@ func (e *Editor) render() {
 	e.term.Clear()
 
 	contentHeight := e.height - 1
-	rects, dividerX := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes))
+	rects, dividerX := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes), e.splitRatio)
 	for i, rect := range rects {
 		if i < len(e.panes) {
 			isActive := i == e.activePane

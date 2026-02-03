@@ -14,6 +14,8 @@ type Editor struct {
 	height     int
 	panes      []*Pane
 	activePane int
+	splitRatio float64
+	dragSplit  bool
 	quit       bool
 }
 
@@ -27,6 +29,7 @@ func New(term *terminal.Terminal) *Editor {
 		height:     height,
 		panes:      []*Pane{pane},
 		activePane: 0,
+		splitRatio: 0.5,
 	}
 }
 
@@ -45,6 +48,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				height:     height,
 				panes:      []*Pane{pane},
 				activePane: 0,
+				splitRatio: 0.5,
 			}
 			return ed, nil
 		}
@@ -59,6 +63,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		height:     height,
 		panes:      []*Pane{pane},
 		activePane: 0,
+		splitRatio: 0.5,
 	}
 
 	// Show file info message on load
@@ -102,7 +107,12 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 		return
 	}
 	contentHeight := e.height - 1
-	rects, _ := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes))
+	rects, dividerX := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes), e.splitRatio)
+	if len(rects) >= 2 && dividerX >= 0 {
+		if e.handleSplitterDrag(ev, dividerX) {
+			return
+		}
+	}
 	for i, rect := range rects {
 		if ev.MouseX >= rect.X && ev.MouseX < rect.X+rect.Width && ev.MouseY >= rect.Y && ev.MouseY < rect.Y+rect.Height {
 			e.activePane = i
@@ -113,6 +123,42 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 			return
 		}
 	}
+}
+
+func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int) bool {
+	if ev.Button == tcell.Button1 && abs(ev.MouseX-dividerX) <= 1 {
+		e.dragSplit = true
+	}
+	if ev.Button == tcell.ButtonNone && e.dragSplit {
+		e.dragSplit = false
+		return true
+	}
+	if e.dragSplit {
+		width := e.width
+		if width <= 0 {
+			return true
+		}
+		minLeft := 10
+		minRight := 10
+		maxLeft := width - 1 - minRight
+		if maxLeft < minLeft {
+			maxLeft = minLeft
+		}
+		left := ev.MouseX
+		if left < minLeft {
+			left = minLeft
+		}
+		if left > maxLeft {
+			left = maxLeft
+		}
+		available := width - 1
+		if available <= 0 {
+			return true
+		}
+		e.splitRatio = float64(left) / float64(available)
+		return true
+	}
+	return false
 }
 
 func (e *Editor) Run() error {

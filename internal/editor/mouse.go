@@ -16,6 +16,9 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	if paneHeight == 0 {
 		paneHeight = e.height - 1
 	}
+	if ev.MouseX < 0 || ev.MouseX >= paneWidth {
+		return
+	}
 	// Handle scroll wheel
 	if ev.Button == tcell.WheelUp {
 		if p.preview.IsEnabled() {
