@@ -23,7 +23,7 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		}
 		return
 	}
-	
+
 	if ev.Button == tcell.WheelDown {
 		if e.preview.IsEnabled() {
 			e.preview.Scroll(1)
@@ -32,16 +32,16 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 			gutterWidth := e.getGutterWidth()
 			maxWidth := e.width - gutterWidth
 			contentHeight := e.height - 1
-			
+
 			// Calculate total visual rows
 			totalVisualRows := 0
 			for i := 0; i < e.buffer.LineCount(); i++ {
 				line := e.buffer.Line(i)
 				totalVisualRows += wrap.VisualLineCount(line, maxWidth)
 			}
-			
+
 			// Only scroll if there's more content below
-			if e.visualOffsetY + contentHeight < totalVisualRows {
+			if e.visualOffsetY+contentHeight < totalVisualRows {
 				e.visualOffsetY++
 				// Update offsetY to match
 				e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
@@ -49,71 +49,39 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		}
 		return
 	}
-	
+
 	// Don't handle clicks in preview mode
 	if e.preview.IsEnabled() {
 		return
 	}
-	
+
 	// Only handle left click for positioning and selection
 	if ev.Button != tcell.Button1 && ev.Button != tcell.ButtonNone {
 		return
 	}
-	
+
 	// Detect button state change
 	buttonPressed := ev.Button == tcell.Button1
 	buttonReleased := ev.Button == tcell.ButtonNone && e.mouseDragging
-	
+
 	mouseX, mouseY := ev.MouseX, ev.MouseY
-	
+
 	// Ensure we're not clicking below the content area (status line)
 	contentHeight := e.height - 1
 	if mouseY >= contentHeight {
 		return
 	}
-	
+
 	// Convert screen coordinates to buffer coordinates (accounting for wrapped lines and visual offset)
 	gutterWidth := e.getGutterWidth()
 	maxWidth := e.width - gutterWidth
-	
+
 	if mouseX < gutterWidth {
 		return
 	}
-	
-	// Calculate the visual row that was clicked (accounting for visual offset)
-	clickedVisualRow := e.visualOffsetY + mouseY
-	
-	// Find which buffer line and column corresponds to this visual row
-	currentVisualRow := 0
-	bufferY := 0
-	bufferX := mouseX - gutterWidth
-	
-	for bufferY < e.buffer.LineCount() {
-		line := e.buffer.Line(bufferY)
-		segments := wrap.WrapLine(line, bufferY, maxWidth)
-		
-		for _, seg := range segments {
-			if currentVisualRow == clickedVisualRow {
-				// Found the line - calculate column within this segment
-				bufferX = seg.StartCol + (mouseX - gutterWidth)
-				// Clamp to segment bounds
-				segLen := len([]rune(seg.Text))
-				if bufferX > seg.StartCol + segLen {
-					bufferX = seg.StartCol + segLen
-				}
-				goto found
-			}
-			currentVisualRow++
-		}
-		bufferY++
-	}
-	
-found:
-	// Ensure click is within buffer bounds
-	if bufferY >= e.buffer.LineCount() {
-		bufferY = e.buffer.LineCount() - 1
-	}
-	
+
+	bufferY, bufferX := e.bufferPosFromScreen(mouseX, mouseY, gutterWidth, maxWidth)
+
 	// Check if button is pressed or released
 	if buttonPressed {
 		// Button is pressed/held
@@ -123,65 +91,39 @@ found:
 			e.mouseDownY = mouseY
 			e.mouseDragging = true
 		}
-		
+
 		// Check if mouse moved enough to start selection
 		if e.mouseDragging && !e.selection.IsActive() && (abs(mouseX-e.mouseDownX) > 1 || abs(mouseY-e.mouseDownY) > 0) {
 			// Mouse moved - start selection from original down position
-			// Convert mouseDown position to buffer coordinates
-			screenRow := 0
-			startBufferY := e.offsetY
-			startBufferX := e.mouseDownX - gutterWidth
-			
-			for startBufferY < e.buffer.LineCount() {
-				line := e.buffer.Line(startBufferY)
-				lineVisualRows := wrap.VisualLineCount(line, maxWidth)
-				
-				if screenRow+lineVisualRows > e.mouseDownY {
-					segmentIndex := e.mouseDownY - screenRow
-					startBufferX = segmentIndex*maxWidth + (e.mouseDownX - gutterWidth)
-					break
-				}
-				
-				screenRow += lineVisualRows
-				startBufferY++
-			}
-			
-			if startBufferY >= e.buffer.LineCount() {
-				startBufferY = e.buffer.LineCount() - 1
-			}
-			
+			startBufferY, startBufferX := e.bufferPosFromScreen(e.mouseDownX, e.mouseDownY, gutterWidth, maxWidth)
 			e.selection.Start(startBufferY, startBufferX)
 		}
-		
+
 		// Update selection if active
 		if e.selection.IsActive() {
 			e.selection.Update(bufferY, bufferX)
 		}
-		
+
 		// Auto-scroll if dragging near edges
 		if e.selection.IsActive() {
 			contentHeight := e.height - 1
-			if mouseY < 2 && e.offsetY > 0 {
-				e.offsetY--
-			} else if mouseY > contentHeight - 3 {
+			if mouseY < 2 && e.visualOffsetY > 0 {
+				e.visualOffsetY--
+				e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
+			} else if mouseY > contentHeight-3 {
 				totalVisualRows := 0
 				for i := 0; i < e.buffer.LineCount(); i++ {
 					line := e.buffer.Line(i)
 					totalVisualRows += wrap.VisualLineCount(line, maxWidth)
 				}
-				
-				currentVisualOffset := 0
-				for i := 0; i < e.offsetY && i < e.buffer.LineCount(); i++ {
-					line := e.buffer.Line(i)
-					currentVisualOffset += wrap.VisualLineCount(line, maxWidth)
-				}
-				
-				if currentVisualOffset + contentHeight < totalVisualRows {
-					e.offsetY++
+
+				if e.visualOffsetY+contentHeight < totalVisualRows {
+					e.visualOffsetY++
+					e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
 				}
 			}
 		}
-		
+
 		e.cursorY = bufferY
 		e.cursorX = bufferX
 		e.clampCursor()
@@ -196,9 +138,39 @@ found:
 		// Reset drag state
 		e.mouseDragging = false
 	}
-	
+
 	// Don't call adjustScroll here - let cursor stay where it is
 	// Only adjust scroll when cursor moves via keyboard
+}
+
+func (e *Editor) bufferPosFromScreen(mouseX, mouseY, gutterWidth, maxWidth int) (bufferY, bufferX int) {
+	clickedVisualRow := e.visualOffsetY + mouseY
+	currentVisualRow := 0
+	bufferY = 0
+	bufferX = mouseX - gutterWidth
+
+	for bufferY < e.buffer.LineCount() {
+		line := e.buffer.Line(bufferY)
+		segments := wrap.WrapLine(line, bufferY, maxWidth)
+
+		for _, seg := range segments {
+			if currentVisualRow == clickedVisualRow {
+				bufferX = seg.StartCol + (mouseX - gutterWidth)
+				segLen := len([]rune(seg.Text))
+				if bufferX > seg.StartCol+segLen {
+					bufferX = seg.StartCol + segLen
+				}
+				return bufferY, bufferX
+			}
+			currentVisualRow++
+		}
+		bufferY++
+	}
+
+	if bufferY >= e.buffer.LineCount() {
+		bufferY = e.buffer.LineCount() - 1
+	}
+	return bufferY, bufferX
 }
 
 func abs(x int) int {

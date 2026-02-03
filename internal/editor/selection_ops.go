@@ -8,7 +8,7 @@ func (e *Editor) copySelection() {
 	if text == "" {
 		return
 	}
-	
+
 	err := clipboard.Copy(text)
 	if err != nil {
 		e.msgManager.SetError("Failed to copy selection")
@@ -24,28 +24,43 @@ func (e *Editor) cutSelection() {
 	if text == "" {
 		return
 	}
-	
+
 	// Copy to clipboard
 	err := clipboard.Copy(text)
 	if err != nil {
 		e.msgManager.SetError("Failed to cut selection")
 		return
 	}
-	
+
 	// Get selection range for cursor positioning
 	startLine, startCol, _, _, ok := e.selection.GetRange()
 	if !ok {
 		return
 	}
-	
+
 	// Delete the selected text
 	e.selection.DeleteSelectedText(e.buffer)
-	
+
 	// Position cursor at start of selection
 	e.cursorY = startLine
 	e.cursorX = startCol
 	e.clampCursor()
-	
+
 	e.msgManager.SetTransient("Selection cut")
 	e.selection.Clear()
+}
+
+// deleteSelection deletes the selected text without touching the clipboard
+func (e *Editor) deleteSelection() {
+	startLine, startCol, _, _, ok := e.selection.GetRange()
+	if !ok {
+		return
+	}
+	e.selection.DeleteSelectedText(e.buffer)
+	e.cursorY = startLine
+	e.cursorX = startCol
+	e.clampCursor()
+	e.adjustScroll()
+	e.selection.Clear()
+	e.msgManager.SetTransient("Selection deleted")
 }

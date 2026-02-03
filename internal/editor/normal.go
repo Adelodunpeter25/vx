@@ -189,6 +189,11 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case tcell.KeyEscape:
 		e.selection.Clear()
 		e.lastKey = 0
+	case tcell.KeyBackspace, tcell.KeyBackspace2:
+		if e.selection.IsActive() {
+			e.deleteSelection()
+		}
+		e.lastKey = 0
 	case tcell.KeyLeft:
 		if e.cursorX > 0 {
 			e.cursorX--
