@@ -108,6 +108,8 @@ vx --version          # Show version
 - `:b filename` - Open file in new pane
 - `:db` - Close current pane (prompts to save if modified)
 - `:f` - Toggle file browser sidebar
+- `:set:show-hidden` - Show hidden files in file browser
+- `:set:hide-hidden` - Hide hidden files in file browser
 
 ### Markdown Preview
 - `p` - Toggle preview (in .md files(normal mode))

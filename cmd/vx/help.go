@@ -46,6 +46,8 @@ func printHelp() {
 	println("  :b filename          Open file in new pane")
 	println("  :db                  Close current pane")
 	println("  :f                   Toggle file browser sidebar")
+	println("  :set:show-hidden     Show hidden files in file browser")
+	println("  :set:hide-hidden     Hide hidden files in file browser")
 	println("")
 	println("MARKDOWN PREVIEW:")
 	println("  p                    Toggle preview (in .md files)")
