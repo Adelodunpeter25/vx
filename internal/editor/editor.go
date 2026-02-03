@@ -18,6 +18,7 @@ type Editor struct {
 	activePane  int
 	splitRatio  float64
 	dragSplit   bool
+	dragBrowser bool
 	fileBrowser *filebrowser.State
 	quit        bool
 }
@@ -165,6 +166,11 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 		if fbWidth > e.width-10 {
 			fbWidth = e.width - 10
 		}
+		if e.dragBrowser {
+			if e.handleBrowserResizeDrag(ev, fbWidth) {
+				return
+			}
+		}
 		if ev.MouseX < fbWidth && ev.MouseY < contentHeight {
 			e.fileBrowser.Focused = true
 			action := e.fileBrowser.HandleMouse(ev, 0, 0, fbWidth, contentHeight)
@@ -174,6 +180,9 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 			if action.OpenPath != "" {
 				e.openFileInActivePane(action.OpenPath)
 			}
+			return
+		}
+		if e.handleBrowserResizeDrag(ev, fbWidth) {
 			return
 		}
 		contentX = fbWidth
@@ -235,6 +244,36 @@ func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int, contentX i
 			return true
 		}
 		e.splitRatio = float64(left) / float64(available)
+		e.active().renderCache.invalidate()
+		return true
+	}
+	return false
+}
+
+func (e *Editor) handleBrowserResizeDrag(ev *terminal.Event, dividerX int) bool {
+	if ev.Button == tcell.Button1 && abs(ev.MouseX-dividerX) <= 1 {
+		e.dragBrowser = true
+	}
+	if ev.Button == tcell.ButtonNone && e.dragBrowser {
+		e.dragBrowser = false
+		return true
+	}
+	if e.dragBrowser {
+		minWidth := 10
+		maxWidth := e.width - 10
+		if maxWidth < minWidth {
+			maxWidth = minWidth
+		}
+		newWidth := ev.MouseX
+		if newWidth < minWidth {
+			newWidth = minWidth
+		}
+		if newWidth > maxWidth {
+			newWidth = maxWidth
+		}
+		if e.fileBrowser != nil {
+			e.fileBrowser.Width = newWidth
+		}
 		e.active().renderCache.invalidate()
 		return true
 	}

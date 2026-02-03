@@ -22,6 +22,16 @@ func (e *Editor) render() {
 			e.fileBrowser.Width = e.width - 10
 		}
 		e.fileBrowser.Render(e.term, 0, 0, e.fileBrowser.Width, contentHeight)
+		dividerStyle := tcell.StyleDefault.Foreground(tcell.ColorWhite)
+		if e.dragBrowser {
+			dividerStyle = dividerStyle.Bold(true)
+		}
+		dividerX := e.fileBrowser.Width
+		if dividerX >= 0 && dividerX < e.width {
+			for y := 0; y < contentHeight; y++ {
+				e.term.SetCell(dividerX, y, '│', dividerStyle)
+			}
+		}
 		contentX = e.fileBrowser.Width
 		contentWidth = e.width - contentX
 	}
