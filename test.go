@@ -3,8 +3,62 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 )
+
+type Address struct {
+	Street  string
+	City    string
+	Country string
+	ZipCode string
+}
+
+type Person struct {
+	Name    string
+	Age     int
+	Email   string
+	Address Address
+}
+
+type Shape interface {
+	Area() float64
+	Perimeter() float64
+}
+
+type Rectangle struct {
+	Width  float64
+	Height float64
+}
+
+func (r Rectangle) Area() float64 {
+	return r.Width * r.Height
+}
+
+func (r Rectangle) Perimeter() float64 {
+	return 2 * (r.Width + r.Height)
+}
+
+type Circle struct {
+	Radius float64
+}
+
+func (c Circle) Area() float64 {
+	return 3.14159 * c.Radius * c.Radius
+}
+
+func (c Circle) Perimeter() float64 {
+	return 2 * 3.14159 * c.Radius
+}
+
+type CustomError struct {
+	Code    int
+	Message string
+}
+
+func (e *CustomError) Error() string {
+	return fmt.Sprintf("Error %d: %s", e.Code, e.Message)
+}
 
 // This is a large test file to stress test the vx editor performance
 // It contains ~1000 lines with various line lengths to test:
@@ -95,20 +149,6 @@ func testMaps() {
 }
 
 func testStructs() {
-	type Person struct {
-		Name    string
-		Age     int
-		Email   string
-		Address Address
-	}
-	
-	type Address struct {
-		Street  string
-		City    string
-		Country string
-		ZipCode string
-	}
-	
 	people := []Person{
 		{
 			Name:  "Alice Johnson",
@@ -159,36 +199,6 @@ func testStructs() {
 }
 
 func testInterfaces() {
-	type Shape interface {
-		Area() float64
-		Perimeter() float64
-	}
-	
-	type Rectangle struct {
-		Width  float64
-		Height float64
-	}
-	
-	func (r Rectangle) Area() float64 {
-		return r.Width * r.Height
-	}
-	
-	func (r Rectangle) Perimeter() float64 {
-		return 2 * (r.Width + r.Height)
-	}
-	
-	type Circle struct {
-		Radius float64
-	}
-	
-	func (c Circle) Area() float64 {
-		return 3.14159 * c.Radius * c.Radius
-	}
-	
-	func (c Circle) Perimeter() float64 {
-		return 2 * 3.14159 * c.Radius
-	}
-	
 	shapes := []Shape{
 		Rectangle{Width: 10, Height: 5},
 		Circle{Radius: 7},
@@ -323,15 +333,6 @@ func testErrorHandling() {
 	}
 	
 	// Custom errors
-	type CustomError struct {
-		Code    int
-		Message string
-	}
-	
-	func (e *CustomError) Error() string {
-		return fmt.Sprintf("Error %d: %s", e.Code, e.Message)
-	}
-	
 	err = &CustomError{Code: 404, Message: "Not Found"}
 	fmt.Println(err)
 }
