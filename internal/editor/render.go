@@ -14,8 +14,14 @@ func (e *Editor) render() {
 
 	contentHeight := e.height - 1
 	cdPromptActive := e.active() != nil && e.active().mode == ModeCdPrompt
-	if cdPromptActive && contentHeight > 1 {
-		contentHeight--
+	cdPromptRows := 0
+	if cdPromptActive {
+		cdPromptRows = 4
+		if contentHeight > cdPromptRows {
+			contentHeight -= cdPromptRows
+		} else {
+			contentHeight = 1
+		}
 	}
 	contentX := 0
 	contentWidth := e.width
@@ -62,7 +68,11 @@ func (e *Editor) render() {
 
 	e.renderStatusLine()
 	if cdPromptActive {
-		filebrowser.RenderCdPrompt(e.term, e.cdPrompt, e.width, e.height-2, e.height-1)
+		promptY := e.height - 1 - cdPromptRows
+		if promptY < 0 {
+			promptY = 0
+		}
+		filebrowser.RenderCdPrompt(e.term, e.cdPrompt, e.width, promptY, promptY+1, cdPromptRows-1)
 	}
 	e.term.Show()
 }

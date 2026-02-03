@@ -7,7 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-func RenderCdPrompt(term *terminal.Terminal, prompt *CdPrompt, width int, promptY int, suggestY int) {
+func RenderCdPrompt(term *terminal.Terminal, prompt *CdPrompt, width int, promptY int, suggestY int, suggestRows int) {
 	if term == nil || prompt == nil || width <= 0 {
 		return
 	}
@@ -16,7 +16,9 @@ func RenderCdPrompt(term *terminal.Terminal, prompt *CdPrompt, width int, prompt
 
 	for x := 0; x < width; x++ {
 		term.SetCell(x, promptY, ' ', promptStyle)
-		term.SetCell(x, suggestY, ' ', suggestStyle)
+		for row := 0; row < suggestRows; row++ {
+			term.SetCell(x, suggestY+row, ' ', suggestStyle)
+		}
 	}
 
 	line, cursorX := prompt.RenderLine(width)
@@ -27,12 +29,28 @@ func RenderCdPrompt(term *terminal.Terminal, prompt *CdPrompt, width int, prompt
 	}
 
 	suggestions := prompt.Suggestions()
-	if len(suggestions) == 0 {
+	if len(suggestions) == 0 || suggestRows <= 0 {
 		return
 	}
 	text := strings.Join(suggestions, " ")
-	if len(text) > width {
-		text = text[:width]
+	lines := wrapText(text, width, suggestRows)
+	for i, line := range lines {
+		term.DrawText(0, suggestY+i, padRight(line, width), suggestStyle)
 	}
-	term.DrawText(0, suggestY, padRight(text, width), suggestStyle)
+}
+
+func wrapText(text string, width int, rows int) []string {
+	if width <= 0 || rows <= 0 || text == "" {
+		return nil
+	}
+	var lines []string
+	for len(text) > 0 && len(lines) < rows {
+		if len(text) <= width {
+			lines = append(lines, text)
+			break
+		}
+		lines = append(lines, text[:width])
+		text = text[width:]
+	}
+	return lines
 }

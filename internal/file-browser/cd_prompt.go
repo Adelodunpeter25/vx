@@ -39,7 +39,7 @@ func (c *CdPrompt) HandleKey(ev *terminal.Event) CdAction {
 	case tcell.KeyEnter:
 		return CdAction{Apply: true, Path: c.Value}
 	case tcell.KeyBackspace, tcell.KeyBackspace2:
-		c.Value = deletePathSegment(c.Value)
+		c.Value = deletePathCharOrSegment(c.Value)
 		c.suggestions = nil
 		return CdAction{}
 	case tcell.KeyTab:
@@ -106,7 +106,7 @@ func (c *CdPrompt) complete() {
 	}
 	if len(matches) == 1 {
 		c.suggestions = nil
-		c.Value = filepath.Join(displayBase, matches[0])
+		c.Value = filepath.Join(displayBase, matches[0]) + string(os.PathSeparator)
 		return
 	}
 	c.suggestions = matches
@@ -138,13 +138,16 @@ func ExpandHome(path string) string {
 	return path
 }
 
-func deletePathSegment(path string) string {
+func deletePathCharOrSegment(path string) string {
 	if path == "" {
 		return ""
 	}
 	trimmed := strings.TrimRight(path, string(os.PathSeparator))
 	if trimmed == "" {
 		return string(os.PathSeparator)
+	}
+	if len(path) > 0 && !strings.HasSuffix(path, string(os.PathSeparator)) {
+		return path[:len(path)-1]
 	}
 	dir := filepath.Dir(trimmed)
 	if dir == "." {
