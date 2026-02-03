@@ -993,4 +993,4 @@ func testMutex() {
 	fmt.Printf("Final counter value: %d\n", counter)
 }
 
-// End of test file - this should be around 1000 lines
+// End of test file - this should be around 1000 line

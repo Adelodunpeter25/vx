@@ -25,7 +25,10 @@ func runeIndexToByteIndex(s string, col int) int {
 }
 
 func (b *Buffer) InsertRune(line, col int, r rune) {
-	if line < 0 || line >= len(b.lines) {
+	if line < 0 {
+		return
+	}
+	if line >= len(b.lines) {
 		return
 	}
 
@@ -49,7 +52,10 @@ func (b *Buffer) InsertRune(line, col int, r rune) {
 }
 
 func (b *Buffer) DeleteRune(line, col int) {
-	if line < 0 || line >= len(b.lines) {
+	if line < 0 {
+		return
+	}
+	if line >= len(b.lines) {
 		return
 	}
 
@@ -77,7 +83,10 @@ func (b *Buffer) DeleteRune(line, col int) {
 }
 
 func (b *Buffer) InsertLine(line int) {
-	if line < 0 || line > len(b.lines) {
+	if line < 0 {
+		return
+	}
+	if line > len(b.lines) {
 		return
 	}
 
@@ -92,7 +101,10 @@ func (b *Buffer) InsertLine(line int) {
 }
 
 func (b *Buffer) DeleteLine(line int) {
-	if line < 0 || line >= len(b.lines) || len(b.lines) == 1 {
+	if line < 0 {
+		return
+	}
+	if line >= len(b.lines) || len(b.lines) == 1 {
 		return
 	}
 
@@ -108,7 +120,10 @@ func (b *Buffer) DeleteLine(line int) {
 }
 
 func (b *Buffer) SplitLine(line, col int) {
-	if line < 0 || line >= len(b.lines) {
+	if line < 0 {
+		return
+	}
+	if line >= len(b.lines) {
 		return
 	}
 
@@ -132,7 +147,10 @@ func (b *Buffer) SplitLine(line, col int) {
 }
 
 func (b *Buffer) JoinLine(line int) {
-	if line < 0 || line >= len(b.lines)-1 {
+	if line < 0 {
+		return
+	}
+	if line >= len(b.lines)-1 {
 		return
 	}
 

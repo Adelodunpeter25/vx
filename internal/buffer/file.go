@@ -15,13 +15,13 @@ func Load(filename string) (*Buffer, error) {
 	if err != nil && !os.IsNotExist(err) {
 		return nil, utils.NewFileError("load", filename, err)
 	}
-	
+
 	if tooLarge {
-		return nil, utils.NewFileError("load", filename, 
-			fmt.Errorf("file too large (%d MB), maximum is %d MB", 
+		return nil, utils.NewFileError("load", filename,
+			fmt.Errorf("file too large (%d MB), maximum is %d MB",
 				size/(1024*1024), utils.MaxFileSize/(1024*1024)))
 	}
-	
+
 	file, err := os.Open(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -39,16 +39,44 @@ func Load(filename string) (*Buffer, error) {
 		undoStack: undo.NewStack(),
 	}
 
+	useLazy, err := utils.ShouldUseLazyLoad(filename)
+	if err == nil && useLazy {
+		reader, err := utils.NewLazyFileReader(filename)
+		if err != nil {
+			return nil, utils.NewFileError("load", filename, err)
+		}
+		if reader.TotalCount() > utils.MaxLines {
+			_ = reader.Close()
+			return nil, utils.NewFileError("load", filename,
+				fmt.Errorf("too many lines (%d), maximum is %d", reader.TotalCount(), utils.MaxLines))
+		}
+		chunk, err := reader.LoadChunk()
+		if err != nil {
+			_ = reader.Close()
+			return nil, utils.NewFileError("load", filename, err)
+		}
+		if len(chunk) == 0 {
+			b.lines = []string{""}
+			b.totalLines = 1
+			_ = reader.Close()
+			return b, nil
+		}
+		b.lines = append(b.lines, chunk...)
+		b.lazy = reader
+		b.totalLines = reader.TotalCount()
+		return b, nil
+	}
+
 	scanner := bufio.NewScanner(file)
 	lineCount := 0
-	
+
 	for scanner.Scan() {
 		lineCount++
 		if lineCount > utils.MaxLines {
-			return nil, utils.NewFileError("load", filename, 
+			return nil, utils.NewFileError("load", filename,
 				fmt.Errorf("too many lines (%d), maximum is %d", lineCount, utils.MaxLines))
 		}
-		
+
 		// Validate and clean UTF-8
 		line := scanner.Text()
 		line = utils.ValidateUTF8(line)
@@ -59,7 +87,8 @@ func Load(filename string) (*Buffer, error) {
 		// Try to recover - return what we loaded so far
 		if len(b.lines) > 0 {
 			b.modified = true
-			return b, utils.NewFileError("load", filename, 
+			b.totalLines = len(b.lines)
+			return b, utils.NewFileError("load", filename,
 				fmt.Errorf("partial load: %v", err))
 		}
 		return nil, utils.NewFileError("load", filename, err)
@@ -67,8 +96,11 @@ func Load(filename string) (*Buffer, error) {
 
 	if len(b.lines) == 0 {
 		b.lines = []string{""}
+		b.totalLines = 1
+		return b, nil
 	}
 
+	b.totalLines = len(b.lines)
 	return b, nil
 }
 
@@ -76,7 +108,8 @@ func (b *Buffer) Save() error {
 	if b.filename == "" {
 		return fmt.Errorf("no filename set")
 	}
-	
+	b.ensureAllLoaded()
+
 	file, err := os.Create(b.filename)
 	if err != nil {
 		return utils.NewFileError("save", b.filename, err)
@@ -94,7 +127,7 @@ func (b *Buffer) Save() error {
 			return utils.NewFileError("save", b.filename, err)
 		}
 	}
-	
+
 	if err := writer.Flush(); err != nil {
 		return utils.NewFileError("save", b.filename, err)
 	}
@@ -108,7 +141,7 @@ func (b *Buffer) GetFileSize() (int64, error) {
 	if b.filename == "" {
 		return 0, nil
 	}
-	
+
 	info, err := os.Stat(b.filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -116,6 +149,6 @@ func (b *Buffer) GetFileSize() (int64, error) {
 		}
 		return 0, err
 	}
-	
+
 	return info.Size(), nil
 }
