@@ -11,8 +11,8 @@ func RenderCdPrompt(term *terminal.Terminal, prompt *CdPrompt, width int, prompt
 	if term == nil || prompt == nil || width <= 0 {
 		return
 	}
-	promptStyle := tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorLightBlue)
-	suggestStyle := tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorSilver)
+	promptStyle := tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorBlack)
+	suggestStyle := tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorBlack)
 
 	for x := 0; x < width; x++ {
 		term.SetCell(x, promptY, ' ', promptStyle)

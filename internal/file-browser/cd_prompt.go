@@ -58,9 +58,6 @@ func (c *CdPrompt) Render(width int) string {
 		return ""
 	}
 	prefix := " cd " + c.Value
-	if len(c.suggestions) > 0 {
-		prefix += "  [" + strings.Join(c.suggestions, " ") + "]"
-	}
 	if len(prefix) > width {
 		return prefix[:width]
 	}
