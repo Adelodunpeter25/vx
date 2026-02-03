@@ -157,7 +157,10 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 	}
 	for i, rect := range rects {
 		if ev.MouseX >= rect.X && ev.MouseX < rect.X+rect.Width && ev.MouseY >= rect.Y && ev.MouseY < rect.Y+rect.Height {
-			e.activePane = i
+			// Focus only on click or scroll, not on hover/move.
+			if ev.Button == tcell.Button1 || ev.Button == tcell.WheelUp || ev.Button == tcell.WheelDown {
+				e.activePane = i
+			}
 			local := *ev
 			local.MouseX = ev.MouseX - rect.X
 			local.MouseY = ev.MouseY - rect.Y
