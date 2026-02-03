@@ -30,7 +30,7 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 
 		// Handle buffer operations
 		if result.AddBuffer && result.NewBuffer != nil {
-			e.addBuffer(result.NewBuffer, result.NewBuffer.Filename())
+			e.addPaneWithBuffer(result.NewBuffer, result.NewBuffer.Filename())
 		} else if result.DeleteBuffer {
 			e.deleteCurrentBuffer()
 			// If we're in prompt mode, don't reset to normal

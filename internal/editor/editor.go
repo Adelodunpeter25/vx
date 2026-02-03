@@ -99,6 +99,12 @@ func (e *Editor) active() *Pane {
 	return e.panes[e.activePane]
 }
 
+func (e *Editor) addPaneWithBuffer(buf *buffer.Buffer, filename string) {
+	pane := NewPane(buf, filename)
+	e.panes = append(e.panes, pane)
+	e.activePane = len(e.panes) - 1
+}
+
 func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 	if len(e.panes) == 0 {
 		return
