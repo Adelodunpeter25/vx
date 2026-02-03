@@ -15,3 +15,7 @@ func (t *Terminal) DrawText(x, y int, text string, style tcell.Style) {
 func (t *Terminal) DrawLine(y int, text string, style tcell.Style) {
 	t.DrawText(0, y, text, style)
 }
+
+func (t *Terminal) ScreenContent(x, y int) (rune, []rune, tcell.Style, int) {
+	return t.screen.GetContent(x, y)
+}

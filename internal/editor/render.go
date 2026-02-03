@@ -3,6 +3,7 @@ package editor
 import (
 	"fmt"
 
+	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/wrap"
 	"github.com/gdamore/tcell/v2"
@@ -12,6 +13,10 @@ func (e *Editor) render() {
 	e.term.Clear()
 
 	contentHeight := e.height - 1
+	cdPromptActive := e.active() != nil && e.active().mode == ModeCdPrompt
+	if cdPromptActive && contentHeight > 1 {
+		contentHeight--
+	}
 	contentX := 0
 	contentWidth := e.width
 	if e.fileBrowser != nil && e.fileBrowser.Open {
@@ -56,6 +61,9 @@ func (e *Editor) render() {
 	}
 
 	e.renderStatusLine()
+	if cdPromptActive {
+		filebrowser.RenderCdPrompt(e.term, e.cdPrompt, e.width, e.height-2, e.height-1)
+	}
 	e.term.Show()
 }
 

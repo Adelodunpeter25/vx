@@ -67,6 +67,22 @@ func (c *CdPrompt) Render(width int) string {
 	return padRight(prefix, width)
 }
 
+func (c *CdPrompt) RenderLine(width int) (string, int) {
+	prefix := " cd " + c.Value
+	if len(prefix) > width {
+		prefix = prefix[:width]
+	}
+	cursorX := len(prefix)
+	if cursorX >= width {
+		cursorX = width - 1
+	}
+	return padRight(prefix, width), cursorX
+}
+
+func (c *CdPrompt) Suggestions() []string {
+	return c.suggestions
+}
+
 func (c *CdPrompt) complete() {
 	base, partial, displayBase := splitPath(c.Value)
 	entries, err := os.ReadDir(base)
