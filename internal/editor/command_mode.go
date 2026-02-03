@@ -48,6 +48,7 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 			p.cursorY = 0
 			p.offsetY = 0
 			p.renderCache.invalidate()
+			e.showFileInfo()
 		}
 
 		if result.Error != nil {

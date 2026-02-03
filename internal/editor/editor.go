@@ -372,6 +372,7 @@ func (e *Editor) openFileInActivePane(path string) {
 	p.cursorY = 0
 	p.offsetY = 0
 	p.renderCache.invalidate()
+	e.showFileInfo()
 }
 
 func (e *Editor) previewFileInActivePane(path string) {
@@ -391,6 +392,7 @@ func (e *Editor) previewFileInActivePane(path string) {
 	p.cursorY = 0
 	p.offsetY = 0
 	p.renderCache.invalidate()
+	e.showFileInfo()
 }
 
 func (e *Editor) toggleFileBrowser() {
