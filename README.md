@@ -6,7 +6,7 @@ A modern vi text editor written in Go with syntax highlighting, search, undo/red
 
 - **Modal Editing** - Classic vi-style normal, insert, and command modes
 - **Syntax Highlighting** - Support for 200+ languages via Chroma
-- **Multiple Buffers** - Open and switch between multiple files
+- **Split Panes** - Side-by-side panes for editing multiple files
 - **Mouse Selection** - Click and drag to select text, copy with `c`, cut with `x`
 - **Real-time Search** - Incremental search with live highlighting as you type
 - **Find & Replace** - Interactive replace with y/n confirmation for each match
@@ -71,8 +71,8 @@ vx --version          # Show version
 - `gg` - Jump to start of file
 - `G` - Jump to end of file
 - `Ctrl+S` - Save file
-- `Ctrl+N` - Next buffer
-- `Ctrl+P` - Previous buffer
+- `Ctrl+N` - Next pane
+- `Ctrl+P` - Previous pane
 - `Esc` - Clear selection
 - `q` - Quit
 - `Ctrl+C` - Force quit
@@ -103,9 +103,9 @@ vx --version          # Show version
 - `:q` - Quit
 - `:q!` - Force quit without saving
 - `:wq` - Save and quit
-- `:e filename` - Edit new file (replace current buffer)
-- `:b filename` - Open file in new buffer
-- `:db` - Close current buffer (prompts to save if modified)
+- `:e filename` - Edit new file (replace current pane)
+- `:b filename` - Open file in new pane
+- `:db` - Close current pane (prompts to save if modified)
 
 ### Markdown Preview
 - `p` - Toggle preview (in .md files(normal mode))
