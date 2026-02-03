@@ -6,11 +6,12 @@ import (
 )
 
 func (e *Editor) handleBufferPromptMode(ev *tcell.EventKey) {
+	p := e.active()
 	switch ev.Key() {
 	case tcell.KeyEscape:
-		e.mode = ModeNormal
-		e.msgManager.Clear()
-		e.renderCache.invalidate()
+		p.mode = ModeNormal
+		p.msgManager.Clear()
+		p.renderCache.invalidate()
 		return
 
 	case tcell.KeyRune:
@@ -18,24 +19,24 @@ func (e *Editor) handleBufferPromptMode(ev *tcell.EventKey) {
 		switch r {
 		case 'y', 'Y':
 			// Save and close buffer
-			if err := e.buffer.Save(); err != nil {
-				e.msgManager.SetError(utils.FormatSaveError(e.buffer.Filename(), err))
-				e.mode = ModeNormal
+			if err := p.buffer.Save(); err != nil {
+				p.msgManager.SetError(utils.FormatSaveError(p.buffer.Filename(), err))
+				p.mode = ModeNormal
 			} else {
-				e.bufferMgr.Delete()
+				p.bufferMgr.Delete()
 				e.switchToBuffer()
-				e.msgManager.SetTransient("Buffer saved and closed")
-				e.mode = ModeNormal
+				p.msgManager.SetTransient("Buffer saved and closed")
+				p.mode = ModeNormal
 			}
-			e.renderCache.invalidate()
+			p.renderCache.invalidate()
 
 		case 'n', 'N':
 			// Close without saving
-			e.bufferMgr.Delete()
+			p.bufferMgr.Delete()
 			e.switchToBuffer()
-			e.msgManager.SetTransient("Buffer closed without saving")
-			e.mode = ModeNormal
-			e.renderCache.invalidate()
+			p.msgManager.SetTransient("Buffer closed without saving")
+			p.mode = ModeNormal
+			p.renderCache.invalidate()
 		}
 	}
 }

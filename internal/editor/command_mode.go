@@ -11,63 +11,64 @@ import (
 )
 
 func (e *Editor) handleCommandMode(ev *terminal.Event) {
+	p := e.active()
 	if ev.Key == tcell.KeyEscape {
-		e.mode = ModeNormal
-		e.commandBuf = ""
-		e.msgManager.Clear()
+		p.mode = ModeNormal
+		p.commandBuf = ""
+		p.msgManager.Clear()
 		return
 	}
-	
+
 	if ev.Key == tcell.KeyEnter {
 		// Show "Saving..." for write commands
-		if strings.HasPrefix(e.commandBuf, "w") {
-			e.msgManager.SetPersistent("Saving...")
+		if strings.HasPrefix(p.commandBuf, "w") {
+			p.msgManager.SetPersistent("Saving...")
 			e.render()
 		}
-		
-		result := command.Execute(e.commandBuf, e.buffer)
-		
+
+		result := command.Execute(p.commandBuf, p.buffer)
+
 		// Handle buffer operations
 		if result.AddBuffer && result.NewBuffer != nil {
 			e.addBuffer(result.NewBuffer, result.NewBuffer.Filename())
 		} else if result.DeleteBuffer {
 			e.deleteCurrentBuffer()
 			// If we're in prompt mode, don't reset to normal
-			if e.mode == ModeBufferPrompt {
-				e.commandBuf = ""
+			if p.mode == ModeBufferPrompt {
+				p.commandBuf = ""
 				return
 			}
 		} else if result.SwitchFile && result.NewBuffer != nil {
 			// Handle file switching (replace current buffer)
-			e.buffer = result.NewBuffer
-			e.syntax = syntax.New(result.NewBuffer.Filename())
-			e.cursorX = 0
-			e.cursorY = 0
-			e.offsetY = 0
-			e.renderCache.invalidate()
+			p.buffer = result.NewBuffer
+			p.syntax = syntax.New(result.NewBuffer.Filename())
+			p.cursorX = 0
+			p.cursorY = 0
+			p.offsetY = 0
+			p.renderCache.invalidate()
 		}
-		
+
 		if result.Error != nil {
-			e.msgManager.SetError(utils.FormatUserError(result.Error))
+			p.msgManager.SetError(utils.FormatUserError(result.Error))
 		} else if result.Message != "" {
-			e.msgManager.SetPersistent(result.Message)
+			p.msgManager.SetPersistent(result.Message)
 		}
 		if result.Quit {
 			e.quit = true
 		}
-		e.mode = ModeNormal
-		e.commandBuf = ""
+		p.mode = ModeNormal
+		p.commandBuf = ""
 		return
 	}
-	
+
 	if ev.Key == tcell.KeyBackspace || ev.Key == tcell.KeyBackspace2 {
-		if len(e.commandBuf) > 0 {
-			e.commandBuf = e.commandBuf[:len(e.commandBuf)-1]
+		if len(p.commandBuf) > 0 {
+			p.commandBuf = p.commandBuf[:len(p.commandBuf)-1]
 		}
 		return
 	}
-	
+
 	if ev.Rune != 0 {
-		e.commandBuf += string(ev.Rune)
+		p.commandBuf += string(ev.Rune)
 	}
 }

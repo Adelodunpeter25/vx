@@ -7,22 +7,23 @@ import (
 
 // highlightSelection highlights the selected text on the given screen row
 func (e *Editor) highlightSelection(screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
-	startLine, startCol, endLine, endCol, ok := e.selection.GetRange()
+	p := e.active()
+	startLine, startCol, endLine, endCol, ok := p.selection.GetRange()
 	if !ok {
 		return
 	}
-	
+
 	// Check if this line is within selection range
 	if lineNum < startLine || lineNum > endLine {
 		return
 	}
-	
+
 	// Calculate which part of this segment is selected
 	segStart := seg.StartCol
 	segEnd := seg.StartCol + len([]rune(seg.Text))
-	
+
 	var highlightStart, highlightEnd int
-	
+
 	if lineNum == startLine && lineNum == endLine {
 		// Selection is on single line
 		highlightStart = max(startCol, segStart)
@@ -40,16 +41,16 @@ func (e *Editor) highlightSelection(screenRow, lineNum int, seg wrap.Line, gutte
 		highlightStart = segStart
 		highlightEnd = segEnd
 	}
-	
+
 	// Only highlight if there's overlap with this segment
 	if highlightStart >= segEnd || highlightEnd <= segStart {
 		return
 	}
-	
+
 	// Apply highlight style to selected characters
 	selectionStyle := tcell.StyleDefault.Background(tcell.ColorGray).Foreground(tcell.ColorBlack)
-	line := []rune(e.buffer.Line(lineNum))
-	
+	line := []rune(p.buffer.Line(lineNum))
+
 	for col := highlightStart; col < highlightEnd && col < len(line); col++ {
 		screenX := gutterWidth + (col - segStart)
 		if screenX >= gutterWidth && screenX < e.width {

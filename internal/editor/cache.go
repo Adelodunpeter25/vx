@@ -19,23 +19,23 @@ func newRenderCache() *RenderCache {
 	}
 }
 
-func (rc *RenderCache) hasChanged(e *Editor) bool {
+func (rc *RenderCache) hasChanged(p *Pane, width, height int) bool {
 	if rc.needsRedraw {
 		return true
 	}
-	
-	if rc.cursorX != e.cursorX || rc.cursorY != e.cursorY {
+
+	if rc.cursorX != p.cursorX || rc.cursorY != p.cursorY {
 		return true
 	}
-	
-	if rc.offsetY != e.offsetY {
+
+	if rc.offsetY != p.offsetY {
 		return true
 	}
-	
-	if rc.width != e.width || rc.height != e.height {
+
+	if rc.width != width || rc.height != height {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -48,12 +48,12 @@ func (rc *RenderCache) updateLine(lineNum int, content string) {
 	rc.lines[lineNum] = content
 }
 
-func (rc *RenderCache) update(e *Editor) {
-	rc.cursorX = e.cursorX
-	rc.cursorY = e.cursorY
-	rc.offsetY = e.offsetY
-	rc.width = e.width
-	rc.height = e.height
+func (rc *RenderCache) update(p *Pane, width, height int) {
+	rc.cursorX = p.cursorX
+	rc.cursorY = p.cursorY
+	rc.offsetY = p.offsetY
+	rc.width = width
+	rc.height = height
 	rc.needsRedraw = false
 }
 

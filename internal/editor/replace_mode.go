@@ -6,51 +6,52 @@ import (
 )
 
 func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
-	state := e.replace.GetState()
+	p := e.active()
+	state := p.replace.GetState()
 
 	switch ev.Key() {
 	case tcell.KeyEscape:
-		e.replace.Cancel()
-		e.mode = ModeNormal
-		e.msgManager.Clear()
-		e.renderCache.invalidate()
+		p.replace.Cancel()
+		p.mode = ModeNormal
+		p.msgManager.Clear()
+		p.renderCache.invalidate()
 		return
 
 	case tcell.KeyEnter:
 		if state == replace.StateSearchInput {
 			// Perform search using existing search engine
-			lines := make([]string, e.buffer.LineCount())
-			for i := 0; i < e.buffer.LineCount(); i++ {
-				lines[i] = e.buffer.Line(i)
+			lines := make([]string, p.buffer.LineCount())
+			for i := 0; i < p.buffer.LineCount(); i++ {
+				lines[i] = p.buffer.Line(i)
 			}
-			matches := e.search.Search(lines, e.replace.GetSearchTerm())
-			e.replace.ConfirmSearch(matches)
+			matches := p.search.Search(lines, p.replace.GetSearchTerm())
+			p.replace.ConfirmSearch(matches)
 			if len(matches) == 0 {
-				e.msgManager.SetTransient("No matches found")
-				e.mode = ModeNormal
-				e.replace.Cancel()
+				p.msgManager.SetTransient("No matches found")
+				p.mode = ModeNormal
+				p.replace.Cancel()
 			}
-			e.renderCache.invalidate()
+			p.renderCache.invalidate()
 		} else if state == replace.StateReplaceInput {
 			// Start confirmation
-			e.replace.ConfirmReplace()
-			match := e.replace.GetCurrentMatch()
+			p.replace.ConfirmReplace()
+			match := p.replace.GetCurrentMatch()
 			if match != nil {
-				e.cursorY = match.Line
-				e.cursorX = match.Col
+				p.cursorY = match.Line
+				p.cursorX = match.Col
 				e.adjustScroll()
 			}
-			e.renderCache.invalidate()
+			p.renderCache.invalidate()
 		}
 		return
 
 	case tcell.KeyBackspace, tcell.KeyBackspace2:
 		if state == replace.StateSearchInput {
-			e.replace.BackspaceSearch()
+			p.replace.BackspaceSearch()
 		} else if state == replace.StateReplaceInput {
-			e.replace.BackspaceReplace()
+			p.replace.BackspaceReplace()
 		}
-		e.renderCache.invalidate()
+		p.renderCache.invalidate()
 		return
 
 	case tcell.KeyRune:
@@ -61,67 +62,67 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 			switch r {
 			case 'y':
 				// Replace current match
-				match := e.replace.GetCurrentMatch()
+				match := p.replace.GetCurrentMatch()
 				if match != nil {
 					// Delete old text and insert new text
-					searchLen := len(e.replace.GetSearchTerm())
-					
+					searchLen := len(p.replace.GetSearchTerm())
+
 					// Delete characters one by one from the end
 					for i := 0; i < searchLen; i++ {
-						e.buffer.DeleteRune(match.Line, match.Col+searchLen-i)
+						p.buffer.DeleteRune(match.Line, match.Col+searchLen-i)
 					}
-					
+
 					// Insert replacement text character by character
-					replaceTerm := e.replace.GetReplaceTerm()
+					replaceTerm := p.replace.GetReplaceTerm()
 					for i, r := range replaceTerm {
-						e.buffer.InsertRune(match.Line, match.Col+i, r)
+						p.buffer.InsertRune(match.Line, match.Col+i, r)
 					}
 				}
 				// Move to next match
-				if !e.replace.NextMatch() {
-					e.msgManager.SetTransient("Replace complete")
-					e.mode = ModeNormal
-					e.search.Clear() // Clear search highlights
+				if !p.replace.NextMatch() {
+					p.msgManager.SetTransient("Replace complete")
+					p.mode = ModeNormal
+					p.search.Clear() // Clear search highlights
 				} else {
-					match = e.replace.GetCurrentMatch()
+					match = p.replace.GetCurrentMatch()
 					if match != nil {
-						e.cursorY = match.Line
-						e.cursorX = match.Col
+						p.cursorY = match.Line
+						p.cursorX = match.Col
 						e.adjustScroll()
 					}
 				}
-				e.renderCache.invalidate()
+				p.renderCache.invalidate()
 
 			case 'n':
 				// Skip to next match
-				if !e.replace.NextMatch() {
-					e.msgManager.SetTransient("Replace complete")
-					e.mode = ModeNormal
-					e.search.Clear() // Clear search highlights
+				if !p.replace.NextMatch() {
+					p.msgManager.SetTransient("Replace complete")
+					p.mode = ModeNormal
+					p.search.Clear() // Clear search highlights
 				} else {
-					match := e.replace.GetCurrentMatch()
+					match := p.replace.GetCurrentMatch()
 					if match != nil {
-						e.cursorY = match.Line
-						e.cursorX = match.Col
+						p.cursorY = match.Line
+						p.cursorX = match.Col
 						e.adjustScroll()
 					}
 				}
-				e.renderCache.invalidate()
+				p.renderCache.invalidate()
 
 			case 'q':
 				// Quit replace
-				e.replace.Cancel()
-				e.mode = ModeNormal
-				e.search.Clear() // Clear search highlights
-				e.msgManager.SetTransient("Replace cancelled")
-				e.renderCache.invalidate()
+				p.replace.Cancel()
+				p.mode = ModeNormal
+				p.search.Clear() // Clear search highlights
+				p.msgManager.SetTransient("Replace cancelled")
+				p.renderCache.invalidate()
 			}
 		} else if state == replace.StateSearchInput {
-			e.replace.AppendToSearch(r)
-			e.renderCache.invalidate()
+			p.replace.AppendToSearch(r)
+			p.renderCache.invalidate()
 		} else if state == replace.StateReplaceInput {
-			e.replace.AppendToReplace(r)
-			e.renderCache.invalidate()
+			p.replace.AppendToReplace(r)
+			p.renderCache.invalidate()
 		}
 	}
 }

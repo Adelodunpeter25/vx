@@ -11,74 +11,77 @@ func lineRuneCount(line string) int {
 }
 
 func (e *Editor) clampCursor() {
-	line := e.buffer.Line(e.cursorY)
+	p := e.active()
+	line := p.buffer.Line(p.cursorY)
 	maxX := lineRuneCount(line)
-	if e.mode == ModeNormal && maxX > 0 {
+	if p.mode == ModeNormal && maxX > 0 {
 		maxX--
 	}
-	if e.cursorX > maxX {
-		e.cursorX = maxX
+	if p.cursorX > maxX {
+		p.cursorX = maxX
 	}
-	if e.cursorX < 0 {
-		e.cursorX = 0
+	if p.cursorX < 0 {
+		p.cursorX = 0
 	}
 }
 
 func (e *Editor) adjustScroll() {
+	p := e.active()
 	contentHeight := e.height - 1
 	gutterWidth := e.getGutterWidth()
 	maxWidth := e.width - gutterWidth
 
 	// Calculate visual line position of cursor
 	cursorVisualLine := 0
-	for lineNum := 0; lineNum < e.cursorY && lineNum < e.buffer.LineCount(); lineNum++ {
-		line := e.buffer.Line(lineNum)
+	for lineNum := 0; lineNum < p.cursorY && lineNum < p.buffer.LineCount(); lineNum++ {
+		line := p.buffer.Line(lineNum)
 		cursorVisualLine += wrap.VisualLineCount(line, maxWidth)
 	}
 
 	// Find which wrapped segment contains the cursor
-	currentLine := e.buffer.Line(e.cursorY)
-	segments := wrap.WrapLine(currentLine, e.cursorY, maxWidth)
+	currentLine := p.buffer.Line(p.cursorY)
+	segments := wrap.WrapLine(currentLine, p.cursorY, maxWidth)
 	for i, seg := range segments {
 		segEndCol := seg.StartCol + len([]rune(seg.Text))
-		if e.cursorX >= seg.StartCol && e.cursorX <= segEndCol {
+		if p.cursorX >= seg.StartCol && p.cursorX <= segEndCol {
 			cursorVisualLine += i
 			break
 		}
 	}
 
 	// Adjust visual offset to keep cursor visible
-	if cursorVisualLine < e.visualOffsetY {
+	if cursorVisualLine < p.visualOffsetY {
 		// Cursor above viewport - scroll up
-		e.visualOffsetY = cursorVisualLine
+		p.visualOffsetY = cursorVisualLine
 	}
-	if cursorVisualLine >= e.visualOffsetY+contentHeight {
+	if cursorVisualLine >= p.visualOffsetY+contentHeight {
 		// Cursor below viewport - scroll down
-		e.visualOffsetY = cursorVisualLine - contentHeight + 1
+		p.visualOffsetY = cursorVisualLine - contentHeight + 1
 	}
 
 	// Ensure visual offset doesn't go negative
-	if e.visualOffsetY < 0 {
-		e.visualOffsetY = 0
+	if p.visualOffsetY < 0 {
+		p.visualOffsetY = 0
 	}
 
 	// Convert visual offset to buffer line offset for rendering
-	e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
+	p.offsetY = e.findLineAtVisualRow(p.visualOffsetY, maxWidth)
 
 	// No horizontal scroll needed with wrapping
-	e.offsetX = 0
+	p.offsetX = 0
 }
 
 // findLineAtVisualRow finds which buffer line contains the given visual row
 func (e *Editor) findLineAtVisualRow(targetVisual, maxWidth int) int {
+	p := e.active()
 	visualLine := 0
-	for lineNum := 0; lineNum < e.buffer.LineCount(); lineNum++ {
-		line := e.buffer.Line(lineNum)
+	for lineNum := 0; lineNum < p.buffer.LineCount(); lineNum++ {
+		line := p.buffer.Line(lineNum)
 		lineVisualCount := wrap.VisualLineCount(line, maxWidth)
 		if visualLine+lineVisualCount > targetVisual {
 			return lineNum
 		}
 		visualLine += lineVisualCount
 	}
-	return e.buffer.LineCount() - 1
+	return p.buffer.LineCount() - 1
 }

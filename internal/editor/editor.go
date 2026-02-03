@@ -2,64 +2,30 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
-	"github.com/Adelodunpeter25/vx/internal/buffers"
-	"github.com/Adelodunpeter25/vx/internal/preview"
-	"github.com/Adelodunpeter25/vx/internal/replace"
-	"github.com/Adelodunpeter25/vx/internal/search"
-	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
-	"github.com/Adelodunpeter25/vx/internal/visual"
 	"github.com/gdamore/tcell/v2"
 )
 
 type Editor struct {
-	term        *terminal.Terminal
-	bufferMgr   *buffers.Manager
-	buffer      *buffer.Buffer
-	syntax      *syntax.Engine
-	search      *search.Engine
-	replace     *replace.Engine
-	preview     *preview.Preview
-	selection   *visual.Selection
-	renderCache *RenderCache
-	msgManager  *MessageManager
-	width       int
-	height      int
-	cursorX     int
-	cursorY     int
-	offsetX     int // Horizontal scroll offset
-	offsetY     int // Buffer line offset (top visible line)
-	visualOffsetY int // Visual row offset for smooth scrolling
-	mode        Mode
-	quit        bool
-	commandBuf  string
-	searchBuf   string
-	lastKey     rune // Track last key for multi-key commands like gg
-	mouseDownX  int  // Track mouse button down position
-	mouseDownY  int
-	mouseDragging bool
+	term       *terminal.Terminal
+	width      int
+	height     int
+	panes      []*Pane
+	activePane int
+	quit       bool
 }
 
 func New(term *terminal.Terminal) *Editor {
 	width, height := term.Size()
 	buf := buffer.New()
-	bufMgr := buffers.New(buf, "")
-	
+	pane := NewPane(buf, "")
 	return &Editor{
-		term:        term,
-		bufferMgr:   bufMgr,
-		buffer:      buf,
-		syntax:      bufMgr.Current().Syntax,
-		search:      search.New(),
-		replace:     replace.New(),
-		preview:     preview.New(),
-		selection:   visual.New(),
-		renderCache: newRenderCache(),
-		msgManager:  NewMessageManager(),
-		width:       width,
-		height:      height,
-		mode:        ModeNormal,
+		term:       term,
+		width:      width,
+		height:     height,
+		panes:      []*Pane{pane},
+		activePane: 0,
 	}
 }
 
@@ -70,74 +36,66 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		if buf != nil {
 			// File loaded with warnings
 			width, height := term.Size()
-			bufMgr := buffers.New(buf, filename)
-			msgMgr := NewMessageManager()
-			msgMgr.SetError("Warning: " + utils.FormatLoadError(filename, err))
+			pane := NewPane(buf, filename)
+			pane.msgManager.SetError("Warning: " + utils.FormatLoadError(filename, err))
 			ed := &Editor{
-				term:        term,
-				bufferMgr:   bufMgr,
-				buffer:      buf,
-				syntax:      bufMgr.Current().Syntax,
-				search:      search.New(),
-				replace:     replace.New(),
-				selection:   visual.New(),
-				renderCache: newRenderCache(),
-				msgManager:  msgMgr,
-				width:       width,
-				height:      height,
-				mode:        ModeNormal,
+				term:       term,
+				width:      width,
+				height:     height,
+				panes:      []*Pane{pane},
+				activePane: 0,
 			}
 			return ed, nil
 		}
 		return nil, err
 	}
-	
+
 	width, height := term.Size()
-	bufMgr := buffers.New(buf, filename)
+	pane := NewPane(buf, filename)
 	ed := &Editor{
-		term:        term,
-		bufferMgr:   bufMgr,
-		buffer:      buf,
-		syntax:      bufMgr.Current().Syntax,
-		search:      search.New(),
-		replace:     replace.New(),
-		preview:     preview.New(),
-		selection:   visual.New(),
-		renderCache: newRenderCache(),
-		msgManager:  NewMessageManager(),
-		width:       width,
-		height:      height,
-		mode:        ModeNormal,
+		term:       term,
+		width:      width,
+		height:     height,
+		panes:      []*Pane{pane},
+		activePane: 0,
 	}
-	
+
 	// Show file info message on load
 	ed.showFileInfo()
-	
+
 	// Show warning if syntax highlighting disabled due to size
-	if ed.syntax.IsTooLarge() {
-		ed.msgManager.SetPersistent("File too large for syntax highlighting")
+	if ed.active().syntax.IsTooLarge() {
+		ed.active().msgManager.SetPersistent("File too large for syntax highlighting")
 	}
-	
+
 	return ed, nil
 }
 
 func (e *Editor) showFileInfo() {
-	size, err := e.buffer.GetFileSize()
+	p := e.active()
+	size, err := p.buffer.GetFileSize()
 	if err != nil {
 		return
 	}
-	
-	filename := e.buffer.Filename()
+
+	filename := p.buffer.Filename()
 	if filename == "" {
 		filename = "[No Name]"
 	}
-	
-	e.msgManager.SetPersistent(utils.FormatFileInfo(filename, size, e.buffer.LineCount()))
+
+	p.msgManager.SetPersistent(utils.FormatFileInfo(filename, size, p.buffer.LineCount()))
+}
+
+func (e *Editor) active() *Pane {
+	if e.activePane < 0 || e.activePane >= len(e.panes) {
+		return nil
+	}
+	return e.panes[e.activePane]
 }
 
 func (e *Editor) Run() error {
 	e.render()
-	
+
 	for !e.quit {
 		e.handleEvent()
 	}
@@ -157,24 +115,24 @@ func (e *Editor) handleEvent() {
 		e.handleResize()
 	case terminal.EventMouse:
 		e.handleMouseEvent(ev)
-		e.renderCache.invalidate()
+		e.active().renderCache.invalidate()
 		e.render()
 	}
 }
 
 func (e *Editor) handleResize() {
 	e.width, e.height = e.term.Size()
-	
+
 	// Ensure cursor stays visible after resize
 	e.clampCursor()
 	e.adjustScroll()
-	
-	e.renderCache.invalidate()
+
+	e.active().renderCache.invalidate()
 	e.render()
 }
 
 func (e *Editor) handleKey(ev *terminal.Event) {
-	switch e.mode {
+	switch e.active().mode {
 	case ModeNormal:
 		e.handleNormalMode(ev)
 	case ModeInsert:
@@ -191,6 +149,6 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 		tcellEv := tcell.NewEventKey(ev.Key, ev.Rune, tcell.ModNone)
 		e.handleBufferPromptMode(tcellEv)
 	}
-	e.renderCache.invalidate()
+	e.active().renderCache.invalidate()
 	e.render()
 }

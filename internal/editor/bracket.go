@@ -3,11 +3,12 @@ package editor
 // FindMatchingBracket finds the matching bracket for the one at the given position
 // Returns (-1, -1) if no match found
 func (e *Editor) findMatchingBracket(line, col int) (int, int) {
-	if line < 0 || line >= e.buffer.LineCount() {
+	p := e.active()
+	if line < 0 || line >= p.buffer.LineCount() {
 		return -1, -1
 	}
 
-	currentLine := e.buffer.Line(line)
+	currentLine := p.buffer.Line(line)
 	runes := []rune(currentLine)
 	if col < 0 || col >= len(runes) {
 		return -1, -1
@@ -43,11 +44,12 @@ func (e *Editor) findMatchingBracket(line, col int) (int, int) {
 }
 
 func (e *Editor) findForwardBracket(startLine, startCol int, opening, closing rune) (int, int) {
+	p := e.active()
 	depth := 1
 
 	// Start from next character
-	for l := startLine; l < e.buffer.LineCount(); l++ {
-		line := []rune(e.buffer.Line(l))
+	for l := startLine; l < p.buffer.LineCount(); l++ {
+		line := []rune(p.buffer.Line(l))
 		start := 0
 		if l == startLine {
 			start = startCol + 1
@@ -70,11 +72,12 @@ func (e *Editor) findForwardBracket(startLine, startCol int, opening, closing ru
 }
 
 func (e *Editor) findBackwardBracket(startLine, startCol int, opening, closing rune) (int, int) {
+	p := e.active()
 	depth := 1
 
 	// Start from previous character
 	for l := startLine; l >= 0; l-- {
-		line := []rune(e.buffer.Line(l))
+		line := []rune(p.buffer.Line(l))
 		end := len(line) - 1
 		if l == startLine {
 			end = startCol - 1

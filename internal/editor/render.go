@@ -6,13 +6,14 @@ import (
 )
 
 func (e *Editor) render() {
+	p := e.active()
 	e.term.Clear()
 
 	// If preview is enabled, show full-screen preview
-	if e.preview.IsEnabled() {
+	if p.preview.IsEnabled() {
 		previewHeight := e.height - 1 // Reserve 1 line for status
-		e.preview.Update(e.buffer)
-		e.preview.Render(e.term, 0, previewHeight, e.width)
+		p.preview.Update(p.buffer)
+		p.preview.Render(e.term, 0, previewHeight, e.width)
 		e.renderStatusLine()
 		e.term.Show()
 		return
@@ -22,30 +23,30 @@ func (e *Editor) render() {
 	contentHeight := e.height - 1
 	gutterWidth := e.getGutterWidth()
 	maxWidth := e.width - gutterWidth
-	matchLine, matchCol := e.findMatchingBracket(e.cursorY, e.cursorX)
+	matchLine, matchCol := e.findMatchingBracket(p.cursorY, p.cursorX)
 
 	// Calculate cursor screen position
 	cursorScreenY, cursorScreenX := e.getCursorScreenPos(gutterWidth, maxWidth)
 
 	// Render wrapped lines starting from visualOffsetY
 	screenRow := 0
-	lineNum := e.offsetY
+	lineNum := p.offsetY
 
 	// Calculate how many visual rows to skip in the first line
 	visualRowsBeforeOffset := 0
-	for i := 0; i < e.offsetY; i++ {
-		line := e.buffer.Line(i)
+	for i := 0; i < p.offsetY; i++ {
+		line := p.buffer.Line(i)
 		visualRowsBeforeOffset += wrap.VisualLineCount(line, maxWidth)
 	}
-	skipRows := e.visualOffsetY - visualRowsBeforeOffset
+	skipRows := p.visualOffsetY - visualRowsBeforeOffset
 
-	for screenRow < contentHeight && lineNum < e.buffer.LineCount() {
-		line := e.buffer.Line(lineNum)
+	for screenRow < contentHeight && lineNum < p.buffer.LineCount() {
+		line := p.buffer.Line(lineNum)
 		segments := wrap.WrapLine(line, lineNum, maxWidth)
 
 		for segIdx, seg := range segments {
 			// Skip rows if we're in the first line and need to offset
-			if lineNum == e.offsetY && segIdx < skipRows {
+			if lineNum == p.offsetY && segIdx < skipRows {
 				continue
 			}
 
@@ -54,9 +55,9 @@ func (e *Editor) render() {
 			}
 
 			// Render line number only on first visible segment of each line
-			if segIdx == skipRows && lineNum == e.offsetY {
+			if segIdx == skipRows && lineNum == p.offsetY {
 				e.renderLineNumber(screenRow, lineNum, gutterWidth)
-			} else if !seg.IsWrapped && lineNum > e.offsetY {
+			} else if !seg.IsWrapped && lineNum > p.offsetY {
 				e.renderLineNumber(screenRow, lineNum, gutterWidth)
 			}
 
@@ -64,7 +65,7 @@ func (e *Editor) render() {
 			e.renderWrappedSegment(screenRow, lineNum, seg, gutterWidth)
 
 			// Highlight selection if active
-			if e.selection.IsActive() {
+			if p.selection.IsActive() {
 				e.highlightSelection(screenRow, lineNum, seg, gutterWidth)
 			}
 
@@ -88,13 +89,13 @@ func (e *Editor) render() {
 	e.renderStatusLine()
 
 	// Position cursor (but not in search mode - cursor position is shown in status bar)
-	if e.mode != ModeSearch && cursorScreenY >= 0 && cursorScreenY < contentHeight && cursorScreenX >= gutterWidth && cursorScreenX < e.width {
+	if p.mode != ModeSearch && cursorScreenY >= 0 && cursorScreenY < contentHeight && cursorScreenX >= gutterWidth && cursorScreenX < e.width {
 		e.term.SetCell(cursorScreenX, cursorScreenY, ' ', tcell.StyleDefault.Reverse(true))
 
-		currentLine := []rune(e.buffer.Line(e.cursorY))
-		if e.cursorX < len(currentLine) && isBracket(currentLine[e.cursorX]) {
+		currentLine := []rune(p.buffer.Line(p.cursorY))
+		if p.cursorX < len(currentLine) && isBracket(currentLine[p.cursorX]) {
 			style := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 200, 0)).Foreground(tcell.ColorBlack).Bold(true)
-			e.term.SetCell(cursorScreenX, cursorScreenY, currentLine[e.cursorX], style)
+			e.term.SetCell(cursorScreenX, cursorScreenY, currentLine[p.cursorX], style)
 		}
 	}
 
@@ -102,34 +103,36 @@ func (e *Editor) render() {
 }
 
 func (e *Editor) getCursorScreenPos(gutterWidth, maxWidth int) (screenY, screenX int) {
+	p := e.active()
 	// Calculate cursor's visual row position
 	cursorVisualLine := 0
-	for lineNum := 0; lineNum < e.cursorY && lineNum < e.buffer.LineCount(); lineNum++ {
-		line := e.buffer.Line(lineNum)
+	for lineNum := 0; lineNum < p.cursorY && lineNum < p.buffer.LineCount(); lineNum++ {
+		line := p.buffer.Line(lineNum)
 		cursorVisualLine += wrap.VisualLineCount(line, maxWidth)
 	}
 
 	// Find which wrapped segment contains the cursor
-	currentLine := e.buffer.Line(e.cursorY)
-	segments := wrap.WrapLine(currentLine, e.cursorY, maxWidth)
+	currentLine := p.buffer.Line(p.cursorY)
+	segments := wrap.WrapLine(currentLine, p.cursorY, maxWidth)
 
 	for i, seg := range segments {
 		segEndCol := seg.StartCol + len([]rune(seg.Text))
-		if e.cursorX >= seg.StartCol && e.cursorX <= segEndCol {
+		if p.cursorX >= seg.StartCol && p.cursorX <= segEndCol {
 			cursorVisualLine += i
-			screenX = (e.cursorX - seg.StartCol) + gutterWidth
+			screenX = (p.cursorX - seg.StartCol) + gutterWidth
 			break
 		}
 	}
 
 	// Convert to screen position relative to visual offset
-	screenY = cursorVisualLine - e.visualOffsetY
+	screenY = cursorVisualLine - p.visualOffsetY
 
 	return screenY, screenX
 }
 
 func (e *Editor) renderWrappedSegment(screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
-	styledRunes := e.syntax.HighlightLine(lineNum, e.buffer.Line(lineNum), e.buffer)
+	p := e.active()
+	styledRunes := p.syntax.HighlightLine(lineNum, p.buffer.Line(lineNum), p.buffer)
 
 	runes := []rune(seg.Text)
 	for i, r := range runes {
@@ -157,11 +160,12 @@ func (e *Editor) highlightBracketWrapped(screenCol, screenRow, gutterWidth int, 
 }
 
 func (e *Editor) highlightSearchMatchesWrapped(screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
-	if !e.search.HasMatches() {
+	p := e.active()
+	if !p.search.HasMatches() {
 		return
 	}
 
-	line := []rune(e.buffer.Line(lineNum))
+	line := []rune(p.buffer.Line(lineNum))
 
 	highlightStyle := tcell.StyleDefault.
 		Background(tcell.NewRGBColor(80, 80, 80)).
@@ -173,14 +177,14 @@ func (e *Editor) highlightSearchMatchesWrapped(screenRow, lineNum int, seg wrap.
 		Foreground(tcell.ColorBlack).
 		Bold(true)
 
-	for _, match := range e.search.GetMatches() {
+	for _, match := range p.search.GetMatches() {
 		if match.Line != lineNum {
 			continue
 		}
 
-		isCurrent := e.search.Current() != nil &&
-			match.Line == e.search.Current().Line &&
-			match.Col == e.search.Current().Col
+		isCurrent := p.search.Current() != nil &&
+			match.Line == p.search.Current().Line &&
+			match.Col == p.search.Current().Col
 
 		style := highlightStyle
 		if isCurrent {
@@ -200,7 +204,8 @@ func (e *Editor) highlightSearchMatchesWrapped(screenRow, lineNum int, seg wrap.
 
 func (e *Editor) highlightBracket(x, y, gutterWidth int) {
 	// Legacy function - kept for compatibility
-	line := e.buffer.Line(e.offsetY + y)
+	p := e.active()
+	line := p.buffer.Line(p.offsetY + y)
 	runes := []rune(line)
 	if x < len(runes) {
 		style := tcell.StyleDefault.Background(tcell.NewRGBColor(255, 200, 0)).Foreground(tcell.ColorBlack).Bold(true)
@@ -209,12 +214,13 @@ func (e *Editor) highlightBracket(x, y, gutterWidth int) {
 }
 
 func (e *Editor) renderLine(y int, line string, gutterWidth int) {
-	lineNum := e.offsetY + y
-	styledRunes := e.syntax.HighlightLine(lineNum, line, e.buffer)
+	p := e.active()
+	lineNum := p.offsetY + y
+	styledRunes := p.syntax.HighlightLine(lineNum, line, p.buffer)
 
 	// Apply horizontal offset
-	visibleStart := e.offsetX
-	visibleEnd := e.offsetX + e.width - gutterWidth
+	visibleStart := p.offsetX
+	visibleEnd := p.offsetX + e.width - gutterWidth
 
 	if styledRunes == nil || len(styledRunes) == 0 {
 		// Plain text rendering with horizontal scroll
@@ -239,7 +245,8 @@ func (e *Editor) renderLine(y int, line string, gutterWidth int) {
 }
 
 func (e *Editor) highlightSearchMatches(y, lineNum int, line string, gutterWidth int) {
-	if !e.search.HasMatches() {
+	p := e.active()
+	if !p.search.HasMatches() {
 		return
 	}
 
@@ -255,11 +262,11 @@ func (e *Editor) highlightSearchMatches(y, lineNum int, line string, gutterWidth
 		Foreground(tcell.ColorBlack).
 		Bold(true)
 
-	for _, match := range e.search.GetMatches() {
+	for _, match := range p.search.GetMatches() {
 		if match.Line == lineNum {
-			isCurrent := e.search.Current() != nil &&
-				match.Line == e.search.Current().Line &&
-				match.Col == e.search.Current().Col
+			isCurrent := p.search.Current() != nil &&
+				match.Line == p.search.Current().Line &&
+				match.Col == p.search.Current().Col
 
 			style := highlightStyle
 			if isCurrent {
@@ -268,7 +275,7 @@ func (e *Editor) highlightSearchMatches(y, lineNum int, line string, gutterWidth
 
 			lineRunes := []rune(line)
 			for i := 0; i < match.Len && match.Col+i < len(lineRunes); i++ {
-				screenX := match.Col + i - e.offsetX + gutterWidth
+				screenX := match.Col + i - p.offsetX + gutterWidth
 				if screenX >= gutterWidth && screenX < e.width {
 					e.term.SetCell(screenX, y, lineRunes[match.Col+i], style)
 				}

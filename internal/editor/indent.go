@@ -32,7 +32,7 @@ func (e *Editor) drawIndentGuides(y int, line string, maxIndent int, gutterWidth
 			// Only draw guide if this position is whitespace
 			if char == ' ' || char == '\t' {
 				style := tcell.StyleDefault.Foreground(tcell.ColorGray).Dim(true)
-				screenX := x - e.offsetX + gutterWidth
+				screenX := x - e.active().offsetX + gutterWidth
 				if screenX >= gutterWidth && screenX < e.width {
 					e.term.SetCell(screenX, y, '│', style)
 				}
@@ -43,15 +43,16 @@ func (e *Editor) drawIndentGuides(y int, line string, maxIndent int, gutterWidth
 
 // GetMaxIndentInView returns the maximum indent level in visible lines
 func (e *Editor) getMaxIndentInView() int {
+	p := e.active()
 	maxIndent := 0
 	contentHeight := e.height - 1
 
 	for i := 0; i < contentHeight; i++ {
-		lineNum := e.offsetY + i
-		if lineNum >= e.buffer.LineCount() {
+		lineNum := p.offsetY + i
+		if lineNum >= p.buffer.LineCount() {
 			break
 		}
-		line := e.buffer.Line(lineNum)
+		line := p.buffer.Line(lineNum)
 		indent := GetIndentLevel(line)
 		if indent > maxIndent {
 			maxIndent = indent

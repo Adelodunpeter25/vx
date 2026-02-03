@@ -60,7 +60,7 @@ func (m *MessageManager) Get() string {
 	if m.current == nil {
 		return ""
 	}
-	
+
 	// Check if transient message has expired (2 seconds)
 	if m.current.msgType == MessageTransient {
 		if time.Since(m.current.timestamp) > 2*time.Second {
@@ -68,7 +68,7 @@ func (m *MessageManager) Get() string {
 			return ""
 		}
 	}
-	
+
 	return m.current.text
 }
 

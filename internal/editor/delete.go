@@ -2,49 +2,51 @@ package editor
 
 // deleteCharacter deletes the character under the cursor
 func (e *Editor) deleteCharacter() {
-	if e.cursorY >= e.buffer.LineCount() {
+	p := e.active()
+	if p.cursorY >= p.buffer.LineCount() {
 		return
 	}
 
-	line := e.buffer.Line(e.cursorY)
-	if e.cursorX >= lineRuneCount(line) {
+	line := p.buffer.Line(p.cursorY)
+	if p.cursorX >= lineRuneCount(line) {
 		// At end of line, join with next line
-		if e.cursorY < e.buffer.LineCount()-1 {
-			nextLine := e.buffer.Line(e.cursorY + 1)
-			e.buffer.DeleteLine(e.cursorY + 1)
+		if p.cursorY < p.buffer.LineCount()-1 {
+			nextLine := p.buffer.Line(p.cursorY + 1)
+			p.buffer.DeleteLine(p.cursorY + 1)
 			// Append next line content to current line
 			for _, r := range []rune(nextLine) {
-				e.buffer.InsertRune(e.cursorY, lineRuneCount(e.buffer.Line(e.cursorY)), r)
+				p.buffer.InsertRune(p.cursorY, lineRuneCount(p.buffer.Line(p.cursorY)), r)
 			}
 		}
 		return
 	}
 
 	// Delete character at cursor
-	e.buffer.DeleteRune(e.cursorY, e.cursorX+1)
+	p.buffer.DeleteRune(p.cursorY, p.cursorX+1)
 	e.clampCursor()
 	e.adjustScroll()
 }
 
 // deleteCurrentLine deletes the entire current line
 func (e *Editor) deleteCurrentLine() {
-	if e.buffer.LineCount() == 1 {
+	p := e.active()
+	if p.buffer.LineCount() == 1 {
 		// Last line, just clear it
-		line := e.buffer.Line(0)
+		line := p.buffer.Line(0)
 		for i := lineRuneCount(line); i > 0; i-- {
-			e.buffer.DeleteRune(0, i)
+			p.buffer.DeleteRune(0, i)
 		}
-		e.cursorX = 0
+		p.cursorX = 0
 		return
 	}
 
-	e.buffer.DeleteLine(e.cursorY)
+	p.buffer.DeleteLine(p.cursorY)
 
 	// Adjust cursor position
-	if e.cursorY >= e.buffer.LineCount() {
-		e.cursorY = e.buffer.LineCount() - 1
+	if p.cursorY >= p.buffer.LineCount() {
+		p.cursorY = p.buffer.LineCount() - 1
 	}
-	e.cursorX = 0
+	p.cursorX = 0
 
 	e.clampCursor()
 	e.adjustScroll()

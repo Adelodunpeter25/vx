@@ -7,26 +7,27 @@ import (
 )
 
 func (e *Editor) handleMouseEvent(ev *terminal.Event) {
+	p := e.active()
 	// Handle scroll wheel
 	if ev.Button == tcell.WheelUp {
-		if e.preview.IsEnabled() {
-			e.preview.Scroll(-1)
+		if p.preview.IsEnabled() {
+			p.preview.Scroll(-1)
 		} else {
 			// Scroll view up by one visual row
-			if e.visualOffsetY > 0 {
-				e.visualOffsetY--
+			if p.visualOffsetY > 0 {
+				p.visualOffsetY--
 				// Update offsetY to match
 				gutterWidth := e.getGutterWidth()
 				maxWidth := e.width - gutterWidth
-				e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
+				p.offsetY = e.findLineAtVisualRow(p.visualOffsetY, maxWidth)
 			}
 		}
 		return
 	}
 
 	if ev.Button == tcell.WheelDown {
-		if e.preview.IsEnabled() {
-			e.preview.Scroll(1)
+		if p.preview.IsEnabled() {
+			p.preview.Scroll(1)
 		} else {
 			// Scroll view down by one visual row
 			gutterWidth := e.getGutterWidth()
@@ -35,23 +36,23 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 
 			// Calculate total visual rows
 			totalVisualRows := 0
-			for i := 0; i < e.buffer.LineCount(); i++ {
-				line := e.buffer.Line(i)
+			for i := 0; i < p.buffer.LineCount(); i++ {
+				line := p.buffer.Line(i)
 				totalVisualRows += wrap.VisualLineCount(line, maxWidth)
 			}
 
 			// Only scroll if there's more content below
-			if e.visualOffsetY+contentHeight < totalVisualRows {
-				e.visualOffsetY++
+			if p.visualOffsetY+contentHeight < totalVisualRows {
+				p.visualOffsetY++
 				// Update offsetY to match
-				e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
+				p.offsetY = e.findLineAtVisualRow(p.visualOffsetY, maxWidth)
 			}
 		}
 		return
 	}
 
 	// Don't handle clicks in preview mode
-	if e.preview.IsEnabled() {
+	if p.preview.IsEnabled() {
 		return
 	}
 
@@ -62,7 +63,7 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 
 	// Detect button state change
 	buttonPressed := ev.Button == tcell.Button1
-	buttonReleased := ev.Button == tcell.ButtonNone && e.mouseDragging
+	buttonReleased := ev.Button == tcell.ButtonNone && p.mouseDragging
 
 	mouseX, mouseY := ev.MouseX, ev.MouseY
 
@@ -85,58 +86,58 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	// Check if button is pressed or released
 	if buttonPressed {
 		// Button is pressed/held
-		if !e.mouseDragging && !e.selection.IsActive() {
+		if !p.mouseDragging && !p.selection.IsActive() {
 			// First press - record position but don't start selection yet
-			e.mouseDownX = mouseX
-			e.mouseDownY = mouseY
-			e.mouseDragging = true
+			p.mouseDownX = mouseX
+			p.mouseDownY = mouseY
+			p.mouseDragging = true
 		}
 
 		// Check if mouse moved enough to start selection
-		if e.mouseDragging && !e.selection.IsActive() && (abs(mouseX-e.mouseDownX) > 1 || abs(mouseY-e.mouseDownY) > 0) {
+		if p.mouseDragging && !p.selection.IsActive() && (abs(mouseX-p.mouseDownX) > 1 || abs(mouseY-p.mouseDownY) > 0) {
 			// Mouse moved - start selection from original down position
-			startBufferY, startBufferX := e.bufferPosFromScreen(e.mouseDownX, e.mouseDownY, gutterWidth, maxWidth)
-			e.selection.Start(startBufferY, startBufferX)
+			startBufferY, startBufferX := e.bufferPosFromScreen(p.mouseDownX, p.mouseDownY, gutterWidth, maxWidth)
+			p.selection.Start(startBufferY, startBufferX)
 		}
 
 		// Update selection if active
-		if e.selection.IsActive() {
-			e.selection.Update(bufferY, bufferX)
+		if p.selection.IsActive() {
+			p.selection.Update(bufferY, bufferX)
 		}
 
 		// Auto-scroll if dragging near edges
-		if e.selection.IsActive() {
+		if p.selection.IsActive() {
 			contentHeight := e.height - 1
-			if mouseY < 2 && e.visualOffsetY > 0 {
-				e.visualOffsetY--
-				e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
+			if mouseY < 2 && p.visualOffsetY > 0 {
+				p.visualOffsetY--
+				p.offsetY = e.findLineAtVisualRow(p.visualOffsetY, maxWidth)
 			} else if mouseY > contentHeight-3 {
 				totalVisualRows := 0
-				for i := 0; i < e.buffer.LineCount(); i++ {
-					line := e.buffer.Line(i)
+				for i := 0; i < p.buffer.LineCount(); i++ {
+					line := p.buffer.Line(i)
 					totalVisualRows += wrap.VisualLineCount(line, maxWidth)
 				}
 
-				if e.visualOffsetY+contentHeight < totalVisualRows {
-					e.visualOffsetY++
-					e.offsetY = e.findLineAtVisualRow(e.visualOffsetY, maxWidth)
+				if p.visualOffsetY+contentHeight < totalVisualRows {
+					p.visualOffsetY++
+					p.offsetY = e.findLineAtVisualRow(p.visualOffsetY, maxWidth)
 				}
 			}
 		}
 
-		e.cursorY = bufferY
-		e.cursorX = bufferX
+		p.cursorY = bufferY
+		p.cursorX = bufferX
 		e.clampCursor()
 	} else if buttonReleased {
 		// Button released
-		if !e.selection.IsActive() {
+		if !p.selection.IsActive() {
 			// Was just a click, not a drag - move cursor
-			e.cursorY = bufferY
-			e.cursorX = bufferX
+			p.cursorY = bufferY
+			p.cursorX = bufferX
 			e.clampCursor()
 		}
 		// Reset drag state
-		e.mouseDragging = false
+		p.mouseDragging = false
 	}
 
 	// Don't call adjustScroll here - let cursor stay where it is
@@ -144,13 +145,14 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 }
 
 func (e *Editor) bufferPosFromScreen(mouseX, mouseY, gutterWidth, maxWidth int) (bufferY, bufferX int) {
-	clickedVisualRow := e.visualOffsetY + mouseY
+	p := e.active()
+	clickedVisualRow := p.visualOffsetY + mouseY
 	currentVisualRow := 0
 	bufferY = 0
 	bufferX = mouseX - gutterWidth
 
-	for bufferY < e.buffer.LineCount() {
-		line := e.buffer.Line(bufferY)
+	for bufferY < p.buffer.LineCount() {
+		line := p.buffer.Line(bufferY)
 		segments := wrap.WrapLine(line, bufferY, maxWidth)
 
 		for _, seg := range segments {
@@ -167,8 +169,8 @@ func (e *Editor) bufferPosFromScreen(mouseX, mouseY, gutterWidth, maxWidth int) 
 		bufferY++
 	}
 
-	if bufferY >= e.buffer.LineCount() {
-		bufferY = e.buffer.LineCount() - 1
+	if bufferY >= p.buffer.LineCount() {
+		bufferY = p.buffer.LineCount() - 1
 	}
 	return bufferY, bufferX
 }

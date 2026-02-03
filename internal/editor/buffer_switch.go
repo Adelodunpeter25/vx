@@ -4,70 +4,73 @@ import "github.com/Adelodunpeter25/vx/internal/buffer"
 
 // saveCurrentBufferState saves cursor and scroll position to buffer manager
 func (e *Editor) saveCurrentBufferState() {
-	e.bufferMgr.SaveState(e.cursorX, e.cursorY, e.offsetX, e.offsetY)
+	p := e.active()
+	p.bufferMgr.SaveState(p.cursorX, p.cursorY, p.offsetX, p.offsetY)
 }
 
 // switchToBuffer switches to a different buffer and restores its state
 func (e *Editor) switchToBuffer() {
-	current := e.bufferMgr.Current()
+	p := e.active()
+	current := p.bufferMgr.Current()
 	if current == nil {
 		return
 	}
 
-	e.buffer = current.Buffer
-	e.syntax = current.Syntax
-	e.cursorX, e.cursorY, e.offsetX, e.offsetY = e.bufferMgr.RestoreState()
+	p.buffer = current.Buffer
+	p.syntax = current.Syntax
+	p.cursorX, p.cursorY, p.offsetX, p.offsetY = p.bufferMgr.RestoreState()
 
 	// Clamp cursor to valid position
 	e.clampCursor()
 	e.adjustScroll()
-	e.renderCache.invalidate()
+	p.renderCache.invalidate()
 }
 
 // addBuffer adds a new buffer and switches to it
 func (e *Editor) addBuffer(buf *buffer.Buffer, filename string) {
 	e.saveCurrentBufferState()
-	e.bufferMgr.Add(buf, filename)
+	e.active().bufferMgr.Add(buf, filename)
 	e.switchToBuffer()
 }
 
 // nextBuffer switches to the next buffer
 func (e *Editor) nextBuffer() {
-	if e.bufferMgr.Count() <= 1 {
+	if e.active().bufferMgr.Count() <= 1 {
 		return
 	}
 	e.saveCurrentBufferState()
-	e.bufferMgr.Next()
+	e.active().bufferMgr.Next()
 	e.switchToBuffer()
 }
 
 // previousBuffer switches to the previous buffer
 func (e *Editor) previousBuffer() {
-	if e.bufferMgr.Count() <= 1 {
+	if e.active().bufferMgr.Count() <= 1 {
 		return
 	}
 	e.saveCurrentBufferState()
-	e.bufferMgr.Previous()
+	e.active().bufferMgr.Previous()
 	e.switchToBuffer()
 }
 
 // deleteCurrentBuffer closes the current buffer with save prompt if modified
 func (e *Editor) deleteCurrentBuffer() {
-	if e.bufferMgr.Count() == 1 {
-		e.msgManager.SetTransient("Cannot close last buffer")
+	p := e.active()
+	if p.bufferMgr.Count() == 1 {
+		p.msgManager.SetTransient("Cannot close last buffer")
 		return
 	}
 
-	if e.buffer.IsModified() {
+	if p.buffer.IsModified() {
 		// Enter a special prompt mode
-		e.mode = ModeBufferPrompt
-		e.msgManager.SetPersistent("Save changes? [y/n]")
-		e.renderCache.invalidate()
+		p.mode = ModeBufferPrompt
+		p.msgManager.SetPersistent("Save changes? [y/n]")
+		p.renderCache.invalidate()
 		return
 	}
 
 	// Not modified, just delete
-	e.bufferMgr.Delete()
+	p.bufferMgr.Delete()
 	e.switchToBuffer()
-	e.msgManager.SetTransient("Buffer closed")
+	p.msgManager.SetTransient("Buffer closed")
 }

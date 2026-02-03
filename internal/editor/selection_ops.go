@@ -4,23 +4,25 @@ import "github.com/Adelodunpeter25/vx/internal/clipboard"
 
 // copySelection copies the selected text to clipboard
 func (e *Editor) copySelection() {
-	text := e.selection.GetSelectedText(e.buffer)
+	p := e.active()
+	text := p.selection.GetSelectedText(p.buffer)
 	if text == "" {
 		return
 	}
 
 	err := clipboard.Copy(text)
 	if err != nil {
-		e.msgManager.SetError("Failed to copy selection")
+		p.msgManager.SetError("Failed to copy selection")
 	} else {
-		e.msgManager.SetTransient("Selection copied")
+		p.msgManager.SetTransient("Selection copied")
 	}
-	e.selection.Clear()
+	p.selection.Clear()
 }
 
 // cutSelection copies and deletes the selected text
 func (e *Editor) cutSelection() {
-	text := e.selection.GetSelectedText(e.buffer)
+	p := e.active()
+	text := p.selection.GetSelectedText(p.buffer)
 	if text == "" {
 		return
 	}
@@ -28,39 +30,40 @@ func (e *Editor) cutSelection() {
 	// Copy to clipboard
 	err := clipboard.Copy(text)
 	if err != nil {
-		e.msgManager.SetError("Failed to cut selection")
+		p.msgManager.SetError("Failed to cut selection")
 		return
 	}
 
 	// Get selection range for cursor positioning
-	startLine, startCol, _, _, ok := e.selection.GetRange()
+	startLine, startCol, _, _, ok := p.selection.GetRange()
 	if !ok {
 		return
 	}
 
 	// Delete the selected text
-	e.selection.DeleteSelectedText(e.buffer)
+	p.selection.DeleteSelectedText(p.buffer)
 
 	// Position cursor at start of selection
-	e.cursorY = startLine
-	e.cursorX = startCol
+	p.cursorY = startLine
+	p.cursorX = startCol
 	e.clampCursor()
 
-	e.msgManager.SetTransient("Selection cut")
-	e.selection.Clear()
+	p.msgManager.SetTransient("Selection cut")
+	p.selection.Clear()
 }
 
 // deleteSelection deletes the selected text without touching the clipboard
 func (e *Editor) deleteSelection() {
-	startLine, startCol, _, _, ok := e.selection.GetRange()
+	p := e.active()
+	startLine, startCol, _, _, ok := p.selection.GetRange()
 	if !ok {
 		return
 	}
-	e.selection.DeleteSelectedText(e.buffer)
-	e.cursorY = startLine
-	e.cursorX = startCol
+	p.selection.DeleteSelectedText(p.buffer)
+	p.cursorY = startLine
+	p.cursorX = startCol
 	e.clampCursor()
 	e.adjustScroll()
-	e.selection.Clear()
-	e.msgManager.SetTransient("Selection deleted")
+	p.selection.Clear()
+	p.msgManager.SetTransient("Selection deleted")
 }
