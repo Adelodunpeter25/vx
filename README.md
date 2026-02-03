@@ -115,11 +115,6 @@ vx --version          # Show version
 
 ### File Browser
 - `:f` - Toggle file browser sidebar
-- `↑/↓` - Move selection
-- `→` - Expand folder
-- `←` - Collapse folder / move to parent
-- `Enter` - Open file in active pane
-- Click - Preview file (and select)
 
 ## Philosophy
 

@@ -172,7 +172,9 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 			}
 		}
 		if ev.MouseX < fbWidth && ev.MouseY < contentHeight {
-			e.fileBrowser.Focused = true
+			if ev.Button == tcell.Button1 || ev.Button == tcell.WheelUp || ev.Button == tcell.WheelDown {
+				e.fileBrowser.Focused = true
+			}
 			action := e.fileBrowser.HandleMouse(ev, 0, 0, fbWidth, contentHeight)
 			if action.PreviewPath != "" {
 				e.previewFileInActivePane(action.PreviewPath)

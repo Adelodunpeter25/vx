@@ -53,11 +53,6 @@ func printHelp() {
 	println("")
 	println("FILE BROWSER:")
 	println("  :f                   Toggle file browser sidebar")
-	println("  ↑/↓                  Move selection")
-	println("  →                    Expand folder")
-	println("  ←                    Collapse folder / move to parent")
-	println("  Enter                Open file in active pane")
-	println("  Click                Preview file (and select)")
 	println("")
 	println("For more information, visit: https://github.com/Adelodunpeter25/vx")
 }
