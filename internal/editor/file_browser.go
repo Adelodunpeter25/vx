@@ -125,7 +125,7 @@ func (e *Editor) handleCdPrompt(ev *terminal.Event) {
 			if e.fileBrowser != nil {
 				e.fileBrowser.SetRoot(path)
 			}
-			e.active().msgManager.SetPersistent("Changed directory to " + path)
+			e.active().msgManager.SetTransient("Changed directory to " + abbreviateHome(path))
 		}
 		e.active().mode = ModeNormal
 	}
