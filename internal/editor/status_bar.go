@@ -2,6 +2,7 @@ package editor
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/Adelodunpeter25/vx/internal/replace"
@@ -72,8 +73,13 @@ func (e *Editor) renderNormalStatus(y int, style tcell.Style) {
 	} else {
 		mode = e.active().mode.String()
 	}
-	e.term.DrawText(0, y, " "+mode+" ", style)
-	modeWidth := len(mode) + 2
+	focus := "EDITOR"
+	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
+		focus = "FILES"
+	}
+	prefix := " " + mode + " | " + focus + " "
+	e.term.DrawText(0, y, prefix, style)
+	modeWidth := len(prefix)
 
 	// Show message if present
 	message := e.active().msgManager.Get()
@@ -101,6 +107,7 @@ func (e *Editor) renderFileInfo(y int, style tcell.Style, modeWidth int) {
 	if filename == "" {
 		filename = "[No Name]"
 	}
+	filename = abbreviateHome(filename)
 	modified := ""
 	if p.buffer.IsModified() {
 		modified = " [+]"
@@ -146,6 +153,7 @@ func (e *Editor) renderFileInfoMessage(y int, style tcell.Style, modeWidth int, 
 	}
 
 	filename := parts[1]
+	filename = abbreviateHome(filename)
 	rest := strings.TrimSpace(parts[2])
 
 	// Draw filename after mode
@@ -153,4 +161,25 @@ func (e *Editor) renderFileInfoMessage(y int, style tcell.Style, modeWidth int, 
 
 	// Draw size and lines on right
 	e.term.DrawText(e.width-len(rest)-1, y, rest, style)
+}
+
+func abbreviateHome(path string) string {
+	if path == "" || path == "[No Name]" {
+		return path
+	}
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return path
+	}
+	if strings.HasPrefix(path, home) {
+		trimmed := strings.TrimPrefix(path, home)
+		if trimmed == "" {
+			return "~"
+		}
+		if strings.HasPrefix(trimmed, string(os.PathSeparator)) {
+			return "~" + trimmed
+		}
+		return "~/" + trimmed
+	}
+	return path
 }
