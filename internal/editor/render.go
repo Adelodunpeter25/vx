@@ -12,10 +12,24 @@ func (e *Editor) render() {
 	e.term.Clear()
 
 	contentHeight := e.height - 1
-	rects, dividerX := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes), e.splitRatio)
+	contentX := 0
+	contentWidth := e.width
+	if e.fileBrowser != nil && e.fileBrowser.Open {
+		if e.fileBrowser.Width < 10 {
+			e.fileBrowser.Width = 10
+		}
+		if e.fileBrowser.Width > e.width-10 {
+			e.fileBrowser.Width = e.width - 10
+		}
+		e.fileBrowser.Render(e.term, 0, 0, e.fileBrowser.Width, contentHeight)
+		contentX = e.fileBrowser.Width
+		contentWidth = e.width - contentX
+	}
+	rects, dividerX := splitpane.LayoutSideBySide(contentWidth, contentHeight, len(e.panes), e.splitRatio)
 	for i, rect := range rects {
 		if i < len(e.panes) {
 			isActive := i == e.activePane
+			rect.X += contentX
 			e.renderPane(e.panes[i], rect, isActive)
 		}
 	}
@@ -27,7 +41,7 @@ func (e *Editor) render() {
 			style = style.Bold(true)
 		}
 		for y := 0; y < contentHeight; y++ {
-			e.term.SetCell(dividerX, y, '│', style)
+			e.term.SetCell(contentX+dividerX, y, '│', style)
 		}
 	}
 

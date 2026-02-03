@@ -2,21 +2,24 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
+	"github.com/Adelodunpeter25/vx/internal/syntax"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/gdamore/tcell/v2"
 )
 
 type Editor struct {
-	term       *terminal.Terminal
-	width      int
-	height     int
-	panes      []*Pane
-	activePane int
-	splitRatio float64
-	dragSplit  bool
-	quit       bool
+	term        *terminal.Terminal
+	width       int
+	height      int
+	panes       []*Pane
+	activePane  int
+	splitRatio  float64
+	dragSplit   bool
+	fileBrowser *filebrowser.State
+	quit        bool
 }
 
 func New(term *terminal.Terminal) *Editor {
@@ -24,12 +27,13 @@ func New(term *terminal.Terminal) *Editor {
 	buf := buffer.New()
 	pane := NewPane(buf, "")
 	return &Editor{
-		term:       term,
-		width:      width,
-		height:     height,
-		panes:      []*Pane{pane},
-		activePane: 0,
-		splitRatio: 0.5,
+		term:        term,
+		width:       width,
+		height:      height,
+		panes:       []*Pane{pane},
+		activePane:  0,
+		splitRatio:  0.5,
+		fileBrowser: filebrowser.New(""),
 	}
 }
 
@@ -43,12 +47,13 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 			pane := NewPane(buf, filename)
 			pane.msgManager.SetError("Warning: " + utils.FormatLoadError(filename, err))
 			ed := &Editor{
-				term:       term,
-				width:      width,
-				height:     height,
-				panes:      []*Pane{pane},
-				activePane: 0,
-				splitRatio: 0.5,
+				term:        term,
+				width:       width,
+				height:      height,
+				panes:       []*Pane{pane},
+				activePane:  0,
+				splitRatio:  0.5,
+				fileBrowser: filebrowser.New(""),
 			}
 			return ed, nil
 		}
@@ -58,12 +63,13 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 	width, height := term.Size()
 	pane := NewPane(buf, filename)
 	ed := &Editor{
-		term:       term,
-		width:      width,
-		height:     height,
-		panes:      []*Pane{pane},
-		activePane: 0,
-		splitRatio: 0.5,
+		term:        term,
+		width:       width,
+		height:      height,
+		panes:       []*Pane{pane},
+		activePane:  0,
+		splitRatio:  0.5,
+		fileBrowser: filebrowser.New(""),
 	}
 
 	// Show file info message on load
@@ -149,17 +155,42 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 		return
 	}
 	contentHeight := e.height - 1
-	rects, dividerX := splitpane.LayoutSideBySide(e.width, contentHeight, len(e.panes), e.splitRatio)
+	contentX := 0
+	contentWidth := e.width
+	if e.fileBrowser != nil && e.fileBrowser.Open {
+		fbWidth := e.fileBrowser.Width
+		if fbWidth < 10 {
+			fbWidth = 10
+		}
+		if fbWidth > e.width-10 {
+			fbWidth = e.width - 10
+		}
+		if ev.MouseX < fbWidth && ev.MouseY < contentHeight {
+			e.fileBrowser.Focused = true
+			action := e.fileBrowser.HandleMouse(ev, 0, 0, fbWidth, contentHeight)
+			if action.OpenPath != "" {
+				e.openFileInActivePane(action.OpenPath)
+			}
+			return
+		}
+		contentX = fbWidth
+		contentWidth = e.width - contentX
+	}
+	rects, dividerX := splitpane.LayoutSideBySide(contentWidth, contentHeight, len(e.panes), e.splitRatio)
 	if len(rects) >= 2 && dividerX >= 0 {
-		if e.handleSplitterDrag(ev, dividerX) {
+		if e.handleSplitterDrag(ev, contentX+dividerX, contentX, contentWidth) {
 			return
 		}
 	}
 	for i, rect := range rects {
+		rect.X += contentX
 		if ev.MouseX >= rect.X && ev.MouseX < rect.X+rect.Width && ev.MouseY >= rect.Y && ev.MouseY < rect.Y+rect.Height {
 			// Focus only on click or scroll, not on hover/move.
 			if ev.Button == tcell.Button1 || ev.Button == tcell.WheelUp || ev.Button == tcell.WheelDown {
 				e.activePane = i
+				if e.fileBrowser != nil {
+					e.fileBrowser.Focused = false
+				}
 			}
 			local := *ev
 			local.MouseX = ev.MouseX - rect.X
@@ -170,7 +201,7 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 	}
 }
 
-func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int) bool {
+func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int, contentX int, contentWidth int) bool {
 	if ev.Button == tcell.Button1 && abs(ev.MouseX-dividerX) <= 1 {
 		e.dragSplit = true
 	}
@@ -179,7 +210,7 @@ func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int) bool {
 		return true
 	}
 	if e.dragSplit {
-		width := e.width
+		width := contentWidth
 		if width <= 0 {
 			return true
 		}
@@ -189,7 +220,7 @@ func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int) bool {
 		if maxLeft < minLeft {
 			maxLeft = minLeft
 		}
-		left := ev.MouseX
+		left := ev.MouseX - contentX
 		if left < minLeft {
 			left = minLeft
 		}
@@ -247,6 +278,15 @@ func (e *Editor) handleResize() {
 }
 
 func (e *Editor) handleKey(ev *terminal.Event) {
+	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
+		action := e.fileBrowser.HandleKey(ev)
+		if action.OpenPath != "" {
+			e.openFileInActivePane(action.OpenPath)
+		}
+		e.active().renderCache.invalidate()
+		e.render()
+		return
+	}
 	switch e.active().mode {
 	case ModeNormal:
 		e.handleNormalMode(ev)
@@ -266,6 +306,25 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 	}
 	e.active().renderCache.invalidate()
 	e.render()
+}
+
+func (e *Editor) openFileInActivePane(path string) {
+	p := e.active()
+	if p.buffer.IsModified() {
+		p.msgManager.SetError("No write since last change (use :e! to override)")
+		return
+	}
+	newBuf, err := buffer.Load(path)
+	if err != nil {
+		p.msgManager.SetError("Error: " + err.Error())
+		return
+	}
+	p.buffer = newBuf
+	p.syntax = syntax.New(newBuf.Filename())
+	p.cursorX = 0
+	p.cursorY = 0
+	p.offsetY = 0
+	p.renderCache.invalidate()
 }
 
 func (e *Editor) ensurePaneCount() {
