@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"os"
+
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
@@ -20,6 +22,7 @@ type Editor struct {
 	dragSplit   bool
 	dragBrowser bool
 	fileBrowser *filebrowser.State
+	cdPrompt    *filebrowser.CdPrompt
 	quit        bool
 }
 
@@ -350,6 +353,8 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 	case ModeBufferPrompt:
 		tcellEv := tcell.NewEventKey(ev.Key, ev.Rune, tcell.ModNone)
 		e.handleBufferPromptMode(tcellEv)
+	case ModeCdPrompt:
+		e.handleCdPrompt(ev)
 	}
 	e.active().renderCache.invalidate()
 	e.render()
@@ -404,6 +409,45 @@ func (e *Editor) toggleFileBrowser() {
 		e.fileBrowser.Focused = true
 	} else {
 		e.fileBrowser.Focused = false
+	}
+}
+
+func (e *Editor) startCdPrompt(initial string) {
+	if e.cdPrompt == nil {
+		e.cdPrompt = filebrowser.NewCdPrompt(initial)
+	} else {
+		if initial == "" {
+			e.cdPrompt = filebrowser.NewCdPrompt("")
+		} else {
+			e.cdPrompt = filebrowser.NewCdPrompt(initial)
+		}
+	}
+	e.active().mode = ModeCdPrompt
+}
+
+func (e *Editor) handleCdPrompt(ev *terminal.Event) {
+	if e.cdPrompt == nil {
+		e.cdPrompt = filebrowser.NewCdPrompt("")
+	}
+	action := e.cdPrompt.HandleKey(ev)
+	if action.Cancel {
+		e.active().mode = ModeNormal
+		return
+	}
+	if action.Apply {
+		path := filebrowser.ExpandHome(action.Path)
+		if path == "" {
+			path = "."
+		}
+		if err := os.Chdir(path); err != nil {
+			e.active().msgManager.SetError("Error: " + err.Error())
+		} else {
+			if e.fileBrowser != nil {
+				e.fileBrowser.SetRoot(path)
+			}
+			e.active().msgManager.SetPersistent("Changed directory to " + path)
+		}
+		e.active().mode = ModeNormal
 	}
 }
 

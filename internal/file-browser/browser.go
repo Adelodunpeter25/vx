@@ -62,6 +62,25 @@ func New(root string) *State {
 	return state
 }
 
+func (s *State) SetRoot(root string) {
+	if root == "" {
+		if cwd, err := os.Getwd(); err == nil {
+			root = cwd
+		}
+	}
+	root = filepath.Clean(root)
+	s.RootPath = root
+	s.Root = &Node{
+		Name:  filepath.Base(root),
+		Path:  root,
+		IsDir: true,
+	}
+	s.selected = 0
+	s.scroll = 0
+	s.loadChildren(s.Root)
+	s.Root.Expanded = true
+}
+
 func (s *State) Visible() []*Node {
 	if s.Root == nil {
 		return nil

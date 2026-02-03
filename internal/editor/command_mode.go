@@ -20,6 +20,14 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 	}
 
 	if ev.Key == tcell.KeyEnter {
+		cmdTrim := strings.TrimSpace(p.commandBuf)
+		if strings.HasPrefix(cmdTrim, "cd") {
+			arg := strings.TrimSpace(strings.TrimPrefix(cmdTrim, "cd"))
+			e.startCdPrompt(arg)
+			p.commandBuf = ""
+			p.msgManager.Clear()
+			return
+		}
 		// Show "Saving..." for write commands
 		if strings.HasPrefix(p.commandBuf, "w") {
 			p.msgManager.SetPersistent("Saving...")

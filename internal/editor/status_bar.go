@@ -34,6 +34,10 @@ func (e *Editor) renderStatusLine() {
 		e.renderReplaceStatus(y, style)
 		return
 	}
+	if p.mode == ModeCdPrompt {
+		e.renderCdStatus(y, style)
+		return
+	}
 
 	// Normal status line
 	e.renderNormalStatus(y, style)
@@ -161,6 +165,14 @@ func (e *Editor) renderFileInfoMessage(y int, style tcell.Style, modeWidth int, 
 
 	// Draw size and lines on right
 	e.term.DrawText(e.width-len(rest)-1, y, rest, style)
+}
+
+func (e *Editor) renderCdStatus(y int, style tcell.Style) {
+	if e.cdPrompt == nil {
+		return
+	}
+	line := e.cdPrompt.Render(e.width)
+	e.term.DrawText(0, y, line, style)
 }
 
 func abbreviateHome(path string) string {

@@ -9,6 +9,7 @@ const (
 	ModeSearch
 	ModeReplace
 	ModeBufferPrompt
+	ModeCdPrompt
 )
 
 func (m Mode) String() string {
@@ -25,6 +26,8 @@ func (m Mode) String() string {
 		return "REPLACE"
 	case ModeBufferPrompt:
 		return "PROMPT"
+	case ModeCdPrompt:
+		return "CD"
 	default:
 		return "UNKNOWN"
 	}
