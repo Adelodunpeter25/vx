@@ -253,7 +253,7 @@ func (e *Editor) togglePreview() {
 	p := e.active()
 	p.preview.Toggle()
 	if p.preview.IsEnabled() {
-		p.preview.Update(p.buffer)
+		p.preview.Update(p.buffer, p.viewWidth)
 		p.msgManager.SetTransient("Preview enabled")
 	} else {
 		p.msgManager.SetTransient("Preview disabled")
@@ -263,9 +263,13 @@ func (e *Editor) togglePreview() {
 
 func (e *Editor) handlePreviewKeys(ev *terminal.Event) {
 	p := e.active()
+
+	if ev.Rune != 'g' {
+		p.lastKey = 0
+	}
+
 	switch ev.Rune {
 	case 'p':
-		// Toggle preview off
 		e.togglePreview()
 	case 'j':
 		p.preview.Scroll(1)
@@ -273,6 +277,16 @@ func (e *Editor) handlePreviewKeys(ev *terminal.Event) {
 		p.preview.Scroll(-1)
 	case 'q':
 		e.quit = true
+	case 'g':
+		if p.lastKey == 'g' {
+			p.preview.ScrollToStart()
+			p.lastKey = 0
+		} else {
+			p.lastKey = 'g'
+		}
+		return
+	case 'G':
+		p.preview.ScrollToEnd()
 	}
 
 	switch ev.Key {
@@ -282,9 +296,12 @@ func (e *Editor) handlePreviewKeys(ev *terminal.Event) {
 		p.preview.Scroll(-1)
 	case tcell.KeyCtrlC:
 		e.quit = true
+	case tcell.KeyCtrlU:
+		p.preview.ScrollPage(-1, p.viewHeight)
+	case tcell.KeyCtrlD:
+		p.preview.ScrollPage(1, p.viewHeight)
 	}
 
-	// Ensure render is triggered after preview key handling
 	p.renderCache.invalidate()
 }
 

@@ -7,37 +7,40 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// Preview manages the markdown preview pane
 type Preview struct {
-	enabled  bool
-	elements []markdown.Element
-	offsetY  int
+	enabled   bool
+	elements  []markdown.Element
+	visualLines []markdown.VisualLine
+	offsetY   int
+	modVersion int
+	lastWidth int
 }
 
 func New() *Preview {
-	return &Preview{
-		enabled: false,
-	}
+	return &Preview{enabled: false}
 }
 
-// Toggle enables/disables preview
 func (p *Preview) Toggle() {
 	p.enabled = !p.enabled
 }
 
-// IsEnabled returns preview state
 func (p *Preview) IsEnabled() bool {
 	return p.enabled
 }
 
-// Update re-parses the buffer content
-func (p *Preview) Update(buf *buffer.Buffer) {
-	// Build full text from buffer
+func (p *Preview) Update(buf *buffer.Buffer, width int) {
+	if width <= 0 {
+		return
+	}
+	modVer := buf.ModVersion()
+	if modVer == p.modVersion && width == p.lastWidth && len(p.visualLines) > 0 {
+		return
+	}
+
 	lines := make([]string, buf.LineCount())
 	for i := 0; i < buf.LineCount(); i++ {
 		lines[i] = buf.Line(i)
 	}
-
 	text := ""
 	for i, line := range lines {
 		if i > 0 {
@@ -47,50 +50,116 @@ func (p *Preview) Update(buf *buffer.Buffer) {
 	}
 
 	p.elements = markdown.Parse(text)
+	p.lastWidth = width
+
+	maxWidth := width
+	if maxWidth < 1 {
+		maxWidth = 1
+	}
+
+	p.visualLines = nil
+	for _, elem := range p.elements {
+		vls := markdown.ElementVisualLines(elem, maxWidth)
+		p.visualLines = append(p.visualLines, vls...)
+	}
+
+	p.modVersion = modVer
+	p.clampOffset()
 }
 
-// Render draws the preview pane
+func (p *Preview) TotalVisualLines() int {
+	return len(p.visualLines)
+}
+
 func (p *Preview) Render(term *terminal.Terminal, startX, startY, height, width int) {
-	if !p.enabled {
+	if !p.enabled || width <= 0 || height <= 0 {
 		return
 	}
 
-	y := startY
-	for i := p.offsetY; i < len(p.elements) && y < startY+height; i++ {
-		elem := p.elements[i]
-		segments := markdown.RenderElement(elem)
-
-		// Draw all segments on the same line
-		x := startX
-		for _, seg := range segments {
-			for _, r := range seg.Text {
-				if y < startY+height && x < startX+width {
-					term.SetCell(x, y, r, seg.Style)
-					x++
+	for y := 0; y < height; y++ {
+		vi := p.offsetY + y
+		for x := 0; x < width; x++ {
+			term.SetCell(startX+x, startY+y, ' ', tcell.StyleDefault)
+		}
+		if vi < len(p.visualLines) {
+			vline := p.visualLines[vi]
+			dx := startX
+			for _, seg := range vline.Segments {
+				for _, r := range seg.Text {
+					if dx < startX+width {
+						term.SetCell(dx, startY+y, r, seg.Style)
+						dx++
+					}
 				}
 			}
 		}
-		y++
 	}
 
-	// Fill remaining space
-	for y < startY+height {
-		for x := startX; x < startX+width; x++ {
-			term.SetCell(x, y, ' ', tcell.StyleDefault)
+	// Scroll indicator
+	if p.offsetY > 0 || p.offsetY+height < len(p.visualLines) {
+		total := len(p.visualLines)
+		if total > 0 {
+			barHeight := height
+			if barHeight < 3 {
+				barHeight = 3
+			}
+			thumbPos := 0
+			if total > height {
+				thumbPos = (p.offsetY * (total - barHeight)) / (total - height)
+			}
+			thumbPos = thumbPos * barHeight / total
+			if thumbPos < 0 {
+				thumbPos = 0
+			}
+			if thumbPos >= height {
+				thumbPos = height - 1
+			}
+			scrollX := startX + width - 1
+			if scrollX >= startX {
+				for y := 0; y < height; y++ {
+					style := tcell.StyleDefault
+					if y == thumbPos {
+						style = style.Foreground(tcell.ColorWhite).Reverse(true)
+					} else {
+						style = style.Foreground(tcell.NewRGBColor(60, 60, 60))
+					}
+					term.SetCell(scrollX, startY+y, ' ', style)
+				}
+			}
 		}
-		y++
 	}
 }
 
-// Scroll adjusts preview scroll position
 func (p *Preview) Scroll(delta int) {
 	p.offsetY += delta
-	if p.offsetY < 0 {
-		p.offsetY = 0
-	}
-	maxOffset := len(p.elements) - 1
+	p.clampOffset()
+}
+
+func (p *Preview) ScrollPage(delta int, viewHeight int) {
+	p.offsetY += delta * viewHeight
+	p.clampOffset()
+}
+
+func (p *Preview) ScrollToStart() {
+	p.offsetY = 0
+}
+
+func (p *Preview) ScrollToEnd() {
+	p.offsetY = len(p.visualLines) - 1
+	p.clampOffset()
+}
+
+func (p *Preview) Offset() int {
+	return p.offsetY
+}
+
+func (p *Preview) clampOffset() {
+	maxOffset := len(p.visualLines) - 1
 	if maxOffset < 0 {
 		maxOffset = 0
+	}
+	if p.offsetY < 0 {
+		p.offsetY = 0
 	}
 	if p.offsetY > maxOffset {
 		p.offsetY = maxOffset

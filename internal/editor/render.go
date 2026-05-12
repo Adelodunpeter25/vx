@@ -91,7 +91,7 @@ func (e *Editor) renderPane(p *Pane, rect splitpane.Rect, isActive bool) {
 
 	// If preview is enabled, show preview within pane rect
 	if p.preview.IsEnabled() {
-		p.preview.Update(p.buffer)
+		p.preview.Update(p.buffer, rect.Width)
 		e.renderPreviewPane(p, rect)
 		return
 	}
