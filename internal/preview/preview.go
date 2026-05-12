@@ -99,39 +99,6 @@ func (p *Preview) Render(term *terminal.Terminal, startX, startY, height, width 
 		}
 	}
 
-	// Scroll indicator
-	if p.offsetY > 0 || p.offsetY+height < len(p.visualLines) {
-		total := len(p.visualLines)
-		if total > 0 {
-			barHeight := height
-			if barHeight < 3 {
-				barHeight = 3
-			}
-			thumbPos := 0
-			if total > height {
-				thumbPos = (p.offsetY * (total - barHeight)) / (total - height)
-			}
-			thumbPos = thumbPos * barHeight / total
-			if thumbPos < 0 {
-				thumbPos = 0
-			}
-			if thumbPos >= height {
-				thumbPos = height - 1
-			}
-			scrollX := startX + width - 1
-			if scrollX >= startX {
-				for y := 0; y < height; y++ {
-					style := tcell.StyleDefault
-					if y == thumbPos {
-						style = style.Foreground(tcell.ColorWhite).Reverse(true)
-					} else {
-						style = style.Foreground(tcell.NewRGBColor(60, 60, 60))
-					}
-					term.SetCell(scrollX, startY+y, ' ', style)
-				}
-			}
-		}
-	}
 }
 
 func (p *Preview) Scroll(delta int) {

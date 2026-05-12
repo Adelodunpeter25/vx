@@ -1,8 +1,5 @@
 # VX Editor Tasks
 
-- [ ] Test clipboard on Linux (needs xclip/xsel installed)
-- [ ] Verify Windows build works (untested)
-
 ## Future Features (Post v0.1.0)
 - [ ] Split windows (horizontal/vertical)
 - [ ] Configuration file (keybindings, colors, tab width)

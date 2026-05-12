@@ -24,6 +24,10 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 				p.msgManager.SetTransient("Saved")
 			}
 		}
+		p.mode = ModeNormal
+		if p.cursorX > 0 {
+			p.cursorX--
+		}
 		return
 	}
 

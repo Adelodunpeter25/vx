@@ -53,7 +53,7 @@ func (e *Editor) highlightSelectionAt(rect splitpane.Rect, p *Pane, screenRow, l
 	}
 
 	// Apply highlight style to selected characters
-	selectionStyle := tcell.StyleDefault.Background(tcell.ColorGray).Foreground(tcell.ColorBlack)
+	selectionStyle := tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
 	line := []rune(p.buffer.Line(lineNum))
 
 	for col := highlightStart; col < highlightEnd && col < len(line); col++ {

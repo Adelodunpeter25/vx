@@ -98,20 +98,14 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 	if buttonPressed {
 		// Button is pressed/held
 		if !p.mouseDragging && !p.selection.IsActive() {
-			// First press - record position but don't start selection yet
+			// First press - start selection immediately from click position
 			p.mouseDownX = mouseX
 			p.mouseDownY = mouseY
 			p.mouseDragging = true
+			p.selection.Start(bufferY, bufferX)
 		}
 
-		// Check if mouse moved enough to start selection
-		if p.mouseDragging && !p.selection.IsActive() && (abs(mouseX-p.mouseDownX) > 1 || abs(mouseY-p.mouseDownY) > 0) {
-			// Mouse moved - start selection from original down position
-			startBufferY, startBufferX := e.bufferPosFromScreen(p.mouseDownX, p.mouseDownY, gutterWidth, maxWidth)
-			p.selection.Start(startBufferY, startBufferX)
-		}
-
-		// Update selection if active
+		// Update selection end position as mouse moves
 		if p.selection.IsActive() {
 			p.selection.Update(bufferY, bufferX)
 		}
@@ -141,13 +135,20 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 		e.clampCursor()
 	} else if buttonReleased {
 		// Button released
-		if !p.selection.IsActive() {
-			// Was just a click, not a drag - move cursor
+		if p.selection.IsActive() {
+			sLine, sCol, eLine, eCol, _ := p.selection.GetRange()
+			if sLine == eLine && sCol == eCol {
+				// Click without drag - move cursor and clear
+				p.cursorY = bufferY
+				p.cursorX = bufferX
+				e.clampCursor()
+				p.selection.Clear()
+			}
+		} else {
 			p.cursorY = bufferY
 			p.cursorX = bufferX
 			e.clampCursor()
 		}
-		// Reset drag state
 		p.mouseDragging = false
 	}
 
