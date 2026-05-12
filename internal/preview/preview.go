@@ -12,6 +12,7 @@ type Preview struct {
 	elements    []markdown.Element
 	visualLines []markdown.VisualLine
 	offsetY     int
+	buf         *buffer.Buffer
 	modVersion  int
 	lastWidth   int
 	viewHeight  int
@@ -33,10 +34,11 @@ func (p *Preview) Update(buf *buffer.Buffer, width int) {
 	if width <= 0 {
 		return
 	}
-	modVer := buf.ModVersion()
-	if modVer == p.modVersion && width == p.lastWidth && len(p.visualLines) > 0 {
+	if buf == p.buf && buf.ModVersion() == p.modVersion && width == p.lastWidth && len(p.visualLines) > 0 {
 		return
 	}
+
+	p.buf = buf
 
 	lines := make([]string, buf.LineCount())
 	for i := 0; i < buf.LineCount(); i++ {
@@ -64,8 +66,7 @@ func (p *Preview) Update(buf *buffer.Buffer, width int) {
 		p.visualLines = append(p.visualLines, vls...)
 	}
 
-	p.modVersion = modVer
-	p.clampOffset()
+	p.modVersion = buf.ModVersion()
 }
 
 func (p *Preview) TotalVisualLines() int {

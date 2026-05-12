@@ -96,16 +96,14 @@ func (e *Editor) handleMouseEvent(ev *terminal.Event) {
 
 	// Check if button is pressed or released
 	if buttonPressed {
-		// Button is pressed/held
-		if !p.mouseDragging && !p.selection.IsActive() {
-			// First press - start selection immediately from click position
+		if !p.mouseDragging {
 			p.mouseDownX = mouseX
 			p.mouseDownY = mouseY
 			p.mouseDragging = true
+			p.selection.Clear()
 			p.selection.Start(bufferY, bufferX)
 		}
 
-		// Update selection end position as mouse moves
 		if p.selection.IsActive() {
 			p.selection.Update(bufferY, bufferX)
 		}
