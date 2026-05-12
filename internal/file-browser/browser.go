@@ -48,7 +48,7 @@ func New(root string) *State {
 	}
 	root = filepath.Clean(root)
 	state := &State{
-		Open:     true,
+		Open:     false,
 		Width:    30,
 		Focused:  false,
 		RootPath: root,
