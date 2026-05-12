@@ -11,18 +11,10 @@ import (
 
 func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	p := e.active()
-	// Clear transient messages on any key
 	p.msgManager.ClearIfTransient()
 
-	// If in preview mode, handle preview-specific keys
 	if p.preview.IsEnabled() {
 		e.handlePreviewKeys(ev)
-		return
-	}
-
-	// Ctrl+C force quit
-	if ev.Key == tcell.KeyCtrlC {
-		e.quit = true
 		return
 	}
 
@@ -50,13 +42,13 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		return
 	}
 
-	// Ctrl+N next buffer
+	// Ctrl+N next pane
 	if ev.Key == tcell.KeyCtrlN {
 		e.nextPane()
 		return
 	}
 
-	// Ctrl+P previous buffer
+	// Ctrl+P previous pane
 	if ev.Key == tcell.KeyCtrlP {
 		e.previousPane()
 		return
@@ -79,7 +71,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		p.msgManager.Clear()
 		p.lastKey = 0
 	case 'H':
-		// Ctrl+H for replace
 		p.mode = ModeReplace
 		p.replace.Start()
 		p.msgManager.Clear()
@@ -91,7 +82,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.searchPrevious()
 		p.lastKey = 0
 	case 'c':
-		// Copy selection if active, otherwise copy current line
 		if p.selection.IsActive() {
 			e.copySelection()
 		} else {
@@ -99,7 +89,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		}
 		p.lastKey = 0
 	case 'x':
-		// Cut selection if active, otherwise delete character
 		if p.selection.IsActive() {
 			e.cutSelection()
 		} else {
@@ -107,7 +96,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		}
 		p.lastKey = 0
 	case 'd':
-		// Handle dd (delete line)
 		if p.lastKey == 'd' {
 			e.deleteCurrentLine()
 			p.lastKey = 0
@@ -115,7 +103,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			p.lastKey = 'd'
 		}
 	case 'p':
-		// Check if this is a markdown file
 		if strings.HasSuffix(p.buffer.Filename(), ".md") {
 			e.togglePreview()
 		} else {
@@ -129,7 +116,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.performRedo()
 		p.lastKey = 0
 	case 'g':
-		// Handle gg (go to start of file)
 		if p.lastKey == 'g' {
 			e.jumpToStart()
 			p.lastKey = 0
@@ -137,7 +123,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 			p.lastKey = 'g'
 		}
 	case 'G':
-		// Go to end of file
 		e.jumpToEnd()
 		p.lastKey = 0
 	case 'w':
@@ -182,7 +167,6 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		p.selection.Clear()
 		p.lastKey = 0
 	default:
-		// Clear lastKey if any other key is pressed
 		p.lastKey = 0
 	}
 
@@ -228,6 +212,64 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		} else {
 			p.msgManager.SetTransient("End of file")
 		}
+		p.selection.Clear()
+		p.lastKey = 0
+	case tcell.KeyCtrlC:
+		if p.selection.IsActive() {
+			e.copySelection()
+		} else {
+			e.copyCurrentLine()
+		}
+		p.lastKey = 0
+	case tcell.KeyCtrlQ:
+		e.quit = true
+	case tcell.KeyCtrlZ:
+		e.performUndo()
+	case tcell.KeyCtrlY:
+		e.performRedo()
+	case tcell.KeyCtrlX:
+		if p.selection.IsActive() {
+			e.cutSelection()
+		} else {
+			e.deleteCharacter()
+		}
+		p.lastKey = 0
+	case tcell.KeyCtrlV:
+		e.pasteFromClipboard()
+		p.lastKey = 0
+	case tcell.KeyCtrlA:
+		lastLine := p.buffer.LineCount() - 1
+		lastCol := lineRuneCount(p.buffer.Line(lastLine))
+		p.selection.Start(0, 0)
+		p.selection.Update(lastLine, lastCol)
+		p.lastKey = 0
+	case tcell.KeyCtrlB:
+		e.toggleFileBrowser()
+		p.lastKey = 0
+	case tcell.KeyCtrlO:
+		p.mode = ModeCommand
+		p.commandBuf = "e "
+		p.msgManager.Clear()
+		p.lastKey = 0
+	case tcell.KeyCtrlW:
+		e.deleteCurrentPane()
+		p.lastKey = 0
+	case tcell.KeyCtrlU:
+		halfPage := max(1, (e.height-1)/2)
+		for i := 0; i < halfPage && p.cursorY > 0; i++ {
+			p.cursorY--
+		}
+		e.adjustScroll()
+		e.clampCursor()
+		p.selection.Clear()
+		p.lastKey = 0
+	case tcell.KeyCtrlD:
+		halfPage := max(1, (e.height-1)/2)
+		for i := 0; i < halfPage && p.cursorY < p.buffer.LineCount()-1; i++ {
+			p.cursorY++
+		}
+		e.adjustScroll()
+		e.clampCursor()
 		p.selection.Clear()
 		p.lastKey = 0
 	}
@@ -329,7 +371,6 @@ func (e *Editor) pasteFromClipboard() {
 		return
 	}
 
-	// Insert text at cursor position
 	for _, r := range text {
 		if r == '\n' {
 			p.buffer.SplitLine(p.cursorY, p.cursorX)

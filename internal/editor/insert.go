@@ -7,12 +7,49 @@ import (
 
 func (e *Editor) handleInsertMode(ev *terminal.Event) {
 	p := e.active()
-	// Clear transient messages on any key
 	p.msgManager.ClearIfTransient()
 
-	// Ctrl+C force quit
 	if ev.Key == tcell.KeyCtrlC {
 		e.quit = true
+		return
+	}
+
+	if ev.Key == tcell.KeyCtrlS {
+		if p.buffer.Filename() == "" {
+			p.msgManager.SetError("No filename specified")
+		} else {
+			if err := p.buffer.Save(); err != nil {
+				p.msgManager.SetError("Failed to save")
+			} else {
+				p.msgManager.SetTransient("Saved")
+			}
+		}
+		return
+	}
+
+	if ev.Key == tcell.KeyCtrlZ {
+		p.mode = ModeNormal
+		if p.buffer.Undo() {
+			p.msgManager.SetTransient("Undo")
+			e.clampCursor()
+			e.adjustScroll()
+		} else {
+			p.msgManager.SetTransient("Nothing to undo")
+		}
+		p.mode = ModeInsert
+		return
+	}
+
+	if ev.Key == tcell.KeyCtrlY {
+		p.mode = ModeNormal
+		if p.buffer.Redo() {
+			p.msgManager.SetTransient("Redo")
+			e.clampCursor()
+			e.adjustScroll()
+		} else {
+			p.msgManager.SetTransient("Nothing to redo")
+		}
+		p.mode = ModeInsert
 		return
 	}
 
@@ -31,7 +68,6 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 	}
 
 	if ev.Key == tcell.KeyEnter {
-		// Get current line indentation
 		currentLine := p.buffer.Line(p.cursorY)
 		indent := getIndentation(currentLine)
 
@@ -39,7 +75,6 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 		p.cursorY++
 		p.cursorX = 0
 
-		// Auto-indent: insert same indentation on new line
 		for _, r := range indent {
 			p.buffer.InsertRune(p.cursorY, p.cursorX, r)
 			p.cursorX++

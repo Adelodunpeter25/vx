@@ -11,8 +11,8 @@ A modern vi text editor written in Go with syntax highlighting, search, undo/red
 - **Mouse Selection** - Click and drag to select text, copy with `c`, cut with `x`
 - **Real-time Search** - Incremental search with live highlighting as you type
 - **Find & Replace** - Interactive replace with y/n confirmation for each match
-- **Undo/Redo** - Full undo history with `u` and `r`
-- **Clipboard Support** - Copy with `c`, paste with `p`
+- **Undo/Redo** - Full undo history with `Ctrl+Z` / `Ctrl+Y`
+- **Clipboard Support** - Copy with `Ctrl+C`, paste with `Ctrl+V`
 - **Markdown Preview** - Full-screen preview for `.md` files
 - **Fast Startup** - Native Go binary, instant launch
 
@@ -56,32 +56,59 @@ vx --version          # Show version
 ## Keybindings
 
 ### Normal Mode
+
+#### Navigation
 - `h/j/k/l` - Move cursor left/down/up/right
 - `w/b` - Move forward/backward by word
+- `gg` / `G` - Jump to start / end of file
+- `Ctrl+U` / `Ctrl+D` - Page up / page down
+
+#### Editing
 - `i` - Enter insert mode
-- `:` - Enter command mode
-- `/` or `Ctrl+F` - Search (real-time incremental search)
-- `Shift+H` - Find and replace
-- `n/N` - Next/previous search result
-- `c` - Copy current line (or selected text if selection active)
-- `x` - Cut selected text (or delete character if no selection)
+- `x` / `Ctrl+X` - Cut (selected text or character)
 - `p` - Paste (or toggle preview for .md files)
+- `u` / `Ctrl+Z` - Undo
+- `r` / `Ctrl+Y` - Redo
 - `dd` - Delete current line
-- `u` - Undo
-- `r` - Redo
-- `gg` - Jump to start of file
-- `G` - Jump to end of file
+
+#### Clipboard
+- `Ctrl+C` - Copy (selected text or current line)
+- `Ctrl+V` - Paste
+- `c` - Copy (selected text or current line)
+- `x` / `Ctrl+X` - Cut
+
+#### Search & Replace
+- `/` or `Ctrl+F` - Search (real-time incremental)
+- `n` / `N` - Next / previous search result
+- `Shift+H` - Find and replace
+
+#### File & Pane Management
 - `Ctrl+S` - Save file
-- `Ctrl+N` - Next pane
-- `Ctrl+P` - Previous pane
+- `Ctrl+O` - Open file
+- `Ctrl+W` - Close current pane
+- `Ctrl+N` / `Ctrl+P` - Next / previous pane
+- `Ctrl+B` - Toggle file browser sidebar
 - `Esc` - Clear selection
-- `q` - Quit
-- `Ctrl+C` - Force quit
+- `:` - Enter command mode
+
+#### Selection
+- `Ctrl+A` - Select all
+
+#### Misc
+- `q` / `Ctrl+Q` - Quit
+- `Ctrl+C` - Copy
+
+### Insert Mode
+- `Esc` - Return to normal mode
+- `Ctrl+S` - Save
+- `Ctrl+Z` - Undo
+- `Ctrl+Y` - Redo
+- Arrow keys - Navigate
 
 ### Mouse Selection
 - **Click and drag** - Select text (auto-scrolls at edges)
-- `c` - Copy selected text to clipboard
-- `x` - Cut selected text (copy and delete)
+- `Ctrl+C` - Copy selected text to clipboard
+- `Ctrl+X` - Cut selected text
 - `Esc` or any movement key - Clear selection
 
 ### Search Mode
@@ -112,12 +139,11 @@ vx --version          # Show version
 - `:set:hide-hidden` - Hide hidden files in file browser
 
 ### Markdown Preview
-- `p` - Toggle preview (in .md files(normal mode))
-- `j/k` or arrows - Scroll preview
-
-### File Browser
-- `:f` - Toggle file browser sidebar
+- `p` - Toggle preview (in .md files, normal mode)
+- `j/k` or arrows - Scroll
+- `gg` / `G` - Start / end
+- `Ctrl+U` / `Ctrl+D` - Page up / page down
 
 ## Philosophy
 
-VX is "vi, but modern" - keeping the classic vi modal editing experience while adding modern conveniences like syntax highlighting and better UX. It's not trying to be Vim or Neovim, just a fast, simple text editor that respectsyour muscle memory..
+VX is "vi, but modern" - keeping the classic vi modal editing experience while adding modern conveniences like syntax highlighting and better UX. It's not trying to be Vim or Neovim, just a fast, simple text editor that respects your muscle memory.
