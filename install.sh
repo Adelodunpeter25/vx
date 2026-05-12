@@ -2,23 +2,16 @@
 
 set -e
 
-# VX Editor Installation Script
-
 REPO="Adelodunpeter25/vx"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="vx"
 
-# Detect OS and architecture
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
 
 case "$OS" in
-    linux)
-        OS="linux"
-        ;;
-    darwin)
-        OS="darwin"
-        ;;
+    linux) OS="linux" ;;
+    darwin) OS="darwin" ;;
     *)
         echo "Unsupported operating system: $OS"
         exit 1
@@ -26,12 +19,8 @@ case "$OS" in
 esac
 
 case "$ARCH" in
-    x86_64|amd64)
-        ARCH="amd64"
-        ;;
-    arm64|aarch64)
-        ARCH="arm64"
-        ;;
+    x86_64|amd64) ARCH="amd64" ;;
+    arm64|aarch64) ARCH="arm64" ;;
     *)
         echo "Unsupported architecture: $ARCH"
         exit 1

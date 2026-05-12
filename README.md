@@ -31,7 +31,6 @@ Download the appropriate binary from [releases](https://github.com/Adelodunpeter
 - **Linux (ARM64)**: `vx-linux-arm64`
 - **macOS (Intel)**: `vx-darwin-amd64`
 - **macOS (Apple Silicon)**: `vx-darwin-arm64`
-- **Windows**: `vx-windows-amd64.exe`
 
 Make it executable and move to PATH:
 
