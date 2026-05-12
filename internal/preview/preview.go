@@ -8,12 +8,13 @@ import (
 )
 
 type Preview struct {
-	enabled   bool
-	elements  []markdown.Element
+	enabled     bool
+	elements    []markdown.Element
 	visualLines []markdown.VisualLine
-	offsetY   int
-	modVersion int
-	lastWidth int
+	offsetY     int
+	modVersion  int
+	lastWidth   int
+	viewHeight  int
 }
 
 func New() *Preview {
@@ -75,6 +76,9 @@ func (p *Preview) Render(term *terminal.Terminal, startX, startY, height, width 
 	if !p.enabled || width <= 0 || height <= 0 {
 		return
 	}
+
+	p.viewHeight = height
+	p.clampOffset()
 
 	for y := 0; y < height; y++ {
 		vi := p.offsetY + y
@@ -154,9 +158,12 @@ func (p *Preview) Offset() int {
 }
 
 func (p *Preview) clampOffset() {
-	maxOffset := len(p.visualLines) - 1
-	if maxOffset < 0 {
-		maxOffset = 0
+	maxOffset := 0
+	total := len(p.visualLines)
+	if p.viewHeight > 0 && total > p.viewHeight {
+		maxOffset = total - p.viewHeight
+	} else if total > 0 {
+		maxOffset = total - 1
 	}
 	if p.offsetY < 0 {
 		p.offsetY = 0
