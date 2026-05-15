@@ -1,14 +1,19 @@
 package terminal
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
+)
 
 func (t *Terminal) SetCell(x, y int, r rune, style tcell.Style) {
 	t.screen.SetContent(x, y, r, nil, style)
 }
 
 func (t *Terminal) DrawText(x, y int, text string, style tcell.Style) {
-	for i, r := range text {
-		t.SetCell(x+i, y, r, style)
+	cursorX := x
+	for _, r := range text {
+		t.SetCell(cursorX, y, r, style)
+		cursorX += runewidth.RuneWidth(r)
 	}
 }
 

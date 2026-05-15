@@ -6,6 +6,7 @@ import (
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/wrap"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
 )
 
 func (e *Editor) renderPane(p *Pane, rect splitpane.Rect, isActive bool) {
@@ -105,8 +106,10 @@ func (e *Editor) setCellAt(rect splitpane.Rect, x, y int, r rune, style tcell.St
 }
 
 func (e *Editor) drawTextAt(rect splitpane.Rect, x, y int, text string, style tcell.Style) {
-	for i, r := range text {
-		e.setCellAt(rect, x+i, y, r, style)
+	cursorX := x
+	for _, r := range text {
+		e.setCellAt(rect, cursorX, y, r, style)
+		cursorX += runewidth.RuneWidth(r)
 	}
 }
 

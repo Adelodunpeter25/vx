@@ -252,31 +252,36 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 			depth++
 		}
 		prefix := " "
+		iconStyle := tcell.StyleDefault.Foreground(tcell.ColorGray)
 		if node.IsDir {
 			if node.Expanded {
 				prefix = " "
+				iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(137, 180, 250))
 			} else {
 				prefix = " "
+				iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(250, 179, 135))
 			}
 		} else {
 			prefix = " "
+			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(166, 227, 161))
 		}
 		indent := strings.Repeat("  ", depth)
-		label := indent + prefix + node.Name
-		if node.IsDir && !node.Expanded {
-			// label += "/" // Optional: remove trailing slash for cleaner look
-		}
-		style := tcell.StyleDefault
+		label := node.Name
+		rowStyle := tcell.StyleDefault
 		if idx == s.selected {
-			style = style.Reverse(true)
+			rowStyle = rowStyle.Background(tcell.NewRGBColor(45, 46, 61)).Foreground(tcell.ColorWhite)
+			if s.Focused {
+				rowStyle = rowStyle.Bold(true)
+			}
 		}
-		if s.Focused && idx == s.selected {
-			style = style.Bold(true)
-		}
+		term.DrawText(x, y+row, padRight(strings.Repeat(" ", width), width), rowStyle)
+		term.DrawText(x, y+row, indent, rowStyle)
+		term.DrawText(x+runewidth.StringWidth(indent), y+row, prefix, iconStyle)
 		if runewidth.StringWidth(label) > width {
 			label = runewidth.Truncate(label, width, "…")
 		}
-		term.DrawText(x, y+row, padRight(label, width), style)
+		nameX := x + runewidth.StringWidth(indent+prefix)
+		term.DrawText(nameX, y+row, label, rowStyle)
 	}
 }
 
