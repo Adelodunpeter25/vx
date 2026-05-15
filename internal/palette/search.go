@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Adelodunpeter25/vx/internal/utils"
 )
 
 func SearchFiles(root string, pattern string) []Item {
@@ -30,7 +32,7 @@ func SearchFiles(root string, pattern string) []Item {
 			items = append(items, Item{
 				Label: rel,
 				Data:  path,
-				Icon:  fileIcon(path),
+				Icon:  utils.FileIcon(path),
 			})
 		}
 		
@@ -43,25 +45,4 @@ func SearchFiles(root string, pattern string) []Item {
 	})
 
 	return items
-}
-
-func fileIcon(path string) string {
-	switch strings.ToLower(filepath.Ext(path)) {
-	case ".go":
-		return ""
-	case ".md":
-		return "󰍔"
-	case ".json":
-		return ""
-	case ".js", ".mjs", ".cjs":
-		return ""
-	case ".ts", ".tsx":
-		return ""
-	case ".py":
-		return ""
-	case ".rs":
-		return ""
-	default:
-		return ""
-	}
 }

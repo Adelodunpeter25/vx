@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Adelodunpeter25/vx/internal/terminal"
+	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 )
@@ -14,6 +15,7 @@ import (
 type Node struct {
 	Name     string
 	Path     string
+	Icon     string
 	IsDir    bool
 	Expanded bool
 	Loaded   bool
@@ -57,6 +59,7 @@ func New(root string) *State {
 	state.Root = &Node{
 		Name:  filepath.Base(root),
 		Path:  root,
+		Icon:  utils.FileIcon(root),
 		IsDir: true,
 	}
 	state.loadChildren(state.Root)
@@ -75,6 +78,7 @@ func (s *State) SetRoot(root string) {
 	s.Root = &Node{
 		Name:  filepath.Base(root),
 		Path:  root,
+		Icon:  utils.FileIcon(root),
 		IsDir: true,
 	}
 	s.selected = 0
@@ -190,6 +194,7 @@ func (s *State) loadChildren(node *Node) {
 		child := &Node{
 			Name:   name,
 			Path:   path,
+			Icon:   utils.FileIcon(path),
 			IsDir:  ent.IsDir(),
 			Parent: node,
 		}
@@ -251,17 +256,16 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		for p := node.Parent; p != nil && p != s.Root; p = p.Parent {
 			depth++
 		}
-		prefix := " "
 		iconStyle := tcell.StyleDefault.Foreground(tcell.ColorGray)
+		icon := node.Icon
 		if node.IsDir {
 			if node.Expanded {
-				prefix = " "
+				icon = ""
 			} else {
-				prefix = " "
+				icon = ""
 			}
 			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(250, 179, 135))
 		} else {
-			prefix = " "
 			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(166, 227, 161))
 		}
 		indent := strings.Repeat("  ", depth)
@@ -275,11 +279,11 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		}
 		term.DrawText(x, y+row, padRight(strings.Repeat(" ", width), width), rowStyle)
 		term.DrawText(x, y+row, indent, rowStyle)
-		term.DrawText(x+runewidth.StringWidth(indent), y+row, prefix, iconStyle)
+		term.DrawText(x+runewidth.StringWidth(indent), y+row, icon+" ", iconStyle)
 		if runewidth.StringWidth(label) > width {
 			label = runewidth.Truncate(label, width, "…")
 		}
-		nameX := x + runewidth.StringWidth(indent+prefix)
+		nameX := x + runewidth.StringWidth(indent+icon+" ")
 		term.DrawText(nameX, y+row, label, rowStyle)
 	}
 }
