@@ -317,10 +317,12 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 	// Global shortcuts that work regardless of focus
 	if ev.Key == tcell.KeyCtrlP {
 		e.openPalette()
+		e.render()
 		return
 	}
 	if ev.Key == tcell.KeyCtrlB {
 		e.toggleFileBrowser()
+		e.render()
 		return
 	}
 	if ev.Key == tcell.KeyCtrlQ {
