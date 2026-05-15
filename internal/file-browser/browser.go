@@ -120,6 +120,13 @@ func (s *State) SetSelectedPath(path string) {
 	}
 }
 
+func (s *State) Refresh() {
+	if s.Root != nil {
+		s.Root.Loaded = false
+		// loadChildren will be called on next render through Visible() -> appendVisible()
+	}
+}
+
 func (s *State) Visible() []*Node {
 	if s.Root == nil {
 		return nil

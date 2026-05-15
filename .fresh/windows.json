@@ -1,0 +1,12 @@
+{
+  "active": 1,
+  "next_id": 2,
+  "windows": [
+    {
+      "id": 1,
+      "label": "vx",
+      "root": "/Users/techclub/Public/projects/vx",
+      "plugin_state": {}
+    }
+  ]
+}

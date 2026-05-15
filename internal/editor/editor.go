@@ -5,6 +5,7 @@ import (
 
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
+	"github.com/Adelodunpeter25/vx/internal/fswatch"
 	"github.com/Adelodunpeter25/vx/internal/palette"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
@@ -24,6 +25,7 @@ type Editor struct {
 	fileBrowser *filebrowser.State
 	cdPrompt    *filebrowser.CdPrompt
 	palette     *palette.Palette
+	watcher     *fswatch.Watcher
 	quit        bool
 }
 
@@ -31,7 +33,7 @@ func New(term *terminal.Terminal) *Editor {
 	width, height := term.Size()
 	buf := buffer.New()
 	pane := NewPane(buf, "")
-	return &Editor{
+	ed := &Editor{
 		term:        term,
 		width:       width,
 		height:      height,
@@ -40,6 +42,8 @@ func New(term *terminal.Terminal) *Editor {
 		splitRatio:  0.5,
 		fileBrowser: filebrowser.New(""),
 	}
+	ed.initWatcher(".")
+	return ed
 }
 
 func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
@@ -58,6 +62,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		}
 		ed.fileBrowser.Open = true
 		ed.fileBrowser.Focused = true
+		ed.initWatcher(filename)
 		return ed, nil
 	}
 
@@ -78,6 +83,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				splitRatio:  0.5,
 				fileBrowser: filebrowser.New(""),
 			}
+			ed.initWatcher(".")
 			return ed, nil
 		}
 		return nil, err
@@ -94,6 +100,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		splitRatio:  0.5,
 		fileBrowser: filebrowser.New(""),
 	}
+	ed.initWatcher(".")
 
 	// Show file info message on load
 	ed.showFileInfo()
