@@ -67,6 +67,7 @@ func (e *CustomError) Error() string {
 // - Syntax highlighting
 // - Search performance
 // - Rendering speed
+// - Nothing to se here just using this to trigger a github release
 
 func main() {
 	fmt.Println("VX Editor Performance Test File")
