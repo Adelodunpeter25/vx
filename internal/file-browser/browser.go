@@ -250,18 +250,20 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		for p := node.Parent; p != nil && p != s.Root; p = p.Parent {
 			depth++
 		}
-		prefix := "  "
+		prefix := " "
 		if node.IsDir {
 			if node.Expanded {
-				prefix = "v "
+				prefix = " "
 			} else {
-				prefix = "> "
+				prefix = " "
 			}
+		} else {
+			prefix = " "
 		}
 		indent := strings.Repeat("  ", depth)
 		label := indent + prefix + node.Name
-		if node.IsDir {
-			label += "/"
+		if node.IsDir && !node.Expanded {
+			// label += "/" // Optional: remove trailing slash for cleaner look
 		}
 		style := tcell.StyleDefault
 		if idx == s.selected {
