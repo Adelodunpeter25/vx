@@ -61,9 +61,9 @@ func (m *MessageManager) Get() string {
 		return ""
 	}
 
-	// Check if transient message has expired (2 seconds)
+	// Check if transient message has expired (3 seconds)
 	if m.current.msgType == MessageTransient {
-		if time.Since(m.current.timestamp) > 2*time.Second {
+		if time.Since(m.current.timestamp) > 3*time.Second {
 			m.current = nil
 			return ""
 		}
@@ -77,9 +77,13 @@ func (m *MessageManager) Clear() {
 	m.current = nil
 }
 
-// ClearIfTransient clears only if current message is transient
+// ClearIfTransient clears only if current message is transient and has been shown
 func (m *MessageManager) ClearIfTransient() {
 	if m.current != nil && m.current.msgType == MessageTransient {
-		m.current = nil
+		// Only clear on action if it's been shown for at least 500ms
+		// to prevent accidental clearing on double key presses
+		if time.Since(m.current.timestamp) > 500*time.Millisecond {
+			m.current = nil
+		}
 	}
 }

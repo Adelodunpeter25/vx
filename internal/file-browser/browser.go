@@ -84,11 +84,37 @@ func (s *State) SetRoot(root string) {
 
 func (s *State) SetSelectedPath(path string) {
 	path = filepath.Clean(path)
+
+	// Ensure all parents are expanded
+	rel, err := filepath.Rel(s.RootPath, path)
+	if err == nil && !strings.HasPrefix(rel, "..") {
+		parts := strings.Split(rel, string(os.PathSeparator))
+		curr := s.Root
+		currPath := s.RootPath
+		for i := 0; i < len(parts)-1; i++ {
+			currPath = filepath.Join(currPath, parts[i])
+			if !curr.Loaded {
+				s.loadChildren(curr)
+			}
+			found := false
+			for _, child := range curr.Children {
+				if child.Path == currPath {
+					child.Expanded = true
+					curr = child
+					found = true
+					break
+				}
+			}
+			if !found {
+				break
+			}
+		}
+	}
+
 	nodes := s.Visible()
 	for i, node := range nodes {
 		if node.Path == path {
 			s.selected = i
-			// Ensure visibility (could expand parents if needed, but for now just select if visible)
 			return
 		}
 	}
