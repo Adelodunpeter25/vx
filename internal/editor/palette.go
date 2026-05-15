@@ -1,21 +1,28 @@
 package editor
 
 import (
+	"path/filepath"
+
 	"github.com/Adelodunpeter25/vx/internal/palette"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 )
 
 func (e *Editor) openPalette() {
+	root := "."
+	if p := e.active(); p != nil && p.buffer.Filename() != "" {
+		root = filepath.Dir(p.buffer.Filename())
+	}
+
 	e.palette = palette.New("")
 	e.palette.Active = true
 	e.active().mode = ModePalette
 
 	// Initial file search
-	items := palette.SearchFiles(".", "")
+	items := palette.SearchFiles(root, "")
 	e.palette.SetItems(items)
 
 	e.palette.OnChange = func(input string) {
-		items := palette.SearchFiles(".", input)
+		items := palette.SearchFiles(root, input)
 		e.palette.SetItems(items)
 	}
 
