@@ -6,7 +6,7 @@ import (
 )
 
 func (e *Editor) openPalette() {
-	e.palette = palette.New("Open:")
+	e.palette = palette.New("")
 	e.palette.Active = true
 	e.active().mode = ModePalette
 

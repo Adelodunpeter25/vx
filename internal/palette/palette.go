@@ -1,6 +1,8 @@
 package palette
 
 import (
+	"strings"
+
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
 )
@@ -11,15 +13,15 @@ type Item struct {
 }
 
 type Palette struct {
-	Active      bool
-	Input       string
-	Items       []Item
-	Filtered    []Item
+	Active        bool
+	Input         string
+	Items         []Item
+	Filtered      []Item
 	SelectedIndex int
-	Prompt      string
-	OnSelect    func(Item)
-	OnCancel    func()
-	OnChange    func(string)
+	Prompt        string
+	OnSelect      func(Item)
+	OnCancel      func()
+	OnChange      func(string)
 }
 
 func New(prompt string) *Palette {
@@ -88,34 +90,56 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 		return
 	}
 
-	// Overlay render at the bottom
-	pWidth := width
-	pHeight := 10
+	pHeight := 12
 	if pHeight > height {
 		pHeight = height
 	}
 	x := 0
 	y := height - pHeight
 
-	style := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorWhite)
+	bgStyle := tcell.StyleDefault.Background(tcell.NewRGBColor(30, 30, 30)).Foreground(tcell.ColorWhite)
 	
-	// Draw box
-	for i := 0; i < pWidth; i++ {
+	// Draw background
+	for i := 0; i < width; i++ {
 		for j := 0; j < pHeight; j++ {
-			term.SetCell(x+i, y+j, ' ', style)
+			term.SetCell(x+i, y+j, ' ', bgStyle)
 		}
 	}
 
-	// Render input line
-	inputLine := p.Prompt + " " + p.Input
-	term.DrawText(x+1, y+1, inputLine, style.Bold(true))
-
-	// Render results
-	for i := 0; i < pHeight-3 && i < len(p.Filtered); i++ {
-		itemStyle := style
+	// Render results (top part of palette)
+	maxResults := pHeight - 3
+	for i := 0; i < maxResults && i < len(p.Filtered); i++ {
+		itemStyle := bgStyle
 		if i == p.SelectedIndex {
-			itemStyle = itemStyle.Reverse(true)
+			itemStyle = itemStyle.Background(tcell.NewRGBColor(60, 60, 100)).Bold(true)
 		}
-		term.DrawText(x+1, y+3+i, p.Filtered[i].Label, itemStyle)
+		label := " " + p.Filtered[i].Label
+		term.DrawText(x, y+i, padRight(label, width), itemStyle)
 	}
+
+	// Separator line
+	sepY := y + pHeight - 2
+	sepStyle := tcell.StyleDefault.Foreground(tcell.ColorGray)
+	for i := 0; i < width; i++ {
+		term.SetCell(x+i, sepY, '─', sepStyle)
+	}
+
+	// Render input line at the very bottom
+	inputY := y + pHeight - 1
+	inputStyle := bgStyle.Bold(true)
+	prompt := "> "
+	if p.Prompt != "" {
+		prompt = p.Prompt + " "
+	}
+	term.DrawText(x, inputY, prompt+p.Input, inputStyle)
+	
+	// Show blinking cursor
+	term.ShowCursor(x+len(prompt)+len(p.Input), inputY)
+}
+
+func padRight(s string, width int) string {
+	if len(s) >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-len(s))
 }

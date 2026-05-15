@@ -75,6 +75,8 @@ func (e *Editor) render() {
 	}
 	if e.palette != nil && e.palette.Active {
 		e.palette.Render(e.term, e.width, e.height)
+	} else {
+		e.term.HideCursor()
 	}
 	e.term.Show()
 }

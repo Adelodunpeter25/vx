@@ -37,6 +37,14 @@ func (t *Terminal) Show() {
 	t.screen.Show()
 }
 
+func (t *Terminal) ShowCursor(x, y int) {
+	t.screen.ShowCursor(x, y)
+}
+
+func (t *Terminal) HideCursor() {
+	t.screen.HideCursor()
+}
+
 func (t *Terminal) PollEvent() tcell.Event {
 	return t.screen.PollEvent()
 }
