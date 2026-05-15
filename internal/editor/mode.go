@@ -10,6 +10,7 @@ const (
 	ModeReplace
 	ModeBufferPrompt
 	ModeCdPrompt
+	ModePalette
 )
 
 func (m Mode) String() string {
@@ -28,6 +29,8 @@ func (m Mode) String() string {
 		return "PROMPT"
 	case ModeCdPrompt:
 		return "CD"
+	case ModePalette:
+		return "PALETTE"
 	default:
 		return "UNKNOWN"
 	}

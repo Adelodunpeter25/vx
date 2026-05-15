@@ -73,6 +73,9 @@ func (e *Editor) render() {
 		}
 		filebrowser.RenderCdPrompt(e.term, e.cdPrompt, e.width, promptY, promptY+1, cdPromptRows-1)
 	}
+	if e.palette != nil && e.palette.Active {
+		e.palette.Render(e.term, e.width, e.height)
+	}
 	e.term.Show()
 }
 

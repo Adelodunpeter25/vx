@@ -5,6 +5,7 @@ import (
 
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
+	"github.com/Adelodunpeter25/vx/internal/palette"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
@@ -22,6 +23,7 @@ type Editor struct {
 	dragBrowser bool
 	fileBrowser *filebrowser.State
 	cdPrompt    *filebrowser.CdPrompt
+	palette     *palette.Palette
 	quit        bool
 }
 
@@ -342,6 +344,8 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 		e.handleBufferPromptMode(tcellEv)
 	case ModeCdPrompt:
 		e.handleCdPrompt(ev)
+	case ModePalette:
+		e.handlePaletteEvent(ev)
 	}
 	e.active().renderCache.invalidate()
 	e.render()

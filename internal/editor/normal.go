@@ -47,9 +47,9 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		return
 	}
 
-	// Ctrl+P previous pane
+	// Ctrl+P open palette
 	if ev.Key == tcell.KeyCtrlP {
-		e.previousPane()
+		e.openPalette()
 		return
 	}
 
