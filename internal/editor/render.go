@@ -23,14 +23,15 @@ func (e *Editor) render() {
 	contentX := 0
 	contentWidth := e.width
 	if e.fileBrowser != nil && e.fileBrowser.Open {
-		if e.fileBrowser.Width < 10 {
-			e.fileBrowser.Width = 10
+		fbWidth := e.fileBrowser.Width
+		if fbWidth < 10 {
+			fbWidth = 10
 		}
-		if e.fileBrowser.Width > e.width-10 {
-			e.fileBrowser.Width = e.width - 10
+		if fbWidth > e.width-10 {
+			fbWidth = e.width - 10
 		}
-		e.fileBrowser.Render(e.term, 0, 0, e.fileBrowser.Width, contentHeight)
-		contentX = e.fileBrowser.Width + 1
+		e.fileBrowser.Render(e.term, 0, 0, fbWidth, contentHeight)
+		contentX = fbWidth + 1
 		contentWidth = e.width - contentX
 	}
 	rects, dividerX := splitpane.LayoutSideBySide(contentWidth, contentHeight, len(e.panes), e.splitRatio)

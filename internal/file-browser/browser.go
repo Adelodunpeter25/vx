@@ -82,6 +82,18 @@ func (s *State) SetRoot(root string) {
 	s.Root.Expanded = true
 }
 
+func (s *State) SetSelectedPath(path string) {
+	path = filepath.Clean(path)
+	nodes := s.Visible()
+	for i, node := range nodes {
+		if node.Path == path {
+			s.selected = i
+			// Ensure visibility (could expand parents if needed, but for now just select if visible)
+			return
+		}
+	}
+}
+
 func (s *State) Visible() []*Node {
 	if s.Root == nil {
 		return nil

@@ -1,6 +1,8 @@
 package preview
 
 import (
+	"fmt"
+
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	"github.com/Adelodunpeter25/vx/internal/markdown"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
@@ -81,6 +83,12 @@ func (p *Preview) Render(term *terminal.Terminal, startX, startY, height, width 
 	p.viewHeight = height
 	p.clampOffset()
 
+	gutterWidth := 5 // Fixed width for line numbers in preview
+	contentWidth := width - gutterWidth
+	if contentWidth < 1 {
+		contentWidth = 1
+	}
+
 	for y := 0; y < height; y++ {
 		vi := p.offsetY + y
 		for x := 0; x < width; x++ {
@@ -88,7 +96,18 @@ func (p *Preview) Render(term *terminal.Terminal, startX, startY, height, width 
 		}
 		if vi < len(p.visualLines) {
 			vline := p.visualLines[vi]
-			dx := startX
+			
+			// Render line number (only on non-wrapped starts if we had that info, but here we just show visual line num)
+			numStyle := tcell.StyleDefault.Foreground(tcell.ColorGray)
+			numStr := ""
+			// If it's a new element's first visual line, we could show a number. 
+			// For now, let's just show visual line numbers for simplicity as markdown doesn't have 1:1 line mapping easily here.
+			numStr = fmt.Sprintf("%*d ", gutterWidth-1, vi+1)
+			for i, r := range numStr {
+				term.SetCell(startX+i, startY+y, r, numStyle)
+			}
+
+			dx := startX + gutterWidth
 			for _, seg := range vline.Segments {
 				for _, r := range seg.Text {
 					if dx < startX+width {

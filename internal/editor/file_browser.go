@@ -29,6 +29,9 @@ func (e *Editor) openFileInActivePane(path string) {
 	p.offsetY = 0
 	p.renderCache.invalidate()
 	e.showFileInfo()
+	if e.fileBrowser != nil {
+		e.fileBrowser.SetSelectedPath(path)
+	}
 }
 
 func (e *Editor) previewFileInActivePane(path string) {
@@ -53,6 +56,9 @@ func (e *Editor) previewFileInActivePane(path string) {
 	p.offsetY = 0
 	p.renderCache.invalidate()
 	e.showFileInfo()
+	if e.fileBrowser != nil {
+		e.fileBrowser.SetSelectedPath(path)
+	}
 }
 
 func (e *Editor) toggleFileBrowser() {
