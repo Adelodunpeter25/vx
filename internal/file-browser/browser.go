@@ -8,6 +8,7 @@ import (
 
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
 )
 
 type Node struct {
@@ -272,8 +273,8 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		if s.Focused && idx == s.selected {
 			style = style.Bold(true)
 		}
-		if len(label) > width {
-			label = label[:width]
+		if runewidth.StringWidth(label) > width {
+			label = runewidth.Truncate(label, width, "…")
 		}
 		term.DrawText(x, y+row, padRight(label, width), style)
 	}
@@ -412,8 +413,9 @@ func (s *State) clampScroll(nodesLen int, height int) {
 }
 
 func padRight(s string, width int) string {
-	if len(s) >= width {
+	sw := runewidth.StringWidth(s)
+	if sw >= width {
 		return s
 	}
-	return s + strings.Repeat(" ", width-len(s))
+	return s + strings.Repeat(" ", width-sw)
 }
