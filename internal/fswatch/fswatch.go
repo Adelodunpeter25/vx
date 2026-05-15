@@ -45,17 +45,17 @@ func New(root string) *Watcher {
 
 // Start begins monitoring the root directory
 func (w *Watcher) Start() {
-	// Initial snapshot
-	w.scan()
+	// Initial snapshot (don't emit events for existing files)
+	w.scan(true)
 
 	go func() {
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ticker.C:
-				w.scan()
+				w.scan(false)
 			case <-w.stop:
 				return
 			}
@@ -68,7 +68,7 @@ func (w *Watcher) Stop() {
 	close(w.stop)
 }
 
-func (w *Watcher) scan() {
+func (w *Watcher) scan(initial bool) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -79,32 +79,51 @@ func (w *Watcher) scan() {
 			return nil
 		}
 
-		// Skip hidden directories (like .git) to save performance
-		if info.IsDir() && filepath.Base(path) != "." && filepath.Base(path)[0] == '.' {
-			return filepath.SkipDir
+		// Skip hidden directories and large dependency folders
+		name := filepath.Base(path)
+		if info.IsDir() && name != "." {
+			if name[0] == '.' || name == "node_modules" || name == "vendor" {
+				return filepath.SkipDir
+			}
 		}
 
 		current[path] = info.ModTime()
 
-		lastMod, exists := w.snapshot[path]
-		if !exists {
-			w.Events <- Event{Path: path, Type: EventCreated}
-		} else if info.ModTime().After(lastMod) {
-			w.Events <- Event{Path: path, Type: EventModified}
+		if !initial {
+			lastMod, exists := w.snapshot[path]
+			if !exists {
+				select {
+				case w.Events <- Event{Path: path, Type: EventCreated}:
+				default:
+				}
+			} else if info.ModTime().After(lastMod) {
+				select {
+				case w.Events <- Event{Path: path, Type: EventModified}:
+				default:
+				}
+			}
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		w.Errors <- err
+		select {
+		case w.Errors <- err:
+		default:
+		}
 		return
 	}
 
 	// Check for deletions
-	for path := range w.snapshot {
-		if _, exists := current[path]; !exists {
-			w.Events <- Event{Path: path, Type: EventDeleted}
+	if !initial {
+		for path := range w.snapshot {
+			if _, exists := current[path]; !exists {
+				select {
+				case w.Events <- Event{Path: path, Type: EventDeleted}:
+				default:
+				}
+			}
 		}
 	}
 

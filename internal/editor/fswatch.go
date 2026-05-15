@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"time"
+
 	"github.com/Adelodunpeter25/vx/internal/fswatch"
 )
 
@@ -12,13 +14,16 @@ func (e *Editor) initWatcher(root string) {
 		for {
 			select {
 			case <-e.watcher.Events:
+				// Coalesce events (debounce)
+				time.Sleep(100 * time.Millisecond)
+				// Drain pending events
+				for len(e.watcher.Events) > 0 {
+					<-e.watcher.Events
+				}
+
 				if e.fileBrowser != nil {
-					// We need to refresh the root children if anything changed
-					// For simplicity, we'll just trigger a re-render and let fileBrowser
-					// handle expansion if it needs to. 
-					// We'll add a Refresh method to the fileBrowser state later if needed.
-					// For now, just invalidate the root's loaded state.
 					e.fileBrowser.Refresh()
+					e.render()
 				}
 			case <-e.watcher.Errors:
 				// Silent errors for now
