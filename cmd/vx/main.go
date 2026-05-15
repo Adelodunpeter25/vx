@@ -20,12 +20,10 @@ func main() {
 			return
 		}
 		
-		// Check if path is a directory before initializing terminal
+		// Check flags
 		filename := os.Args[1]
-		if info, err := os.Stat(filename); err == nil && info.IsDir() {
-			fmt.Fprintf(os.Stderr, "Error: '%s' is a directory\n", filename)
-			fmt.Fprintf(os.Stderr, "Usage: vx <filename>\n")
-			os.Exit(1)
+		if _, err := os.Stat(filename); err == nil {
+			// If it's a directory, we'll handle it in editor.NewWithFile
 		}
 	}
 	

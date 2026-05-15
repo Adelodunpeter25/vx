@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"os"
+
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
@@ -39,6 +41,24 @@ func New(term *terminal.Terminal) *Editor {
 }
 
 func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
+	if info, err := os.Stat(filename); err == nil && info.IsDir() {
+		width, height := term.Size()
+		buf := buffer.New()
+		pane := NewPane(buf, "")
+		ed := &Editor{
+			term:        term,
+			width:       width,
+			height:      height,
+			panes:       []*Pane{pane},
+			activePane:  0,
+			splitRatio:  0.5,
+			fileBrowser: filebrowser.New(filename),
+		}
+		ed.fileBrowser.Open = true
+		ed.fileBrowser.Focused = true
+		return ed, nil
+	}
+
 	buf, err := buffer.Load(filename)
 	if err != nil {
 		// Check if it's a partial load (recoverable error)
