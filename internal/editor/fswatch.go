@@ -2,7 +2,6 @@ package editor
 
 import (
 	"path/filepath"
-	"time"
 
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	"github.com/Adelodunpeter25/vx/internal/fswatch"
@@ -36,13 +35,6 @@ func (e *Editor) initWatcher(root string) {
 							}
 						}
 					}
-				}
-
-				// Coalesce events for sidebar refresh
-				time.Sleep(100 * time.Millisecond)
-				// Drain pending events
-				for len(e.watcher.Events) > 0 {
-					<-e.watcher.Events
 				}
 
 				if e.fileBrowser != nil {

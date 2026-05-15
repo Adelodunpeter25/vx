@@ -49,7 +49,7 @@ func (w *Watcher) Start() {
 	w.scan(true)
 
 	go func() {
-		ticker := time.NewTicker(2 * time.Second)
+		ticker := time.NewTicker(250 * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
