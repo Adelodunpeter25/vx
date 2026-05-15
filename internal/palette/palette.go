@@ -90,7 +90,14 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 		return
 	}
 
-	pHeight := 12
+	numResults := len(p.Filtered)
+	maxResults := 9 // Max results to show
+	if numResults > maxResults {
+		numResults = maxResults
+	}
+
+	// Dynamic height: results + separator + input
+	pHeight := numResults + 2
 	if pHeight > height {
 		pHeight = height
 	}
@@ -107,8 +114,7 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 	}
 
 	// Render results (top part of palette)
-	maxResults := pHeight - 3
-	for i := 0; i < maxResults && i < len(p.Filtered); i++ {
+	for i := 0; i < numResults; i++ {
 		itemStyle := bgStyle
 		if i == p.SelectedIndex {
 			itemStyle = itemStyle.Background(tcell.NewRGBColor(60, 60, 100)).Bold(true)
@@ -120,8 +126,10 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 	// Separator line
 	sepY := y + pHeight - 2
 	sepStyle := tcell.StyleDefault.Foreground(tcell.ColorGray)
-	for i := 0; i < width; i++ {
-		term.SetCell(x+i, sepY, '─', sepStyle)
+	if pHeight >= 2 {
+		for i := 0; i < width; i++ {
+			term.SetCell(x+i, sepY, '─', sepStyle)
+		}
 	}
 
 	// Render input line at the very bottom
