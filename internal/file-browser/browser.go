@@ -122,8 +122,19 @@ func (s *State) SetSelectedPath(path string) {
 
 func (s *State) Refresh() {
 	if s.Root != nil {
-		s.Root.Loaded = false
-		// loadChildren will be called on next render through Visible() -> appendVisible()
+		s.invalidateRecursive(s.Root)
+	}
+}
+
+func (s *State) invalidateRecursive(node *Node) {
+	if node == nil {
+		return
+	}
+	node.Loaded = false
+	if node.IsDir && node.Expanded {
+		for _, child := range node.Children {
+			s.invalidateRecursive(child)
+		}
 	}
 }
 
