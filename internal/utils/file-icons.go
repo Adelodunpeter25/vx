@@ -6,11 +6,15 @@ import (
 )
 
 func FileIcon(path string) string {
+	return FileIconFor(path, false)
+}
+
+func FileIconFor(path string, isDir bool) string {
 	if path == "" {
 		return ""
 	}
 
-	if strings.HasSuffix(path, string(filepath.Separator)) {
+	if isDir {
 		return ""
 	}
 

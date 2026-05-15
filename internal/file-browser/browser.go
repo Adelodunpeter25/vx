@@ -59,7 +59,7 @@ func New(root string) *State {
 	state.Root = &Node{
 		Name:  filepath.Base(root),
 		Path:  root,
-		Icon:  utils.FileIcon(root),
+		Icon:  utils.FileIconFor(root, true),
 		IsDir: true,
 	}
 	state.loadChildren(state.Root)
@@ -78,7 +78,7 @@ func (s *State) SetRoot(root string) {
 	s.Root = &Node{
 		Name:  filepath.Base(root),
 		Path:  root,
-		Icon:  utils.FileIcon(root),
+		Icon:  utils.FileIconFor(root, true),
 		IsDir: true,
 	}
 	s.selected = 0
@@ -194,7 +194,7 @@ func (s *State) loadChildren(node *Node) {
 		child := &Node{
 			Name:   name,
 			Path:   path,
-			Icon:   utils.FileIcon(path),
+			Icon:   utils.FileIconFor(path, ent.IsDir()),
 			IsDir:  ent.IsDir(),
 			Parent: node,
 		}
@@ -259,11 +259,6 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		iconStyle := tcell.StyleDefault.Foreground(tcell.ColorGray)
 		icon := node.Icon
 		if node.IsDir {
-			if node.Expanded {
-				icon = ""
-			} else {
-				icon = ""
-			}
 			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(250, 179, 135))
 		} else {
 			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(166, 227, 161))
