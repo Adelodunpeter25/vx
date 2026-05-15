@@ -314,6 +314,20 @@ func (e *Editor) handleResize() {
 }
 
 func (e *Editor) handleKey(ev *terminal.Event) {
+	// Global shortcuts that work regardless of focus
+	if ev.Key == tcell.KeyCtrlP {
+		e.openPalette()
+		return
+	}
+	if ev.Key == tcell.KeyCtrlB {
+		e.toggleFileBrowser()
+		return
+	}
+	if ev.Key == tcell.KeyCtrlQ {
+		e.quit = true
+		return
+	}
+
 	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
 		action := e.fileBrowser.HandleKey(ev)
 		if action.PreviewPath != "" {
