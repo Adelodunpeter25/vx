@@ -88,14 +88,14 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 		return
 	}
 
-	// Simple overlay render in the middle
-	pWidth := width * 2 / 3
-	if pWidth < 40 {
-		pWidth = width
-	}
+	// Overlay render at the bottom
+	pWidth := width
 	pHeight := 10
-	x := (width - pWidth) / 2
-	y := 2
+	if pHeight > height {
+		pHeight = height
+	}
+	x := 0
+	y := height - pHeight
 
 	style := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorWhite)
 	
