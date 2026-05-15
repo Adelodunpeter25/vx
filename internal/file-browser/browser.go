@@ -256,11 +256,10 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		if node.IsDir {
 			if node.Expanded {
 				prefix = " "
-				iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(137, 180, 250))
 			} else {
 				prefix = " "
-				iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(250, 179, 135))
 			}
+			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(250, 179, 135))
 		} else {
 			prefix = " "
 			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(166, 227, 161))
