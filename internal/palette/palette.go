@@ -1,15 +1,19 @@
 package palette
 
 import (
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
 )
 
 type Item struct {
 	Label string
 	Data  interface{}
+	Icon  string
 }
 
 type Palette struct {
@@ -36,12 +40,34 @@ func (p *Palette) SetItems(items []Item) {
 }
 
 func (p *Palette) filter() {
-	// Simple prefix filter for now, can be improved to fuzzy later
-	p.Filtered = nil
+	type scoredItem struct {
+		item  Item
+		score int
+	}
+
+	filtered := make([]scoredItem, 0, len(p.Items))
+	query := strings.ToLower(strings.TrimSpace(p.Input))
 	for _, item := range p.Items {
-		p.Filtered = append(p.Filtered, item)
+		score, ok := scoreItem(item, query)
+		if ok {
+			filtered = append(filtered, scoredItem{item: item, score: score})
+		}
+	}
+	sort.SliceStable(filtered, func(i, j int) bool {
+		if filtered[i].score != filtered[j].score {
+			return filtered[i].score < filtered[j].score
+		}
+		return strings.ToLower(filtered[i].item.Label) < strings.ToLower(filtered[j].item.Label)
+	})
+
+	p.Filtered = p.Filtered[:0]
+	for _, scored := range filtered {
+		p.Filtered = append(p.Filtered, scored.item)
 	}
 	if p.SelectedIndex >= len(p.Filtered) {
+		p.SelectedIndex = 0
+	}
+	if p.SelectedIndex < 0 {
 		p.SelectedIndex = 0
 	}
 }
@@ -119,8 +145,16 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 		if i == p.SelectedIndex {
 			itemStyle = itemStyle.Background(tcell.NewRGBColor(60, 60, 100)).Bold(true)
 		}
-		label := " " + p.Filtered[i].Label
-		term.DrawText(x, y+i, padRight(label, width), itemStyle)
+		iconStyle := itemStyle.Foreground(tcell.NewRGBColor(250, 179, 135))
+		label := p.Filtered[i].Label
+		rowText := label
+		if p.Filtered[i].Icon != "" {
+			rowText = p.Filtered[i].Icon + " " + label
+		}
+		term.DrawText(x, y+i, padRight(rowText, width), itemStyle)
+		if p.Filtered[i].Icon != "" {
+			term.DrawText(x, y+i, p.Filtered[i].Icon, iconStyle)
+		}
 	}
 
 	// Separator line
@@ -146,8 +180,30 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 }
 
 func padRight(s string, width int) string {
-	if len(s) >= width {
+	if runewidth.StringWidth(s) >= width {
 		return s
 	}
-	return s + strings.Repeat(" ", width-len(s))
+	return s + strings.Repeat(" ", width-runewidth.StringWidth(s))
+}
+
+func scoreItem(item Item, query string) (int, bool) {
+	if query == "" {
+		return 0, true
+	}
+	label := strings.ToLower(item.Label)
+	base := strings.ToLower(filepath.Base(item.Label))
+	switch {
+	case base == query:
+		return 0, true
+	case strings.HasPrefix(base, query):
+		return 1, true
+	case strings.Contains(base, query):
+		return 2, true
+	case strings.HasPrefix(label, query):
+		return 3, true
+	case strings.Contains(label, query):
+		return 4, true
+	default:
+		return 0, false
+	}
 }

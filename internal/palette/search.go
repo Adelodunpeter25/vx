@@ -30,6 +30,7 @@ func SearchFiles(root string, pattern string) []Item {
 			items = append(items, Item{
 				Label: rel,
 				Data:  path,
+				Icon:  fileIcon(path),
 			})
 		}
 		
@@ -42,4 +43,25 @@ func SearchFiles(root string, pattern string) []Item {
 	})
 
 	return items
+}
+
+func fileIcon(path string) string {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".go":
+		return ""
+	case ".md":
+		return "󰍔"
+	case ".json":
+		return ""
+	case ".js", ".mjs", ".cjs":
+		return ""
+	case ".ts", ".tsx":
+		return ""
+	case ".py":
+		return ""
+	case ".rs":
+		return ""
+	default:
+		return ""
+	}
 }
