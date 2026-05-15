@@ -330,6 +330,14 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 		return
 	}
 
+	// Palette and other modal inputs take absolute precedence over focus
+	if e.active().mode == ModePalette {
+		e.handlePaletteEvent(ev)
+		e.active().renderCache.invalidate()
+		e.render()
+		return
+	}
+
 	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
 		action := e.fileBrowser.HandleKey(ev)
 		if action.PreviewPath != "" {
@@ -360,13 +368,10 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 		e.handleBufferPromptMode(tcellEv)
 	case ModeCdPrompt:
 		e.handleCdPrompt(ev)
-	case ModePalette:
-		e.handlePaletteEvent(ev)
 	}
 	e.active().renderCache.invalidate()
 	e.render()
 }
-
 
 func (e *Editor) ensurePaneCount() {
 	if len(e.panes) == 0 {
@@ -376,3 +381,4 @@ func (e *Editor) ensurePaneCount() {
 		e.activePane = 0
 	}
 }
+
