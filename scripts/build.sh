@@ -27,10 +27,6 @@ GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o build/vx-darwin-amd64 cmd/
 echo "Building for macOS Apple Silicon..."
 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o build/vx-darwin-arm64 cmd/vx/*.go
 
-# Windows AMD64
-echo "Building for Windows AMD64..."
-GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/vx-windows-amd64.exe cmd/vx/*.go
-
 echo ""
 echo "✓ Build complete! Binaries are in the build/ directory:"
 ls -lh build/
