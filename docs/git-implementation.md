@@ -15,6 +15,20 @@ This feature should primarily affect:
 
 This should not require changing core editing behavior unless the file browser needs new callbacks or refresh hooks.
 
+## Package Boundary
+
+All git-related implementation should live under `internal/git/`.
+
+That package should own:
+
+- Git repository detection
+- Git status collection and parsing
+- Status types and helper methods
+- Aggregation rules for directories
+- Cache and refresh coordination for git metadata
+
+The editor, file browser, and renderer should only consume the resulting data structures and helper methods. They should not execute git commands or parse git output directly.
+
 ## Existing Structure To Reuse
 
 Relevant code paths in this repository:
@@ -65,30 +79,31 @@ Example row formats:
 
 ## Phase Plan
 
-### Phase 1: Define the repository metadata model
+### Phase 1: Define the `internal/git` package
 
 Purpose:
 
-- Decide how git state is represented inside the app
-- Keep the data model small enough that rendering remains simple
+- Create the dedicated package boundary for all git logic
+- Keep git concerns isolated from editor and file browser code
 
 Tasks:
 
-- Add a status enum or small set of constants in a new package or in the file browser package
-- Define a per-node status field for files
-- Define an optional aggregate status field for directories
-- Decide whether a node can hold multiple flags or only one primary status
-- Decide how to represent "dirty directory" state when any child is modified
+- Create `internal/git/`
+- Add a status enum or small set of constants in that package
+- Define a repository metadata model in that package
+- Add directory aggregation helpers in that package
+- Keep file browser node structs free of git parsing concerns
 
 Implementation notes:
 
 - A node should probably store one primary status plus optional child summary counts
 - Directory status should usually be derived from descendants, not guessed from directory mtime
 - Keep the model independent from any specific git command output format
+- Expose the smallest possible API to the rest of the app
 
 Exit criteria:
 
-- A node can represent `clean`, `modified`, `untracked`, `ignored`, `deleted`, `added`, or `conflicted`
+- `internal/git` can represent `clean`, `modified`, `untracked`, `ignored`, `deleted`, `added`, or `conflicted`
 - Directory nodes can derive a summary state from child nodes
 
 ### Phase 2: Build a git status collector
@@ -101,14 +116,14 @@ Tasks:
 
 - Detect whether the current root is inside a git repository
 - Collect status for paths under the repo root
-- Map git status output to internal node statuses
+- Map git status output to internal git statuses
 - Handle subdirectories and nested paths consistently
 - Ignore paths that are not part of the file browser tree
 
 Recommended implementation approach:
 
 - Use `git status --porcelain=v1 -z` or a similar stable porcelain format
-- Parse results into a path-to-status map
+- Parse results into a path-to-status map inside `internal/git`
 - Normalize paths relative to the repository root
 - Cache results until refresh is needed
 
@@ -131,16 +146,16 @@ Purpose:
 
 Tasks:
 
-- Extend file browser state with git status data
+- Extend file browser state with a reference to `internal/git` data
 - Add helper methods to resolve status for a node path
-- Add aggregate status support for parent directories
+- Add aggregate status support for parent directories through `internal/git`
 - Ensure root refresh logic updates both tree data and git metadata
 
 Suggested approach:
 
 - Load git status once when the browser root changes
 - Recompute on explicit refresh and file system change events
-- Use path lookup at render time, but keep the lookup O(1) with a map
+- Use path lookup at render time, but keep the lookup O(1) with a map owned by `internal/git`
 
 Exit criteria:
 
@@ -228,36 +243,43 @@ Exit criteria:
 
 ### Task 1: Introduce a status type
 
-- Create a small status type or enum
+- Create `internal/git/status.go`
 - Add helpers for label, color, and badge rendering
 - Keep it simple enough to reuse for files and directories
 
 ### Task 2: Add a collector package or module
 
+- Put the collector in `internal/git/collector.go` or similar
 - Parse git porcelain output
 - Build a map from relative path to status
 - Expose lookup helpers to the file browser
 
-### Task 3: Extend file browser nodes
+### Task 3: Add aggregation helpers
+
+- Put directory aggregation logic in `internal/git/aggregate.go`
+- Derive folder status from child file statuses
+- Keep mixed-state handling deterministic
+
+### Task 4: Extend file browser nodes
 
 - Add a status field to the node model
 - Add directory summary support
 - Preserve current icon and expansion behavior
 
-### Task 4: Refresh status at the right times
+### Task 5: Refresh status at the right times
 
 - On browser root change
 - On editor watcher events
 - On explicit root changes from `:cd`
 - On file open/reload if needed
 
-### Task 5: Render badges
+### Task 6: Render badges
 
 - Add a small fixed-width badge area
 - Apply status colors and preserve selection styles
 - Keep clipping behavior stable
 
-### Task 6: Verify behavior
+### Task 7: Verify behavior
 
 - Run `go test ./...`
 - Run `make build`
@@ -268,9 +290,10 @@ Exit criteria:
 
 If the implementation is split into new files, a practical layout would be:
 
-- `internal/gitstatus/collector.go`
-- `internal/gitstatus/status.go`
-- `internal/file-browser/status.go`
+- `internal/git/status.go`
+- `internal/git/collector.go`
+- `internal/git/aggregate.go`
+- `internal/git/cache.go`
 - `internal/file-browser/browser.go`
 
 This is only a suggestion. The exact structure should follow the existing package boundaries and avoid creating circular dependencies.

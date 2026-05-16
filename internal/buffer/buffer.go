@@ -1,6 +1,7 @@
 package buffer
 
 import (
+	"fmt"
 	"unicode/utf8"
 
 	"github.com/Adelodunpeter25/vx/internal/undo"
@@ -104,6 +105,25 @@ func (b *Buffer) ensureLineLoaded(n int) {
 		_ = b.lazy.Close()
 		b.lazy = nil
 	}
+}
+
+// Reload re-reads the file from disk into this buffer.
+// The undo stack is reset. Returns an error if the reload fails.
+func (b *Buffer) Reload() error {
+	if b.filename == "" {
+		return fmt.Errorf("no filename set")
+	}
+	newBuf, err := Load(b.filename)
+	if err != nil {
+		return err
+	}
+	b.lines = newBuf.lines
+	b.lazy = newBuf.lazy
+	b.totalLines = newBuf.totalLines
+	b.modified = false
+	b.modVersion++
+	b.undoStack = undo.NewStack()
+	return nil
 }
 
 func (b *Buffer) ensureAllLoaded() {
