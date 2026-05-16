@@ -308,7 +308,7 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		badgeText := ""
 		badgeWidth := 0
 		if statusActive {
-			badgeText = " " + status.Badge()
+			badgeText = "   " + status.Badge()
 			badgeWidth = runewidth.StringWidth(badgeText)
 		}
 		if labelWidth+badgeWidth > remaining {
