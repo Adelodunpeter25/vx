@@ -2,10 +2,12 @@ package editor
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
 	"github.com/Adelodunpeter25/vx/internal/fswatch"
+	"github.com/Adelodunpeter25/vx/internal/osc"
 	"github.com/Adelodunpeter25/vx/internal/palette"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
@@ -43,6 +45,7 @@ func New(term *terminal.Terminal) *Editor {
 		fileBrowser: filebrowser.New(""),
 	}
 	ed.initWatcher(".")
+	ed.updateTitle()
 	return ed
 }
 
@@ -63,6 +66,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		ed.fileBrowser.Open = true
 		ed.fileBrowser.Focused = true
 		ed.initWatcher(filename)
+		ed.updateTitle()
 		return ed, nil
 	}
 
@@ -110,6 +114,8 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		ed.active().msgManager.SetPersistent("File too large for syntax highlighting")
 	}
 
+	ed.updateTitle()
+
 	return ed, nil
 }
 
@@ -139,6 +145,7 @@ func (e *Editor) addPaneWithBuffer(buf *buffer.Buffer, filename string) {
 	pane := NewPane(buf, filename)
 	e.panes = append(e.panes, pane)
 	e.activePane = len(e.panes) - 1
+	e.updateTitle()
 }
 
 func (e *Editor) nextPane() {
@@ -146,6 +153,7 @@ func (e *Editor) nextPane() {
 		return
 	}
 	e.activePane = (e.activePane + 1) % len(e.panes)
+	e.updateTitle()
 }
 
 func (e *Editor) previousPane() {
@@ -153,6 +161,7 @@ func (e *Editor) previousPane() {
 		return
 	}
 	e.activePane = (e.activePane - 1 + len(e.panes)) % len(e.panes)
+	e.updateTitle()
 }
 
 func (e *Editor) deleteCurrentPane() {
@@ -175,6 +184,7 @@ func (e *Editor) deleteCurrentPane() {
 		e.activePane = len(e.panes) - 1
 	}
 	e.active().msgManager.SetTransient("Pane closed")
+	e.updateTitle()
 }
 
 func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
@@ -234,6 +244,7 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 				if e.fileBrowser != nil {
 					e.fileBrowser.Focused = false
 				}
+				e.updateTitle()
 			}
 			local := *ev
 			local.MouseX = ev.MouseX - rect.X
@@ -242,6 +253,26 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 			return
 		}
 	}
+}
+
+func (e *Editor) updateTitle() {
+	if e == nil || e.term == nil {
+		return
+	}
+	title := "vx"
+	if p := e.active(); p != nil {
+		dirPath := "."
+		if p.buffer.Filename() != "" {
+			dirPath = filepath.Dir(p.buffer.Filename())
+			title = osc.Title(p.buffer.Filename(), dirPath)
+		} else if e.fileBrowser != nil && e.fileBrowser.RootPath != "" {
+			dirPath = e.fileBrowser.RootPath
+			title = osc.Title("", dirPath)
+		} else {
+			title = osc.Title("", dirPath)
+		}
+	}
+	e.term.SetTitle(title)
 }
 
 func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int, contentX int, contentWidth int) bool {
@@ -395,4 +426,3 @@ func (e *Editor) ensurePaneCount() {
 		e.activePane = 0
 	}
 }
-

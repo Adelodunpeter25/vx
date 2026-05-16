@@ -45,6 +45,10 @@ func (t *Terminal) HideCursor() {
 	t.screen.HideCursor()
 }
 
+func (t *Terminal) SetTitle(title string) {
+	t.screen.SetTitle(title)
+}
+
 func (t *Terminal) PollEvent() tcell.Event {
 	return t.screen.PollEvent()
 }

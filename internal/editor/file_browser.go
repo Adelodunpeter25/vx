@@ -29,6 +29,7 @@ func (e *Editor) openFileInActivePane(path string) {
 	p.offsetY = 0
 	p.renderCache.invalidate()
 	e.showFileInfo()
+	e.updateTitle()
 	if e.fileBrowser != nil {
 		e.fileBrowser.SetSelectedPath(path)
 	}
@@ -56,6 +57,7 @@ func (e *Editor) previewFileInActivePane(path string) {
 	p.offsetY = 0
 	p.renderCache.invalidate()
 	e.showFileInfo()
+	e.updateTitle()
 	if e.fileBrowser != nil {
 		e.fileBrowser.SetSelectedPath(path)
 	}
@@ -137,6 +139,7 @@ func (e *Editor) handleCdPrompt(ev *terminal.Event) {
 				e.fileBrowser.SetRoot(path)
 			}
 			e.active().msgManager.SetTransient("Changed directory to " + abbreviateHome(path))
+			e.updateTitle()
 		}
 		e.active().mode = ModeNormal
 	}

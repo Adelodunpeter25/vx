@@ -61,6 +61,7 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 			p.offsetY = 0
 			p.renderCache.invalidate()
 			e.showFileInfo()
+			e.updateTitle()
 		}
 
 		if result.Error != nil {
