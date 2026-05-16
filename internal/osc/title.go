@@ -8,8 +8,8 @@ import (
 // Title returns the terminal title for the current editor context.
 // If fileName is empty, the title falls back to "vx - {dir}".
 // If fileName is set, the title becomes "{file} - {dir} - vx".
-func Title(fileName, dirPath string) string {
-	dir := displayName(dirPath)
+func Title(fileName, launchDir string) string {
+	dir := displayName(launchDir)
 	if fileName == "" {
 		return "vx - " + dir
 	}

@@ -2,7 +2,6 @@ package editor
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/Adelodunpeter25/vx/internal/buffer"
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
@@ -24,6 +23,7 @@ type Editor struct {
 	splitRatio  float64
 	dragSplit   bool
 	dragBrowser bool
+	launchDir   string
 	fileBrowser *filebrowser.State
 	cdPrompt    *filebrowser.CdPrompt
 	palette     *palette.Palette
@@ -32,6 +32,7 @@ type Editor struct {
 }
 
 func New(term *terminal.Terminal) *Editor {
+	launchDir, _ := os.Getwd()
 	width, height := term.Size()
 	buf := buffer.New()
 	pane := NewPane(buf, "")
@@ -42,6 +43,7 @@ func New(term *terminal.Terminal) *Editor {
 		panes:       []*Pane{pane},
 		activePane:  0,
 		splitRatio:  0.5,
+		launchDir:   launchDir,
 		fileBrowser: filebrowser.New(""),
 	}
 	ed.initWatcher(".")
@@ -50,6 +52,7 @@ func New(term *terminal.Terminal) *Editor {
 }
 
 func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
+	launchDir, _ := os.Getwd()
 	if info, err := os.Stat(filename); err == nil && info.IsDir() {
 		width, height := term.Size()
 		buf := buffer.New()
@@ -61,6 +64,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 			panes:       []*Pane{pane},
 			activePane:  0,
 			splitRatio:  0.5,
+			launchDir:   launchDir,
 			fileBrowser: filebrowser.New(filename),
 		}
 		ed.fileBrowser.Open = true
@@ -85,6 +89,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 				panes:       []*Pane{pane},
 				activePane:  0,
 				splitRatio:  0.5,
+				launchDir:   launchDir,
 				fileBrowser: filebrowser.New(""),
 			}
 			ed.initWatcher(".")
@@ -102,6 +107,7 @@ func NewWithFile(term *terminal.Terminal, filename string) (*Editor, error) {
 		panes:       []*Pane{pane},
 		activePane:  0,
 		splitRatio:  0.5,
+		launchDir:   launchDir,
 		fileBrowser: filebrowser.New(""),
 	}
 	ed.initWatcher(".")
@@ -261,16 +267,7 @@ func (e *Editor) updateTitle() {
 	}
 	title := "vx"
 	if p := e.active(); p != nil {
-		dirPath := "."
-		if p.buffer.Filename() != "" {
-			dirPath = filepath.Dir(p.buffer.Filename())
-			title = osc.Title(p.buffer.Filename(), dirPath)
-		} else if e.fileBrowser != nil && e.fileBrowser.RootPath != "" {
-			dirPath = e.fileBrowser.RootPath
-			title = osc.Title("", dirPath)
-		} else {
-			title = osc.Title("", dirPath)
-		}
+		title = osc.Title(p.buffer.Filename(), e.launchDir)
 	}
 	e.term.SetTitle(title)
 }
