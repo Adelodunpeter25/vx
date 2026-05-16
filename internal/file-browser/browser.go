@@ -1,11 +1,13 @@
 package filebrowser
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/Adelodunpeter25/vx/internal/git"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/gdamore/tcell/v2"
@@ -30,9 +32,10 @@ type State struct {
 	RootPath string
 	Root     *Node
 
-	selected int
-	scroll   int
+	selected   int
+	scroll     int
 	showHidden bool
+	gitCache   *git.Cache
 }
 
 type Action struct {
@@ -59,11 +62,12 @@ func New(root string) *State {
 	state.Root = &Node{
 		Name:  filepath.Base(root),
 		Path:  root,
-		Icon:  utils.FileIconFor(root, true),
+		Icon:  utils.DirIcon(true),
 		IsDir: true,
 	}
 	state.loadChildren(state.Root)
 	state.Root.Expanded = true
+	state.refreshGit()
 	return state
 }
 
@@ -78,13 +82,14 @@ func (s *State) SetRoot(root string) {
 	s.Root = &Node{
 		Name:  filepath.Base(root),
 		Path:  root,
-		Icon:  utils.FileIconFor(root, true),
+		Icon:  utils.DirIcon(true),
 		IsDir: true,
 	}
 	s.selected = 0
 	s.scroll = 0
 	s.loadChildren(s.Root)
 	s.Root.Expanded = true
+	s.refreshGit()
 }
 
 func (s *State) SetSelectedPath(path string) {
@@ -128,6 +133,7 @@ func (s *State) SetSelectedPath(path string) {
 func (s *State) Refresh() {
 	if s.Root != nil {
 		s.invalidateAll(s.Root)
+		s.refreshGit()
 	}
 }
 
@@ -268,6 +274,9 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		}
 		indent := strings.Repeat("  ", depth)
 		label := node.Name
+		if badge := s.gitBadgeFor(node); badge != "" {
+			label = badge + " " + label
+		}
 		rowStyle := tcell.StyleDefault
 		if idx == s.selected {
 			rowStyle = rowStyle.Background(tcell.NewRGBColor(45, 46, 61)).Foreground(tcell.ColorWhite)
@@ -342,6 +351,50 @@ func (s *State) HandleKey(ev *terminal.Event) Action {
 		return s.activateSelection(nodes)
 	}
 	return Action{}
+}
+
+func (s *State) refreshGit() {
+	if s == nil {
+		return
+	}
+	if s.gitCache == nil {
+		s.gitCache = git.NewCache()
+	}
+	collector := git.NewCollector(s.RootPath)
+	_ = s.gitCache.Update(context.Background(), collector)
+}
+
+func (s *State) gitBadgeFor(node *Node) string {
+	if s == nil || node == nil || s.gitCache == nil {
+		return ""
+	}
+	snap := s.gitCache.Snapshot()
+	if snap == nil {
+		return ""
+	}
+	absRepo, err := filepath.Abs(snap.RepoRoot)
+	if err != nil {
+		return ""
+	}
+	absNode, err := filepath.Abs(node.Path)
+	if err != nil {
+		return ""
+	}
+	rel, err := filepath.Rel(absRepo, absNode)
+	if err != nil {
+		return ""
+	}
+	rel = filepath.Clean(rel)
+	if rel == "." {
+		return ""
+	}
+	if status, ok := snap.Statuses[rel]; ok {
+		return status.Badge()
+	}
+	if status, ok := snap.DirStatuses[rel]; ok {
+		return status.Badge()
+	}
+	return ""
 }
 
 func (s *State) HandleMouse(ev *terminal.Event, x, y, width, height int) Action {
