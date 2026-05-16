@@ -179,7 +179,6 @@ func (e *Editor) renderWrappedSegment(screenRow, lineNum int, seg wrap.Line, gut
 
 func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	styledRunes := p.syntax.HighlightLine(lineNum, p.buffer.Line(lineNum), p.buffer)
-	lineChange := p.gitLineChange(lineNum + 1)
 
 	runes := []rune(seg.Text)
 	for i, r := range runes {
@@ -189,12 +188,6 @@ func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow,
 		// Apply syntax highlighting if available
 		if styledRunes != nil && bufferCol < len(styledRunes) {
 			style = styledRunes[bufferCol].Style
-		}
-		switch lineChange {
-		case git.LineChangeAdded:
-			style = style.Background(tcell.NewRGBColor(18, 50, 24))
-		case git.LineChangeModified:
-			style = style.Background(tcell.NewRGBColor(45, 40, 12))
 		}
 
 		e.setCellAt(rect, gutterWidth+i, screenRow, r, style)
