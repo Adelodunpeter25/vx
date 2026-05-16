@@ -142,6 +142,7 @@ func (b *Buffer) Save() error {
 	}
 
 	b.modified = false
+	b.modVersion++
 	if info, err := os.Stat(b.filename); err == nil {
 		b.modTime = info.ModTime()
 	}

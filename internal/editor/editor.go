@@ -381,6 +381,24 @@ func (e *Editor) handleKey(ev *terminal.Event) {
 	}
 
 	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
+		if ev.Rune == 'q' || ev.Key == tcell.KeyCtrlQ {
+			e.quit = true
+			return
+		}
+		if ev.Rune == ':' {
+			p := e.active()
+			if p != nil {
+				p.mode = ModeCommand
+				p.commandBuf = ""
+				p.msgManager.Clear()
+			}
+			e.fileBrowser.Focused = false
+			e.render()
+			return
+		}
+	}
+
+	if e.fileBrowser != nil && e.fileBrowser.Open && e.fileBrowser.Focused {
 		action := e.fileBrowser.HandleKey(ev)
 		if action.PreviewPath != "" {
 			e.previewFileInActivePane(action.PreviewPath)
