@@ -32,7 +32,7 @@ func (e *Engine) HighlightLine(lineNum int, line string, buf *buffer.Buffer) []h
 	}
 	
 	// Check if buffer is too large for highlighting
-	if buf.LineCount() > MaxHighlightLines {
+	if buf.LineCount() > MaxHighlightLines || buf.IsLazy() {
 		e.tooLarge = true
 		e.cache = nil // Free memory
 		return nil

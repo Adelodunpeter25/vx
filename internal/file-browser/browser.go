@@ -277,14 +277,18 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 				rowStyle = rowStyle.Bold(true)
 			}
 		}
-		term.DrawText(x, y+row, padRight(strings.Repeat(" ", width), width), rowStyle)
-		term.DrawText(x, y+row, indent, rowStyle)
-		term.DrawText(x+runewidth.StringWidth(indent), y+row, icon+" ", iconStyle)
+		drawClippedText(term, x, y+row, width, strings.Repeat(" ", width), rowStyle)
+		drawClippedText(term, x, y+row, width, indent, rowStyle)
+		indentWidth := runewidth.StringWidth(indent)
+		iconWidth := runewidth.StringWidth(icon + " ")
+		if indentWidth < width {
+			drawClippedText(term, x+indentWidth, y+row, width-indentWidth, icon+" ", iconStyle)
+		}
 		if runewidth.StringWidth(label) > width {
 			label = runewidth.Truncate(label, width, "…")
 		}
-		nameX := x + runewidth.StringWidth(indent+icon+" ")
-		term.DrawText(nameX, y+row, label, rowStyle)
+		nameX := x + indentWidth + iconWidth
+		drawClippedText(term, nameX, y+row, width-indentWidth-iconWidth, label, rowStyle)
 	}
 }
 
@@ -426,4 +430,25 @@ func padRight(s string, width int) string {
 		return s
 	}
 	return s + strings.Repeat(" ", width-sw)
+}
+
+func drawClippedText(term *terminal.Terminal, x, y, width int, text string, style tcell.Style) {
+	if term == nil || width <= 0 || text == "" {
+		return
+	}
+
+	cursorX := x
+	remaining := width
+	for _, r := range text {
+		rw := runewidth.RuneWidth(r)
+		if rw <= 0 {
+			rw = 1
+		}
+		if rw > remaining {
+			break
+		}
+		term.SetCell(cursorX, y, r, style)
+		cursorX += rw
+		remaining -= rw
+	}
 }

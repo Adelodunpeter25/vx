@@ -65,6 +65,10 @@ func (b *Buffer) Filename() string {
 	return b.filename
 }
 
+func (b *Buffer) IsLazy() bool {
+	return b.lazy != nil
+}
+
 func (b *Buffer) SetFilename(filename string) {
 	b.filename = filename
 }
