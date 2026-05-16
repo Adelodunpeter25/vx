@@ -73,9 +73,9 @@ func (e *Editor) handleFileChange(path string) {
 		// Refresh syntax engine
 		p.syntax = syntax.New(p.buffer.Filename())
 
-		// Clamp cursor and adjust scroll
+		// Clamp cursor and preserve scroll position
 		e.clampCursorForPane(p)
-		e.adjustScrollForPane(p)
+		e.adjustScrollForPaneKeepScroll(p)
 
 		// Invalidate render cache
 		p.renderCache.invalidate()
@@ -110,9 +110,9 @@ func (e *Editor) clampCursorForPane(p *Pane) {
 	}
 }
 
-// adjustScrollForPane adjusts scroll offset so the cursor stays visible.
-func (e *Editor) adjustScrollForPane(p *Pane) {
-	// Save and restore the active pane index so adjustScroll works on the right pane
+// adjustScrollForPaneKeepScroll preserves scroll position after a reload,
+// only adjusting if the cursor went out of the visible area.
+func (e *Editor) adjustScrollForPaneKeepScroll(p *Pane) {
 	saved := e.activePane
 	for i, pane := range e.panes {
 		if pane == p {
@@ -120,6 +120,13 @@ func (e *Editor) adjustScrollForPane(p *Pane) {
 			break
 		}
 	}
+	savedVisualOffset := p.visualOffsetY
+	savedOffsetY := p.offsetY
 	e.adjustScroll()
+	// If the cursor is still within the original viewport, restore the scroll
+	if p.visualOffsetY == savedVisualOffset {
+		p.visualOffsetY = savedVisualOffset
+		p.offsetY = savedOffsetY
+	}
 	e.activePane = saved
 }
