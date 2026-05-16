@@ -46,7 +46,7 @@ func FileIconFor(path string, isDir bool) string {
 
 func DirIcon(expanded bool) string {
 	if expanded {
-		return "󰉖"
+		return ""
 	}
 	return "󰉋"
 }
