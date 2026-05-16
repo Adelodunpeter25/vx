@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/git"
 	"github.com/Adelodunpeter25/vx/internal/preview"
 	"github.com/Adelodunpeter25/vx/internal/replace"
 	"github.com/Adelodunpeter25/vx/internal/search"
@@ -34,6 +35,9 @@ type Pane struct {
 	viewY         int
 	viewWidth     int
 	viewHeight    int
+	gitLines      map[int]git.LineChange
+	gitLineFile   string
+	gitLineVersion int
 }
 
 func NewPane(buf *buffer.Buffer, filename string) *Pane {

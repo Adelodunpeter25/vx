@@ -3,6 +3,7 @@ package editor
 import (
 	"fmt"
 
+	"github.com/Adelodunpeter25/vx/internal/git"
 	splitpane "github.com/Adelodunpeter25/vx/internal/split-pane"
 	"github.com/Adelodunpeter25/vx/internal/wrap"
 	"github.com/gdamore/tcell/v2"
@@ -25,6 +26,8 @@ func (e *Editor) renderPane(p *Pane, rect splitpane.Rect, isActive bool) {
 		e.renderPreviewPane(p, rect)
 		return
 	}
+
+	e.ensureGitLines(p)
 
 	contentHeight := rect.Height
 	gutterWidth := e.getGutterWidthFor(p)
@@ -114,10 +117,24 @@ func (e *Editor) drawTextAt(rect splitpane.Rect, x, y int, text string, style tc
 }
 
 func (e *Editor) renderLineNumberAt(rect splitpane.Rect, screenRow, lineNum, gutterWidth int) {
+	p := e.active()
 	style := tcell.StyleDefault.Foreground(tcell.NewRGBColor(100, 100, 100))
-	numStr := fmt.Sprintf("%*d ", gutterWidth-1, lineNum+1)
+	markerStyle := style
+	marker := ' '
+	if p != nil {
+		switch p.gitLineChange(lineNum + 1) {
+		case git.LineChangeAdded:
+			marker = '+'
+			markerStyle = markerStyle.Foreground(tcell.NewRGBColor(166, 227, 161)).Bold(true)
+		case git.LineChangeModified:
+			marker = '│'
+			markerStyle = markerStyle.Foreground(tcell.NewRGBColor(250, 204, 21)).Bold(true)
+		}
+	}
+	e.setCellAt(rect, 0, screenRow, marker, markerStyle)
+	numStr := fmt.Sprintf("%*d ", gutterWidth-2, lineNum+1)
 	for x, r := range numStr {
-		e.setCellAt(rect, x, screenRow, r, style)
+		e.setCellAt(rect, x+1, screenRow, r, style)
 	}
 }
 
@@ -162,6 +179,7 @@ func (e *Editor) renderWrappedSegment(screenRow, lineNum int, seg wrap.Line, gut
 
 func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	styledRunes := p.syntax.HighlightLine(lineNum, p.buffer.Line(lineNum), p.buffer)
+	lineChange := p.gitLineChange(lineNum + 1)
 
 	runes := []rune(seg.Text)
 	for i, r := range runes {
@@ -171,6 +189,12 @@ func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow,
 		// Apply syntax highlighting if available
 		if styledRunes != nil && bufferCol < len(styledRunes) {
 			style = styledRunes[bufferCol].Style
+		}
+		switch lineChange {
+		case git.LineChangeAdded:
+			style = style.Background(tcell.NewRGBColor(18, 50, 24))
+		case git.LineChangeModified:
+			style = style.Background(tcell.NewRGBColor(45, 40, 12))
 		}
 
 		e.setCellAt(rect, gutterWidth+i, screenRow, r, style)
