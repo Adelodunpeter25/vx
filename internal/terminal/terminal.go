@@ -48,3 +48,9 @@ func (t *Terminal) HideCursor() {
 func (t *Terminal) PollEvent() tcell.Event {
 	return t.screen.PollEvent()
 }
+
+// PostFileChange posts a file change event into the tcell event loop.
+// This is safe to call from any goroutine (tcell.Screen.PostEvent is thread-safe).
+func (t *Terminal) PostFileChange(path string) {
+	t.screen.PostEvent(NewFileChangeEvent(path))
+}

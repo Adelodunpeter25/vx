@@ -290,6 +290,11 @@ func (e *Editor) Run() error {
 	return nil
 }
 
+// Close cleanly shuts down the editor, stopping the file watcher.
+func (e *Editor) Close() {
+	e.stopWatcher()
+}
+
 func (e *Editor) handleEvent() {
 	e.ensurePaneCount()
 	ev := e.term.ReadEvent()
@@ -306,6 +311,8 @@ func (e *Editor) handleEvent() {
 		e.handleMouseEventForPane(ev)
 		e.active().renderCache.invalidate()
 		e.render()
+	case terminal.EventFileChange:
+		e.handleFileChange(ev.ChangePath)
 	}
 }
 

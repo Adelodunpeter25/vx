@@ -44,6 +44,7 @@ func main() {
 	} else {
 		ed = editor.New(term)
 	}
+	defer ed.Close()
 
 	if err := ed.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
