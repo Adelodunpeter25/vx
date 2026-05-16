@@ -27,7 +27,7 @@ func (e *Editor) renderPane(p *Pane, rect splitpane.Rect, isActive bool) {
 		return
 	}
 
-	e.ensureGitLines(p)
+	gitLines := e.gitLinesFor(p)
 
 	contentHeight := rect.Height
 	gutterWidth := e.getGutterWidthFor(p)
@@ -62,12 +62,12 @@ func (e *Editor) renderPane(p *Pane, rect splitpane.Rect, isActive bool) {
 
 			// Line numbers
 			if segIdx == skipRows && lineNum == p.offsetY {
-				e.renderLineNumberAt(rect, screenRow, lineNum, gutterWidth)
+				e.renderLineNumberAt(rect, screenRow, lineNum, gutterWidth, gitLines)
 			} else if !seg.IsWrapped && lineNum > p.offsetY {
-				e.renderLineNumberAt(rect, screenRow, lineNum, gutterWidth)
+				e.renderLineNumberAt(rect, screenRow, lineNum, gutterWidth, gitLines)
 			}
 
-			e.renderWrappedSegmentAt(rect, p, screenRow, lineNum, seg, gutterWidth)
+			e.renderWrappedSegmentAt(rect, p, screenRow, lineNum, seg, gutterWidth, gitLines)
 
 			if p.selection.IsActive() {
 				e.highlightSelectionAt(rect, p, screenRow, lineNum, seg, gutterWidth)
@@ -116,13 +116,12 @@ func (e *Editor) drawTextAt(rect splitpane.Rect, x, y int, text string, style tc
 	}
 }
 
-func (e *Editor) renderLineNumberAt(rect splitpane.Rect, screenRow, lineNum, gutterWidth int) {
-	p := e.active()
+func (e *Editor) renderLineNumberAt(rect splitpane.Rect, screenRow, lineNum, gutterWidth int, gitLines map[int]git.LineChange) {
 	style := tcell.StyleDefault.Foreground(tcell.NewRGBColor(100, 100, 100))
 	markerStyle := style
 	marker := ' '
-	if p != nil {
-		switch p.gitLineChange(lineNum + 1) {
+	if gitLines != nil {
+		switch gitLines[lineNum+1] {
 		case git.LineChangeAdded:
 			marker = '+'
 			markerStyle = markerStyle.Foreground(tcell.NewRGBColor(166, 227, 161)).Bold(true)
@@ -174,11 +173,15 @@ func (e *Editor) getCursorScreenPosFor(p *Pane, gutterWidth, maxWidth int) (scre
 
 func (e *Editor) renderWrappedSegment(screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
 	p := e.active()
-	e.renderWrappedSegmentAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, p, screenRow, lineNum, seg, gutterWidth)
+	e.renderWrappedSegmentAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, p, screenRow, lineNum, seg, gutterWidth, e.gitLinesFor(p))
 }
 
-func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow, lineNum int, seg wrap.Line, gutterWidth int) {
+func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow, lineNum int, seg wrap.Line, gutterWidth int, gitLines map[int]git.LineChange) {
 	styledRunes := p.syntax.HighlightLine(lineNum, p.buffer.Line(lineNum), p.buffer)
+	lineChange := git.LineChangeNone
+	if gitLines != nil {
+		lineChange = gitLines[lineNum+1]
+	}
 
 	runes := []rune(seg.Text)
 	for i, r := range runes {
@@ -188,6 +191,9 @@ func (e *Editor) renderWrappedSegmentAt(rect splitpane.Rect, p *Pane, screenRow,
 		// Apply syntax highlighting if available
 		if styledRunes != nil && bufferCol < len(styledRunes) {
 			style = styledRunes[bufferCol].Style
+		}
+		if lineChange != git.LineChangeNone {
+			style = style
 		}
 
 		e.setCellAt(rect, gutterWidth+i, screenRow, r, style)

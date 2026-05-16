@@ -2,8 +2,10 @@ package editor
 
 import (
 	"os"
+	"sync"
 
 	"github.com/Adelodunpeter25/vx/internal/buffer"
+	"github.com/Adelodunpeter25/vx/internal/git"
 	filebrowser "github.com/Adelodunpeter25/vx/internal/file-browser"
 	"github.com/Adelodunpeter25/vx/internal/fswatch"
 	"github.com/Adelodunpeter25/vx/internal/osc"
@@ -29,6 +31,16 @@ type Editor struct {
 	palette     *palette.Palette
 	watcher     *fswatch.Watcher
 	quit        bool
+	gitLinesMu  sync.RWMutex
+	gitLines    map[string]*gitLineCacheEntry
+}
+
+type gitLineCacheEntry struct {
+	file    string
+	version int
+	lines   map[int]git.LineChange
+	ready   bool
+	loading bool
 }
 
 func New(term *terminal.Terminal) *Editor {

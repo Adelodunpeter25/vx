@@ -27,11 +27,11 @@ func (e *Editor) renderLineNumbers(contentHeight int) {
 			break
 		}
 
-		e.renderLineNumberAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, i, lineNum, gutterWidth)
+		e.renderLineNumberAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, i, lineNum, gutterWidth, e.gitLinesFor(e.active()))
 	}
 }
 
 // renderLineNumber renders a single line number at the given screen row
 func (e *Editor) renderLineNumber(screenRow, lineNum, gutterWidth int) {
-	e.renderLineNumberAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, screenRow, lineNum, gutterWidth)
+	e.renderLineNumberAt(splitpane.Rect{X: 0, Y: 0, Width: e.width, Height: e.height - 1}, screenRow, lineNum, gutterWidth, e.gitLinesFor(e.active()))
 }
