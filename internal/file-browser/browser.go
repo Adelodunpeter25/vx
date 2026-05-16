@@ -192,6 +192,11 @@ func (s *State) loadChildren(node *Node) {
 		node.Loaded = true
 		return
 	}
+	// Build lookup of old children to preserve Expanded state
+	oldChildren := make(map[string]*Node, len(node.Children))
+	for _, old := range node.Children {
+		oldChildren[old.Path] = old
+	}
 	children := make([]*Node, 0, len(entries))
 	for _, ent := range entries {
 		name := ent.Name()
@@ -205,6 +210,10 @@ func (s *State) loadChildren(node *Node) {
 			Icon:   utils.FileIconFor(path, ent.IsDir()),
 			IsDir:  ent.IsDir(),
 			Parent: node,
+		}
+		if old, ok := oldChildren[path]; ok {
+			child.Expanded = old.Expanded
+			child.Children = old.Children // preserve for recursive expansion state
 		}
 		children = append(children, child)
 	}
