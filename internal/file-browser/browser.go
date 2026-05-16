@@ -282,13 +282,15 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 				rowStyle = rowStyle.Bold(true)
 			}
 		}
+		statusActive := status != git.StatusUnknown && status != git.StatusClean
 		nameStyle := rowStyle
-		if status != git.StatusUnknown && status != git.StatusClean {
-			nameStyle = nameStyle.Foreground(statusColor(status))
-		}
 		badgeStyle := rowStyle
-		if status != git.StatusUnknown && status != git.StatusClean {
+		if statusActive {
+			nameStyle = nameStyle.Foreground(statusColor(status))
 			badgeStyle = badgeStyle.Foreground(statusColor(status)).Bold(true)
+			if idx != s.selected {
+				rowStyle = rowStyle.Foreground(statusColor(status))
+			}
 		}
 		drawClippedText(term, x, y+row, width, strings.Repeat(" ", width), rowStyle)
 		drawClippedText(term, x, y+row, width, indent, rowStyle)
@@ -302,19 +304,28 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		if remaining <= 0 {
 			continue
 		}
-		if badge := status.Badge(); status != git.StatusUnknown && status != git.StatusClean {
-			badgeText := badge + " "
-			badgeWidth := runewidth.StringWidth(badgeText)
-			if badgeWidth < remaining {
-				drawClippedText(term, afterIconX, y+row, remaining, badgeText, badgeStyle)
-				afterIconX += badgeWidth
-				remaining -= badgeWidth
-			}
+		labelWidth := runewidth.StringWidth(label)
+		badgeText := ""
+		badgeWidth := 0
+		if statusActive {
+			badgeText = " " + status.Badge()
+			badgeWidth = runewidth.StringWidth(badgeText)
 		}
-		if runewidth.StringWidth(label) > remaining {
-			label = runewidth.Truncate(label, remaining, "…")
+		if labelWidth+badgeWidth > remaining {
+			truncateWidth := remaining - badgeWidth
+			if truncateWidth < 1 {
+				truncateWidth = 1
+			}
+			label = runewidth.Truncate(label, truncateWidth, "…")
+			labelWidth = runewidth.StringWidth(label)
 		}
 		drawClippedText(term, afterIconX, y+row, remaining, label, nameStyle)
+		if statusActive && badgeText != "" {
+			badgeX := afterIconX + labelWidth
+			if badgeX < x+width {
+				drawClippedText(term, badgeX, y+row, x+width-badgeX, badgeText, badgeStyle)
+			}
+		}
 	}
 }
 
