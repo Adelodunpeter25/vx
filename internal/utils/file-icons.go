@@ -15,7 +15,7 @@ func FileIconFor(path string, isDir bool) string {
 	}
 
 	if isDir {
-		return ""
+		return "󰉋"
 	}
 
 	switch strings.ToLower(filepath.Ext(path)) {
@@ -42,4 +42,11 @@ func FileIconFor(path string, isDir bool) string {
 	default:
 		return ""
 	}
+}
+
+func DirIcon(expanded bool) string {
+	if expanded {
+		return "󰉖"
+	}
+	return "󰉋"
 }

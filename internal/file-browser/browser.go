@@ -262,6 +262,7 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		icon := node.Icon
 		if node.IsDir {
 			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(250, 179, 135))
+			icon = utils.DirIcon(node.Expanded)
 		} else {
 			iconStyle = tcell.StyleDefault.Foreground(tcell.NewRGBColor(166, 227, 161))
 		}
