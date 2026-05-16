@@ -145,6 +145,10 @@ func (s *State) Visible() []*Node {
 	if s.Root == nil {
 		return nil
 	}
+	if !s.Root.Loaded {
+		s.loadChildren(s.Root)
+		s.Root.Expanded = true
+	}
 	var nodes []*Node
 	for _, child := range s.Root.Children {
 		s.appendVisible(&nodes, child, 0)
