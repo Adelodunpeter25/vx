@@ -274,15 +274,21 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		}
 		indent := strings.Repeat("  ", depth)
 		label := node.Name
-		if badge := s.gitBadgeFor(node); badge != "" {
-			label = badge + " " + label
-		}
+		status := s.gitStatusFor(node)
 		rowStyle := tcell.StyleDefault
 		if idx == s.selected {
 			rowStyle = rowStyle.Background(tcell.NewRGBColor(45, 46, 61)).Foreground(tcell.ColorWhite)
 			if s.Focused {
 				rowStyle = rowStyle.Bold(true)
 			}
+		}
+		nameStyle := rowStyle
+		if status != git.StatusUnknown && status != git.StatusClean {
+			nameStyle = nameStyle.Foreground(statusColor(status))
+		}
+		badgeStyle := rowStyle
+		if status != git.StatusUnknown && status != git.StatusClean {
+			badgeStyle = badgeStyle.Foreground(statusColor(status)).Bold(true)
 		}
 		drawClippedText(term, x, y+row, width, strings.Repeat(" ", width), rowStyle)
 		drawClippedText(term, x, y+row, width, indent, rowStyle)
@@ -291,11 +297,24 @@ func (s *State) Render(term *terminal.Terminal, x, y, width, height int) {
 		if indentWidth < width {
 			drawClippedText(term, x+indentWidth, y+row, width-indentWidth, icon+" ", iconStyle)
 		}
-		if runewidth.StringWidth(label) > width {
-			label = runewidth.Truncate(label, width, "…")
+		afterIconX := x + indentWidth + iconWidth
+		remaining := width - indentWidth - iconWidth
+		if remaining <= 0 {
+			continue
 		}
-		nameX := x + indentWidth + iconWidth
-		drawClippedText(term, nameX, y+row, width-indentWidth-iconWidth, label, rowStyle)
+		if badge := status.Badge(); status != git.StatusUnknown && status != git.StatusClean {
+			badgeText := badge + " "
+			badgeWidth := runewidth.StringWidth(badgeText)
+			if badgeWidth < remaining {
+				drawClippedText(term, afterIconX, y+row, remaining, badgeText, badgeStyle)
+				afterIconX += badgeWidth
+				remaining -= badgeWidth
+			}
+		}
+		if runewidth.StringWidth(label) > remaining {
+			label = runewidth.Truncate(label, remaining, "…")
+		}
+		drawClippedText(term, afterIconX, y+row, remaining, label, nameStyle)
 	}
 }
 
@@ -364,37 +383,56 @@ func (s *State) refreshGit() {
 	_ = s.gitCache.Update(context.Background(), collector)
 }
 
-func (s *State) gitBadgeFor(node *Node) string {
+func (s *State) gitStatusFor(node *Node) git.Status {
 	if s == nil || node == nil || s.gitCache == nil {
-		return ""
+		return git.StatusUnknown
 	}
 	snap := s.gitCache.Snapshot()
 	if snap == nil {
-		return ""
+		return git.StatusUnknown
 	}
 	absRepo, err := filepath.Abs(snap.RepoRoot)
 	if err != nil {
-		return ""
+		return git.StatusUnknown
 	}
 	absNode, err := filepath.Abs(node.Path)
 	if err != nil {
-		return ""
+		return git.StatusUnknown
 	}
 	rel, err := filepath.Rel(absRepo, absNode)
 	if err != nil {
-		return ""
+		return git.StatusUnknown
 	}
 	rel = filepath.Clean(rel)
 	if rel == "." {
-		return ""
+		return git.StatusUnknown
 	}
 	if status, ok := snap.Statuses[rel]; ok {
-		return status.Badge()
+		return status
 	}
 	if status, ok := snap.DirStatuses[rel]; ok {
-		return status.Badge()
+		return status
 	}
-	return ""
+	return git.StatusClean
+}
+
+func statusColor(status git.Status) tcell.Color {
+	switch status {
+	case git.StatusModified:
+		return tcell.NewRGBColor(250, 204, 21)
+	case git.StatusAdded:
+		return tcell.NewRGBColor(166, 227, 161)
+	case git.StatusDeleted:
+		return tcell.NewRGBColor(243, 139, 168)
+	case git.StatusUntracked:
+		return tcell.NewRGBColor(137, 180, 250)
+	case git.StatusIgnored:
+		return tcell.NewRGBColor(148, 155, 160)
+	case git.StatusConflicted:
+		return tcell.NewRGBColor(244, 143, 177)
+	default:
+		return tcell.ColorWhite
+	}
 }
 
 func (s *State) HandleMouse(ev *terminal.Event, x, y, width, height int) Action {
