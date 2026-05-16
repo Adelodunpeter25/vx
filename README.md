@@ -8,6 +8,7 @@ A modern vi text editor written in Go with syntax highlighting, search, undo/red
 - **Syntax Highlighting** - Support for 200+ languages via Chroma
 - **Split Panes** - Side-by-side panes for editing multiple files
 - **File Browser** - Toggleable left sidebar for navigating folders/files
+- **File Palette** - `Ctrl+P` fuzzy picker for quickly opening files
 - **Mouse Selection** - Click and drag to select text, copy with `c`, cut with `x`
 - **Real-time Search** - Incremental search with live highlighting as you type
 - **Find & Replace** - Interactive replace with y/n confirmation for each match
@@ -85,7 +86,8 @@ vx --version          # Show version
 - `Ctrl+S` - Save file
 - `Ctrl+O` - Open file
 - `Ctrl+W` - Close current pane
-- `Ctrl+N` / `Ctrl+P` - Next / previous pane
+- `Ctrl+N` - Next pane
+- `Ctrl+P` - Open file palette
 - `Ctrl+B` - Toggle file browser sidebar
 - `Esc` - Clear selection
 - `:` - Enter command mode
@@ -134,6 +136,7 @@ vx --version          # Show version
 - `:b filename` - Open file in new pane
 - `:db` - Close current pane (prompts to save if modified)
 - `:f` - Toggle file browser sidebar
+- `:cd [path]` - Change the current directory
 - `:set:show-hidden` - Show hidden files in file browser
 - `:set:hide-hidden` - Hide hidden files in file browser
 
