@@ -127,19 +127,17 @@ func (s *State) SetSelectedPath(path string) {
 
 func (s *State) Refresh() {
 	if s.Root != nil {
-		s.invalidateRecursive(s.Root)
+		s.invalidateAll(s.Root)
 	}
 }
 
-func (s *State) invalidateRecursive(node *Node) {
+func (s *State) invalidateAll(node *Node) {
 	if node == nil {
 		return
 	}
 	node.Loaded = false
-	if node.IsDir && node.Expanded {
-		for _, child := range node.Children {
-			s.invalidateRecursive(child)
-		}
+	for _, child := range node.Children {
+		s.invalidateAll(child)
 	}
 }
 
