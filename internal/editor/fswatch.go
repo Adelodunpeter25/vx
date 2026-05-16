@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/Adelodunpeter25/vx/internal/fswatch"
@@ -56,6 +57,11 @@ func (e *Editor) handleFileChange(path string) {
 			continue
 		}
 		if absPath != absBufPath {
+			continue
+		}
+
+		stat, err := os.Stat(p.buffer.Filename())
+		if err == nil && !stat.ModTime().After(p.buffer.ModTime()) {
 			continue
 		}
 

@@ -2,7 +2,9 @@ package buffer
 
 import (
 	"fmt"
+	"os"
 	"unicode/utf8"
+	"time"
 
 	"github.com/Adelodunpeter25/vx/internal/undo"
 	"github.com/Adelodunpeter25/vx/internal/utils"
@@ -16,6 +18,7 @@ type Buffer struct {
 	undoStack  *undo.Stack
 	lazy       *utils.LazyFileReader
 	totalLines int
+	modTime    time.Time
 }
 
 func New() *Buffer {
@@ -78,6 +81,14 @@ func (b *Buffer) ModVersion() int {
 	return b.modVersion
 }
 
+func (b *Buffer) ModTime() time.Time {
+	return b.modTime
+}
+
+func (b *Buffer) setModTime(t time.Time) {
+	b.modTime = t
+}
+
 func (b *Buffer) markModified() {
 	b.modified = true
 	b.modVersion++
@@ -123,6 +134,9 @@ func (b *Buffer) Reload() error {
 	b.modified = false
 	b.modVersion++
 	b.undoStack = undo.NewStack()
+	if info, err := os.Stat(b.filename); err == nil {
+		b.modTime = info.ModTime()
+	}
 	return nil
 }
 

@@ -24,7 +24,7 @@ func Load(filename string) (*Buffer, error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
-		if os.IsNotExist(err) {
+	if os.IsNotExist(err) {
 			b := New()
 			b.filename = filename
 			return b, nil
@@ -59,11 +59,17 @@ func Load(filename string) (*Buffer, error) {
 			b.lines = []string{""}
 			b.totalLines = 1
 			_ = reader.Close()
+			if info, err := os.Stat(filename); err == nil {
+				b.modTime = info.ModTime()
+			}
 			return b, nil
 		}
 		b.lines = append(b.lines, chunk...)
 		b.lazy = reader
 		b.totalLines = reader.TotalCount()
+		if info, err := os.Stat(filename); err == nil {
+			b.modTime = info.ModTime()
+		}
 		return b, nil
 	}
 
@@ -101,6 +107,9 @@ func Load(filename string) (*Buffer, error) {
 	}
 
 	b.totalLines = len(b.lines)
+	if info, err := os.Stat(filename); err == nil {
+		b.modTime = info.ModTime()
+	}
 	return b, nil
 }
 
@@ -133,6 +142,9 @@ func (b *Buffer) Save() error {
 	}
 
 	b.modified = false
+	if info, err := os.Stat(b.filename); err == nil {
+		b.modTime = info.ModTime()
+	}
 	return nil
 }
 
