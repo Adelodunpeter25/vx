@@ -1,54 +1,53 @@
-package editor
+package tests
 
 import (
 	"testing"
+
+	"github.com/Adelodunpeter25/vx/internal/editor"
 )
 
 func TestRenderCache_Invalidate(t *testing.T) {
-	rc := newRenderCache()
-	if !rc.needsRedraw {
+	rc := editor.NewRenderCache()
+	if !rc.NeedsRedraw() {
 		t.Fatal("new cache should need redraw")
 	}
 
-	rc.needsRedraw = false
-	if rc.needsRedraw {
+	rc.SetNeedsRedraw(false)
+	if rc.NeedsRedraw() {
 		t.Fatal("should not need redraw after clearing")
 	}
 
-	rc.invalidate()
-	if !rc.needsRedraw {
+	rc.MarkNeedsRedraw()
+	if !rc.NeedsRedraw() {
 		t.Fatal("should need redraw after invalidate")
 	}
 }
 
 func TestRenderCache_LineChanged(t *testing.T) {
-	rc := newRenderCache()
-	// Line not in cache — should report changed
-	if !rc.lineChanged(0, "hello") {
+	rc := editor.NewRenderCache()
+	if !rc.LineChanged(0, "hello") {
 		t.Fatal("unseen line should report as changed")
 	}
 
-	rc.updateLine(0, "hello")
-	// Same content — should NOT report changed
-	if rc.lineChanged(0, "hello") {
+	rc.UpdateLine(0, "hello")
+	if rc.LineChanged(0, "hello") {
 		t.Fatal("same content should not report as changed")
 	}
-	// Different content — should report changed
-	if !rc.lineChanged(0, "world") {
+	if !rc.LineChanged(0, "world") {
 		t.Fatal("different content should report as changed")
 	}
 }
 
 func TestRenderCache_InvalidateLine(t *testing.T) {
-	rc := newRenderCache()
-	rc.updateLine(0, "a")
-	rc.updateLine(1, "b")
+	rc := editor.NewRenderCache()
+	rc.UpdateLine(0, "a")
+	rc.UpdateLine(1, "b")
 
-	rc.invalidateLine(0)
-	if !rc.lineChanged(0, "a") {
+	rc.InvalidateLine(0)
+	if !rc.LineChanged(0, "a") {
 		t.Fatal("invalidated line should report as changed")
 	}
-	if rc.lineChanged(1, "b") {
+	if rc.LineChanged(1, "b") {
 		t.Fatal("non-invalidated line should still be cached")
 	}
 }
