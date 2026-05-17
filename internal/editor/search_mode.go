@@ -50,14 +50,8 @@ func (e *Editor) performIncrementalSearch() {
 		return
 	}
 
-	// Get all lines from buffer
-	lines := make([]string, p.buffer.LineCount())
-	for i := 0; i < p.buffer.LineCount(); i++ {
-		lines[i] = p.buffer.Line(i)
-	}
-
-	// Perform search
-	matches := p.search.Search(lines, p.searchBuf)
+	// Perform search directly on buffer without copying
+	matches := p.search.Search(p.buffer, p.searchBuf)
 
 	if len(matches) == 0 {
 		p.msgManager.SetPersistent(fmt.Sprintf("Pattern not found: %s", p.searchBuf))
@@ -84,14 +78,8 @@ func (e *Editor) performSearch() {
 		return
 	}
 
-	// Get all lines from buffer
-	lines := make([]string, p.buffer.LineCount())
-	for i := 0; i < p.buffer.LineCount(); i++ {
-		lines[i] = p.buffer.Line(i)
-	}
-
-	// Perform search
-	matches := p.search.Search(lines, p.searchBuf)
+	// Perform search directly on buffer without copying
+	matches := p.search.Search(p.buffer, p.searchBuf)
 
 	if len(matches) == 0 {
 		p.msgManager.SetPersistent(fmt.Sprintf("Pattern not found: %s", p.searchBuf))

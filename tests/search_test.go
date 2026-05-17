@@ -10,7 +10,7 @@ func TestEngine_SearchBasic(t *testing.T) {
 	e := search.New()
 	lines := []string{"hello world", "foo bar", "hello again"}
 
-	matches := e.Search(lines, "hello")
+	matches := e.Search(search.StringSliceLineProvider(lines), "hello")
 	if len(matches) != 2 {
 		t.Fatalf("expected 2 matches, got %d", len(matches))
 	}
@@ -26,7 +26,7 @@ func TestEngine_SearchCaseInsensitive(t *testing.T) {
 	e := search.New()
 	lines := []string{"Hello WORLD", "hello world", "HELLO"}
 
-	matches := e.Search(lines, "hello")
+	matches := e.Search(search.StringSliceLineProvider(lines), "hello")
 	if len(matches) != 3 {
 		t.Fatalf("expected 3 case-insensitive matches, got %d", len(matches))
 	}
@@ -36,7 +36,8 @@ func TestEngine_SearchNoMatches(t *testing.T) {
 	e := search.New()
 	lines := []string{"abc", "def", "ghi"}
 
-	matches := e.Search(lines, "xyz")
+	matches := e.Search(search.StringSliceLineProvider(lines), 
+ "xyz")
 	if len(matches) != 0 {
 		t.Fatalf("expected 0 matches, got %d", len(matches))
 	}
@@ -49,7 +50,8 @@ func TestEngine_SearchEmptyQuery(t *testing.T) {
 	e := search.New()
 	lines := []string{"abc", "def"}
 
-	matches := e.Search(lines, "")
+	matches := e.Search(search.StringSliceLineProvider(lines), 
+ "")
 	if len(matches) != 0 {
 		t.Fatalf("empty query should return no matches, got %d", len(matches))
 	}
@@ -59,7 +61,8 @@ func TestEngine_NextPrevious(t *testing.T) {
 	e := search.New()
 	lines := []string{"aaa", "bbb", "aaa", "ccc"}
 
-	matches := e.Search(lines, "aaa")
+	matches := e.Search(search.StringSliceLineProvider(lines), 
+ "aaa")
 	if len(matches) != 2 {
 		t.Fatalf("expected 2 matches, got %d", len(matches))
 	}
@@ -93,7 +96,7 @@ func TestEngine_Clear(t *testing.T) {
 	e := search.New()
 	lines := []string{"hello", "world"}
 
-	e.Search(lines, "hello")
+	e.Search(search.StringSliceLineProvider(lines), "hello")
 	if !e.HasMatches() {
 		t.Fatal("should have matches")
 	}
@@ -111,7 +114,7 @@ func TestEngine_MatchCountAndIndex(t *testing.T) {
 	e := search.New()
 	lines := []string{"a", "b", "a", "a"}
 
-	e.Search(lines, "a")
+	e.Search(search.StringSliceLineProvider(lines), "a")
 	if e.MatchCount() != 3 {
 		t.Fatalf("expected 3 matches, got %d", e.MatchCount())
 	}

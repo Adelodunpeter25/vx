@@ -19,12 +19,8 @@ func (e *Editor) handleReplaceMode(ev *tcell.EventKey) {
 
 	case tcell.KeyEnter:
 		if state == replace.StateSearchInput {
-			// Perform search using existing search engine
-			lines := make([]string, p.buffer.LineCount())
-			for i := 0; i < p.buffer.LineCount(); i++ {
-				lines[i] = p.buffer.Line(i)
-			}
-			matches := p.search.Search(lines, p.replace.GetSearchTerm())
+			// Perform search using existing search engine directly on buffer
+			matches := p.search.Search(p.buffer, p.replace.GetSearchTerm())
 			p.replace.ConfirmSearch(matches)
 			if len(matches) == 0 {
 				p.msgManager.SetTransient("No matches found")

@@ -26,8 +26,28 @@ func New() *Engine {
 	}
 }
 
+// LineProvider defines an interface for accessing lines
+type LineProvider interface {
+	LineCount() int
+	Line(n int) string
+}
+
+// StringSliceLineProvider implements LineProvider for a simple string slice
+type StringSliceLineProvider []string
+
+func (s StringSliceLineProvider) LineCount() int {
+	return len(s)
+}
+
+func (s StringSliceLineProvider) Line(n int) string {
+	if n < 0 || n >= len(s) {
+		return ""
+	}
+	return s[n]
+}
+
 // Search finds all matches in buffer
-func (e *Engine) Search(lines []string, query string) []Match {
+func (e *Engine) Search(provider LineProvider, query string) []Match {
 	if query == "" {
 		e.matches = []Match{}
 		e.current = -1
@@ -38,11 +58,18 @@ func (e *Engine) Search(lines []string, query string) []Match {
 	e.matches = []Match{}
 	e.current = -1
 
-	// Case-insensitive search
 	lowerQuery := strings.ToLower(query)
 	queryLen := utf8.RuneCountInString(query)
+	lineCount := provider.LineCount()
 
-	for lineNum, line := range lines {
+	for lineNum := 0; lineNum < lineCount; lineNum++ {
+		line := provider.Line(lineNum)
+		if line == "" {
+			continue
+		}
+
+		// Use a more efficient way to find matches without Lowering the whole line if possible
+		// For now, let's at least avoid multiple Lowerings per line
 		lowerLine := strings.ToLower(line)
 		col := 0
 		for {
@@ -51,7 +78,10 @@ func (e *Engine) Search(lines []string, query string) []Match {
 				break
 			}
 			byteIdx := col + idx
+			
+			// Count runes up to the match
 			runeIdx := utf8.RuneCountInString(line[:byteIdx])
+			
 			e.matches = append(e.matches, Match{
 				Line: lineNum,
 				Col:  runeIdx,
