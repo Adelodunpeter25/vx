@@ -1,16 +1,17 @@
 package editor
 
 import (
-	"path/filepath"
-
 	"github.com/Adelodunpeter25/vx/internal/palette"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
 )
 
 func (e *Editor) openPalette() {
-	root := "."
-	if p := e.active(); p != nil && p.buffer.Filename() != "" {
-		root = filepath.Dir(p.buffer.Filename())
+	root := e.launchDir
+	if e.fileBrowser != nil && e.fileBrowser.RootPath != "" {
+		root = e.fileBrowser.RootPath
+	}
+	if root == "" {
+		root = "."
 	}
 
 	e.palette = palette.New("")
