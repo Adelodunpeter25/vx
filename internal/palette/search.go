@@ -8,10 +8,25 @@ import (
 	"github.com/Adelodunpeter25/vx/internal/utils"
 )
 
-func SearchFiles(root string, pattern string) []Item {
-	var items []Item
-	pattern = strings.ToLower(pattern)
+var (
+	fileCache      []string
+	cacheRoot      string
+	cacheTimestamp int64
+)
 
+// ListAllFiles returns all files in root, using a cache if available
+func ListAllFiles(root string) []string {
+	// Simple cache invalidation: if root changes, clear cache
+	if root != cacheRoot {
+		fileCache = nil
+		cacheRoot = root
+	}
+
+	if fileCache != nil {
+		return fileCache
+	}
+
+	var files []string
 	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
@@ -27,7 +42,21 @@ func SearchFiles(root string, pattern string) []Item {
 		if err != nil {
 			rel = path
 		}
+		files = append(files, rel)
+		return nil
+	})
 
+	fileCache = files
+	return files
+}
+
+func SearchFiles(root string, pattern string) []Item {
+	var items []Item
+	pattern = strings.ToLower(pattern)
+	files := ListAllFiles(root)
+
+	for _, rel := range files {
+		path := filepath.Join(root, rel)
 		if pattern == "" || strings.Contains(strings.ToLower(rel), pattern) {
 			items = append(items, Item{
 				Label: rel,
@@ -35,14 +64,11 @@ func SearchFiles(root string, pattern string) []Item {
 				Icon:  utils.FileIcon(path),
 			})
 		}
-		
-		// Limit results for performance
-		if len(items) > 100 {
-			return filepath.SkipAll
-		}
 
-		return nil
-	})
+		if len(items) > 100 {
+			break
+		}
+	}
 
 	return items
 }
