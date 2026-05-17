@@ -16,12 +16,15 @@ type Item struct {
 	Icon  string
 }
 
+const maxPaletteResults = 9
+
 type Palette struct {
 	Active        bool
 	Input         string
 	Items         []Item
 	Filtered      []Item
 	SelectedIndex int
+	scrollOffset  int
 	Prompt        string
 	OnSelect      func(Item)
 	OnCancel      func()
@@ -70,6 +73,7 @@ func (p *Palette) filter() {
 	if p.SelectedIndex < 0 {
 		p.SelectedIndex = 0
 	}
+	p.scrollOffset = 0
 }
 
 func (p *Palette) HandleKey(ev *terminal.Event) {
@@ -88,9 +92,15 @@ func (p *Palette) HandleKey(ev *terminal.Event) {
 		if p.SelectedIndex > 0 {
 			p.SelectedIndex--
 		}
+		if p.SelectedIndex < p.scrollOffset {
+			p.scrollOffset = p.SelectedIndex
+		}
 	case tcell.KeyDown:
 		if p.SelectedIndex < len(p.Filtered)-1 {
 			p.SelectedIndex++
+		}
+		if p.SelectedIndex >= p.scrollOffset+maxPaletteResults {
+			p.scrollOffset = p.SelectedIndex - maxPaletteResults + 1
 		}
 	case tcell.KeyBackspace, tcell.KeyBackspace2:
 		if len(p.Input) > 0 {
@@ -117,13 +127,13 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 	}
 
 	numResults := len(p.Filtered)
-	maxResults := 9 // Max results to show
-	if numResults > maxResults {
-		numResults = maxResults
+	visibleResults := numResults
+	if visibleResults > maxPaletteResults {
+		visibleResults = maxPaletteResults
 	}
 
 	// Dynamic height: results + separator + input
-	pHeight := numResults + 2
+	pHeight := visibleResults + 2
 	if pHeight > height {
 		pHeight = height
 	}
@@ -140,20 +150,24 @@ func (p *Palette) Render(term *terminal.Terminal, width, height int) {
 	}
 
 	// Render results (top part of palette)
-	for i := 0; i < numResults; i++ {
+	for i := 0; i < visibleResults; i++ {
+		idx := p.scrollOffset + i
+		if idx >= len(p.Filtered) {
+			break
+		}
 		itemStyle := bgStyle
-		if i == p.SelectedIndex {
+		if idx == p.SelectedIndex {
 			itemStyle = itemStyle.Background(tcell.NewRGBColor(60, 60, 100)).Bold(true)
 		}
 		iconStyle := itemStyle.Foreground(tcell.NewRGBColor(250, 179, 135))
-		label := p.Filtered[i].Label
+		label := p.Filtered[idx].Label
 		rowText := label
-		if p.Filtered[i].Icon != "" {
-			rowText = p.Filtered[i].Icon + " " + label
+		if p.Filtered[idx].Icon != "" {
+			rowText = p.Filtered[idx].Icon + " " + label
 		}
 		term.DrawText(x, y+i, padRight(rowText, width), itemStyle)
-		if p.Filtered[i].Icon != "" {
-			term.DrawText(x, y+i, p.Filtered[i].Icon, iconStyle)
+		if p.Filtered[idx].Icon != "" {
+			term.DrawText(x, y+i, p.Filtered[idx].Icon, iconStyle)
 		}
 	}
 
