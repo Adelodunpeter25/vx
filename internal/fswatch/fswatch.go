@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
+	"github.com/Adelodunpeter25/vx/internal/utils"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -85,16 +85,12 @@ func (w *Watcher) addDirsRecursive(root string) error {
 		}
 		name := info.Name()
 		if name != "." && name != root {
-			if shouldSkip(name) {
+			if utils.ShouldSkipDir(name) {
 				return filepath.SkipDir
 			}
 		}
 		return w.watcher.Add(path)
 	})
-}
-
-func shouldSkip(name string) bool {
-	return strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor"
 }
 
 func (w *Watcher) loop(ctx context.Context) {
@@ -117,7 +113,7 @@ func (w *Watcher) loop(ctx context.Context) {
 				return
 			}
 			name := filepath.Base(ev.Name)
-			if shouldSkip(name) {
+			if utils.ShouldSkipDir(name) {
 				continue
 			}
 

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -9,6 +10,15 @@ const (
 	MaxFileSize = 100 * 1024 * 1024 // 100MB
 	MaxLines    = 1000000            // 1 million lines
 )
+
+// ShouldSkipDir returns true if the directory should be ignored by the editor
+func ShouldSkipDir(name string) bool {
+	return (strings.HasPrefix(name, ".") && name != ".") ||
+		name == "node_modules" ||
+		name == "vendor" ||
+		name == "build" ||
+		name == "dist"
+}
 
 // IsFileTooLarge checks if a file exceeds safe size limits
 func IsFileTooLarge(filename string) (bool, int64, error) {

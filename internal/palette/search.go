@@ -32,7 +32,7 @@ func ListAllFiles(root string) []string {
 			return nil
 		}
 		if info.IsDir() {
-			if strings.HasPrefix(info.Name(), ".") && info.Name() != "." {
+			if utils.ShouldSkipDir(info.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
