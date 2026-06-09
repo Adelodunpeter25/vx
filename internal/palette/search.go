@@ -55,9 +55,22 @@ func SearchFiles(root string, pattern string) []Item {
 	pattern = strings.ToLower(pattern)
 	files := ListAllFiles(root)
 
+	hasWildcard := strings.Contains(pattern, "*") || strings.Contains(pattern, "?") || strings.Contains(pattern, "[")
+
 	for _, rel := range files {
 		path := filepath.Join(root, rel)
-		if pattern == "" || strings.Contains(strings.ToLower(rel), pattern) {
+		relLower := strings.ToLower(rel)
+		
+		matched := false
+		if pattern == "" {
+			matched = true
+		} else if hasWildcard {
+			matched, _ = filepath.Match(pattern, relLower)
+		} else {
+			matched = strings.Contains(relLower, pattern)
+		}
+
+		if matched {
 			items = append(items, Item{
 				Label: rel,
 				Data:  path,
