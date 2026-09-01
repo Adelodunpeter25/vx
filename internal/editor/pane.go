@@ -53,3 +53,22 @@ func NewPane(buf *buffer.Buffer, filename string) *Pane {
 		mode:        ModeNormal,
 	}
 }
+
+// resetViewport clears scroll, cursor and transient state when reusing a pane for a new buffer.
+// It fixes the "text out of viewport" bug where visualOffsetY was left stale after file switch.
+func (p *Pane) resetViewport() {
+	p.cursorX = 0
+	p.cursorY = 0
+	p.offsetX = 0
+	p.offsetY = 0
+	p.visualOffsetY = 0
+	if p.selection != nil {
+		p.selection.Clear()
+	}
+	if p.search != nil {
+		p.search.Clear()
+	}
+	if p.renderCache != nil {
+		p.renderCache.invalidate()
+	}
+}

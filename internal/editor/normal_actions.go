@@ -11,6 +11,9 @@ func (e *Editor) jumpToStart() {
 	p.cursorY = 0
 	p.cursorX = 0
 	p.offsetY = 0
+	p.visualOffsetY = 0
+	p.offsetX = 0
+	p.renderCache.invalidate()
 	p.msgManager.Clear()
 }
 

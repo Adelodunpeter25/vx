@@ -140,8 +140,8 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case 'j':
 		if p.cursorY < p.buffer.LineCount()-1 {
 			p.cursorY++
-			e.adjustScroll()
 			e.clampCursor()
+			e.adjustScroll()
 		} else {
 			p.msgManager.SetTransient("End of file")
 		}
@@ -150,8 +150,8 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case 'k':
 		if p.cursorY > 0 {
 			p.cursorY--
-			e.adjustScroll()
 			e.clampCursor()
+			e.adjustScroll()
 		} else {
 			p.msgManager.SetTransient("Top of file")
 		}
@@ -196,8 +196,8 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case tcell.KeyUp:
 		if p.cursorY > 0 {
 			p.cursorY--
-			e.adjustScroll()
 			e.clampCursor()
+			e.adjustScroll()
 		} else {
 			p.msgManager.SetTransient("Top of file")
 		}
@@ -206,8 +206,8 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 	case tcell.KeyDown:
 		if p.cursorY < p.buffer.LineCount()-1 {
 			p.cursorY++
-			e.adjustScroll()
 			e.clampCursor()
+			e.adjustScroll()
 		} else {
 			p.msgManager.SetTransient("End of file")
 		}
@@ -254,21 +254,21 @@ func (e *Editor) handleNormalMode(ev *terminal.Event) {
 		e.deleteCurrentPane()
 		p.lastKey = 0
 	case tcell.KeyCtrlU:
-		halfPage := max(1, (e.height-1)/2)
+		halfPage := max(1, e.getPaneContentHeight(p)/2)
 		for i := 0; i < halfPage && p.cursorY > 0; i++ {
 			p.cursorY--
 		}
-		e.adjustScroll()
 		e.clampCursor()
+		e.adjustScroll()
 		p.selection.Clear()
 		p.lastKey = 0
 	case tcell.KeyCtrlD:
-		halfPage := max(1, (e.height-1)/2)
+		halfPage := max(1, e.getPaneContentHeight(p)/2)
 		for i := 0; i < halfPage && p.cursorY < p.buffer.LineCount()-1; i++ {
 			p.cursorY++
 		}
-		e.adjustScroll()
 		e.clampCursor()
+		e.adjustScroll()
 		p.selection.Clear()
 		p.lastKey = 0
 	}

@@ -2,14 +2,17 @@ package editor
 
 // RenderCache tracks what was rendered to avoid unnecessary redraws
 type RenderCache struct {
-	lines       map[int]string
-	cursorX     int
-	cursorY     int
-	offsetY     int
-	width       int
-	height      int
-	statusLine  string
-	needsRedraw bool
+	lines         map[int]string
+	cursorX       int
+	cursorY       int
+	offsetY       int
+	visualOffsetY int
+	offsetX       int
+	width         int
+	height        int
+	modVersion    int
+	statusLine    string
+	needsRedraw   bool
 }
 
 func newRenderCache() *RenderCache {
@@ -28,7 +31,11 @@ func (rc *RenderCache) hasChanged(p *Pane, width, height int) bool {
 		return true
 	}
 
-	if rc.offsetY != p.offsetY {
+	if rc.offsetY != p.offsetY || rc.visualOffsetY != p.visualOffsetY || rc.offsetX != p.offsetX {
+		return true
+	}
+
+	if rc.modVersion != p.buffer.ModVersion() {
 		return true
 	}
 
@@ -52,6 +59,9 @@ func (rc *RenderCache) update(p *Pane, width, height int) {
 	rc.cursorX = p.cursorX
 	rc.cursorY = p.cursorY
 	rc.offsetY = p.offsetY
+	rc.visualOffsetY = p.visualOffsetY
+	rc.offsetX = p.offsetX
+	rc.modVersion = p.buffer.ModVersion()
 	rc.width = width
 	rc.height = height
 	rc.needsRedraw = false

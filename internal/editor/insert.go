@@ -120,15 +120,15 @@ func (e *Editor) handleInsertMode(ev *terminal.Event) {
 	case tcell.KeyUp:
 		if p.cursorY > 0 {
 			p.cursorY--
-			e.adjustScroll()
 			e.clampCursor()
+			e.adjustScroll()
 		}
 		return
 	case tcell.KeyDown:
 		if p.cursorY < p.buffer.LineCount()-1 {
 			p.cursorY++
-			e.adjustScroll()
 			e.clampCursor()
+			e.adjustScroll()
 		}
 		return
 	}

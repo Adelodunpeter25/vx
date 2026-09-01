@@ -24,10 +24,7 @@ func (e *Editor) openFileInActivePane(path string) {
 	}
 	p.buffer = newBuf
 	p.syntax = syntax.New(newBuf.Filename())
-	p.cursorX = 0
-	p.cursorY = 0
-	p.offsetY = 0
-	p.renderCache.invalidate()
+	p.resetViewport()
 	e.showFileInfo()
 	e.updateTitle()
 	if e.fileBrowser != nil {
@@ -52,10 +49,7 @@ func (e *Editor) previewFileInActivePane(path string) {
 	}
 	p.buffer = newBuf
 	p.syntax = syntax.New(newBuf.Filename())
-	p.cursorX = 0
-	p.cursorY = 0
-	p.offsetY = 0
-	p.renderCache.invalidate()
+	p.resetViewport()
 	e.showFileInfo()
 	e.updateTitle()
 	if e.fileBrowser != nil {
@@ -81,6 +75,11 @@ func (e *Editor) handleBrowserResizeDrag(ev *terminal.Event, dividerX int) bool 
 	}
 	if ev.Button == tcell.ButtonNone && e.dragBrowser {
 		e.dragBrowser = false
+		for _, p := range e.panes {
+			e.clampCursorForPane(p)
+			e.adjustScrollForPane(p)
+			p.renderCache.invalidate()
+		}
 		return true
 	}
 	if e.dragBrowser {
@@ -99,7 +98,9 @@ func (e *Editor) handleBrowserResizeDrag(ev *terminal.Event, dividerX int) bool 
 		if e.fileBrowser != nil {
 			e.fileBrowser.Width = newWidth
 		}
-		e.active().renderCache.invalidate()
+		for _, p := range e.panes {
+			p.renderCache.invalidate()
+		}
 		return true
 	}
 	return false

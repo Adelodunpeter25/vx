@@ -56,10 +56,7 @@ func (e *Editor) handleCommandMode(ev *terminal.Event) {
 			// Handle file switching (replace current buffer)
 			p.buffer = result.NewBuffer
 			p.syntax = syntax.New(result.NewBuffer.Filename())
-			p.cursorX = 0
-			p.cursorY = 0
-			p.offsetY = 0
-			p.renderCache.invalidate()
+			p.resetViewport()
 			e.showFileInfo()
 			e.updateTitle()
 		}

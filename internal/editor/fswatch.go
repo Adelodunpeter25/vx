@@ -101,38 +101,18 @@ func (e *Editor) handleFileChange(path string) {
 	}
 }
 
-// clampCursorForPane clamps cursor position to valid bounds within the buffer.
-func (e *Editor) clampCursorForPane(p *Pane) {
-	if p.cursorY >= p.buffer.LineCount() {
-		p.cursorY = p.buffer.LineCount() - 1
-	}
-	if p.cursorY < 0 {
-		p.cursorY = 0
-	}
-	line := p.buffer.Line(p.cursorY)
-	lineLen := lineRuneCount(line)
-	if p.cursorX > lineLen {
-		p.cursorX = lineLen
-	}
-}
-
 // adjustScrollForPaneKeepScroll preserves scroll position after a reload,
 // only adjusting if the cursor went out of the visible area.
 func (e *Editor) adjustScrollForPaneKeepScroll(p *Pane) {
-	saved := e.activePane
-	for i, pane := range e.panes {
-		if pane == p {
-			e.activePane = i
-			break
-		}
+	if p == nil {
+		return
 	}
 	savedVisualOffset := p.visualOffsetY
 	savedOffsetY := p.offsetY
-	e.adjustScroll()
-	// If the cursor is still within the original viewport, restore the scroll
+	e.adjustScrollForPane(p)
+	// If viewport didn't need to move for cursor, restore original scroll
 	if p.visualOffsetY == savedVisualOffset {
 		p.visualOffsetY = savedVisualOffset
 		p.offsetY = savedOffsetY
 	}
-	e.activePane = saved
 }

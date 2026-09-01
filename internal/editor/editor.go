@@ -171,6 +171,11 @@ func (e *Editor) nextPane() {
 		return
 	}
 	e.activePane = (e.activePane + 1) % len(e.panes)
+	if p := e.active(); p != nil {
+		e.clampCursorForPane(p)
+		e.adjustScrollForPane(p)
+		p.renderCache.invalidate()
+	}
 	e.updateTitle()
 }
 
@@ -179,6 +184,11 @@ func (e *Editor) previousPane() {
 		return
 	}
 	e.activePane = (e.activePane - 1 + len(e.panes)) % len(e.panes)
+	if p := e.active(); p != nil {
+		e.clampCursorForPane(p)
+		e.adjustScrollForPane(p)
+		p.renderCache.invalidate()
+	}
 	e.updateTitle()
 }
 
@@ -258,7 +268,15 @@ func (e *Editor) handleMouseEventForPane(ev *terminal.Event) {
 		if ev.MouseX >= rect.X && ev.MouseX < rect.X+rect.Width && ev.MouseY >= rect.Y && ev.MouseY < rect.Y+rect.Height {
 			// Focus only on click or scroll, not on hover/move.
 			if ev.Button == tcell.Button1 || ev.Button == tcell.WheelUp || ev.Button == tcell.WheelDown {
+				wasActive := e.activePane
 				e.activePane = i
+				if wasActive != i {
+					if p := e.active(); p != nil {
+						e.clampCursorForPane(p)
+						e.adjustScrollForPane(p)
+						p.renderCache.invalidate()
+					}
+				}
 				if e.fileBrowser != nil {
 					e.fileBrowser.Focused = false
 				}
@@ -290,6 +308,12 @@ func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int, contentX i
 	}
 	if ev.Button == tcell.ButtonNone && e.dragSplit {
 		e.dragSplit = false
+		// Re-clamp all panes after drag ends (width changed)
+		for _, p := range e.panes {
+			e.clampCursorForPane(p)
+			e.adjustScrollForPane(p)
+			p.renderCache.invalidate()
+		}
 		return true
 	}
 	if e.dragSplit {
@@ -315,7 +339,9 @@ func (e *Editor) handleSplitterDrag(ev *terminal.Event, dividerX int, contentX i
 			return true
 		}
 		e.splitRatio = float64(left) / float64(available)
-		e.active().renderCache.invalidate()
+		for _, p := range e.panes {
+			p.renderCache.invalidate()
+		}
 		return true
 	}
 	return false
@@ -359,11 +385,12 @@ func (e *Editor) handleEvent() {
 func (e *Editor) handleResize() {
 	e.width, e.height = e.term.Size()
 
-	// Ensure cursor stays visible after resize
-	e.clampCursor()
-	e.adjustScroll()
-
-	e.active().renderCache.invalidate()
+	// Ensure all panes' cursors/scroll are valid after resize (per-pane width changed)
+	for _, p := range e.panes {
+		e.clampCursorForPane(p)
+		e.adjustScrollForPane(p)
+		p.renderCache.invalidate()
+	}
 	e.render()
 }
 
