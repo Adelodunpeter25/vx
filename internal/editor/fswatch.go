@@ -9,22 +9,22 @@ import (
 )
 
 func (e *Editor) initWatcher(root string) {
-	e.watcher = fswatch.New(root)
-	if err := e.watcher.Start(); err != nil {
-		return // watcher failure is non-fatal
-	}
-
-	// This goroutine only forwards events into the tcell event loop.
-	// It never touches editor state directly — no data races.
+	w := fswatch.New(root)
+	e.watcher = w
+	// Start watcher async so recursive directory walk (filepath.Walk + inotify_add_watch)
+	// does not block the first frame. File change events will arrive late, which is fine.
 	go func() {
+		if err := w.Start(); err != nil {
+			return // watcher failure is non-fatal
+		}
 		for {
 			select {
-			case ev, ok := <-e.watcher.Events:
+			case ev, ok := <-w.Events:
 				if !ok {
 					return
 				}
 				e.term.PostFileChange(ev.Path)
-			case _, ok := <-e.watcher.Errors:
+			case _, ok := <-w.Errors:
 				if !ok {
 					return
 				}

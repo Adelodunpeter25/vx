@@ -2,7 +2,6 @@ package buffer
 
 import (
 	"fmt"
-	"os"
 	"unicode/utf8"
 	"time"
 
@@ -19,6 +18,7 @@ type Buffer struct {
 	lazy       *utils.LazyFileReader
 	totalLines int
 	modTime    time.Time
+	fileSize   int64
 }
 
 func New() *Buffer {
@@ -134,9 +134,8 @@ func (b *Buffer) Reload() error {
 	b.modified = false
 	b.modVersion++
 	b.undoStack = undo.NewStack()
-	if info, err := os.Stat(b.filename); err == nil {
-		b.modTime = info.ModTime()
-	}
+	b.modTime = newBuf.modTime
+	b.fileSize = newBuf.fileSize
 	return nil
 }
 

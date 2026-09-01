@@ -64,25 +64,37 @@ func CountLines(filename string) (int, error) {
 	}
 	defer file.Close()
 
+	return CountLinesFromFile(file)
+}
+
+// CountLinesFromFile counts lines from an already-opened file without reopening.
+// It seeks back to the start after counting so the file can be reused.
+func CountLinesFromFile(file *os.File) (int, error) {
+	if file == nil {
+		return 0, os.ErrInvalid
+	}
+	// Remember current offset to restore? We always seek to 0 for reuse, but try to preserve.
+	if _, err := file.Seek(0, 0); err != nil {
+		return 0, err
+	}
 	buf := make([]byte, 32*1024)
 	count := 0
-	
 	for {
 		n, err := file.Read(buf)
 		if n == 0 {
 			break
 		}
-		
 		for i := 0; i < n; i++ {
 			if buf[i] == '\n' {
 				count++
 			}
 		}
-		
 		if err != nil {
 			break
 		}
 	}
-	
+	if _, err := file.Seek(0, 0); err != nil {
+		return count, err
+	}
 	return count, nil
 }

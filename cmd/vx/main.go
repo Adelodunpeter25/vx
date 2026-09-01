@@ -12,18 +12,12 @@ func main() {
 	// Handle flags
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
-		case "h","-h", "--help":
+		case "h", "-h", "--help":
 			printHelp()
 			return
 		case "-v", "--version":
 			printVersion()
 			return
-		}
-		
-		// Check flags
-		filename := os.Args[1]
-		if _, err := os.Stat(filename); err == nil {
-			// If it's a directory, we'll handle it in editor.NewWithFile
 		}
 	}
 	

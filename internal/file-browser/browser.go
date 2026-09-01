@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Adelodunpeter25/vx/internal/git"
 	"github.com/Adelodunpeter25/vx/internal/terminal"
@@ -65,7 +66,8 @@ func New(root string) *State {
 		Icon:  utils.DirIcon(true),
 		IsDir: true,
 	}
-	state.loadChildren(state.Root)
+	// Defer loading children and git status until needed to avoid blocking startup.
+	// Visible() will lazy-load children on first render, and refreshGit is async.
 	state.Root.Expanded = true
 	state.refreshGit()
 	return state
@@ -87,7 +89,6 @@ func (s *State) SetRoot(root string) {
 	}
 	s.selected = 0
 	s.scroll = 0
-	s.loadChildren(s.Root)
 	s.Root.Expanded = true
 	s.refreshGit()
 }
@@ -399,8 +400,14 @@ func (s *State) refreshGit() {
 	if s.gitCache == nil {
 		s.gitCache = git.NewCache()
 	}
+	// Run git status async so startup is not blocked (badges appear late).
+	cache := s.gitCache
 	collector := git.NewCollector(s.RootPath)
-	_ = s.gitCache.Update(context.Background(), collector)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_ = cache.Update(ctx, collector)
+	}()
 }
 
 func (s *State) gitStatusFor(node *Node) git.Status {

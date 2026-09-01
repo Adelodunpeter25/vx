@@ -28,27 +28,44 @@ func NewLazyFileReader(filename string) (*LazyFileReader, error) {
 		return nil, err
 	}
 
-	// Count total lines first
-	total, err := CountLines(filename)
+	// Count total lines using the open file to avoid reopening
+	total, err := CountLinesFromFile(file)
 	if err != nil {
 		file.Close()
 		return nil, err
 	}
 
-	// Reopen for reading
-	file.Close()
-	file, err = os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
+	// File is already seeked to 0 by CountLinesFromFile, reuse it directly
+	scanner := bufio.NewScanner(file)
+	// Allow long lines up to 1MB
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
 
 	return &LazyFileReader{
 		filename: filename,
 		file:     file,
-		scanner:  bufio.NewScanner(file),
+		scanner:  scanner,
 		lines:    make([]string, 0, ChunkSize),
 		total:    total,
 	}, nil
+}
+
+// NewLazyFileReaderWithFile creates a lazy reader from an already-opened file
+// and a pre-counted total. The file must be seeked to 0 and will be owned by the reader.
+func NewLazyFileReaderWithFile(file *os.File, filename string, total int) *LazyFileReader {
+	if file == nil {
+		return nil
+	}
+	scanner := bufio.NewScanner(file)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+	return &LazyFileReader{
+		filename: filename,
+		file:     file,
+		scanner:  scanner,
+		lines:    make([]string, 0, ChunkSize),
+		total:    total,
+	}
 }
 
 // LoadChunk loads next chunk of lines
